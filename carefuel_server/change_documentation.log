@@ -1,0 +1,19 @@
+# Open ports for webserver
+sudo iptables -A INPUT -p tcp --dport http -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport https -j ACCEPT
+
+# Install Java
+sudo apt-get install default-jre
+sudo apt-get install default-jdk
+-> that was java7...
+-> update /etc/apt/sources.list to import jessie-backports
+sudo apt install -t jessie-backports  openjdk-8-jre-headless ca-certificates-java
+sudo apt-get install openjdk-8-jre
+sudo apt-get install openjdk-8-jdk
+sudo update-alternatives --config java (change default version to java 8)
+also updated locale settings with (sudo dpkg-reconfigure locales)
+
+# Webserver
+Created new folder 'carefuel' in root directory
+start webserver with: sudo java -jar -Dserver.port=80 carefuel_server-0.1.0.jar
+-> sudo due to port 80, in linux all ports under 1024 are normally reserved
