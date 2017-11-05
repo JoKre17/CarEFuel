@@ -1,1 +1,3 @@
 /carefuel_server/target
+*.tfrecord
+/.idea/
