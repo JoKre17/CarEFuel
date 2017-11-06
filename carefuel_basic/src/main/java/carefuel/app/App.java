@@ -18,6 +18,13 @@ public class App {
 
 		testLog();
 		
+		System.out.println( "Hello World!" );
+        
+        File file = new File(System.getProperty("user.dir") + "/resource/Bertha Benz Memorial Route.csv");
+        System.out.println(file.exists());
+        
+        Parser parser = new Parser(file);
+        parser.parse();
 	}
 
 	private static void testLog() {

@@ -1,3 +1,7 @@
+<<<<<<< Upstream, based on origin/basicProject
+=======
+
+>>>>>>> 8127c5f parser implemented + fixedPath Algorithm
 package com.carefuel.app;
 
 import java.io.File;
