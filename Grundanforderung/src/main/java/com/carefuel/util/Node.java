@@ -48,7 +48,7 @@ public class Node implements Comparable<Node>{
 	}
 
 	public double getFuelToBuy() {
-		return fuelToBuy;
+		return fuelToBuy; 
 	}
 
 	public void setFuelToBuy(double fuelToBuy) {
