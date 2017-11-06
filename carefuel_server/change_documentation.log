@@ -17,3 +17,13 @@ also updated locale settings with (sudo dpkg-reconfigure locales)
 Created new folder 'carefuel' in root directory
 start webserver with: sudo java -jar -Dserver.port=80 carefuel_server-0.1.0.jar
 -> sudo due to port 80, in linux all ports under 1024 are normally reserved
+
+#MySQL Server
+Installed MySQL Server and changed root PW (ask Wolfgang if you need access):
+'sudo apt-get install mysql-server'
+'sudo mysql_secure_installation'
+Already created the database with standard UTF-8 encoding:
+'CREATE DATABASE carefuel
+  DEFAULT CHARACTER SET utf8
+  DEFAULT COLLATE utf8_general_ci;'
+To login to the database, use: 'mysql -u root -p'
