@@ -1,3 +1,4 @@
 /carefuel_server/target
 *.tfrecord
 /.idea/
+/rnn_training/models
