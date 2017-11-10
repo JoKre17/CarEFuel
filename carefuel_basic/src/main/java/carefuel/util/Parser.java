@@ -45,6 +45,9 @@ public class Parser {
 				}
 				GasStation station = new GasStation(entry[0], Integer.parseInt(entry[1]), 0.0, 0.0);
 				gasStations.add(station);
+				Double[] tmp = getLonLat(Integer.parseInt(entry[1]));
+				station.setLon(tmp[0]);
+				station.setLat(tmp[1]);
 			}
 			
 			reader.close();
@@ -53,6 +56,42 @@ public class Parser {
 		catch(Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public Double[] getLonLat(int gasStationID) {
+		Double[] lonLat = {0.0, 0.0};
+		
+		String line = "";
+		String[] entry;
+		String splitBy = ";";
+		
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(new File(System.getProperty("user.dir") + "/resource/gasstations.csv")));		
+			
+			while ((line = reader.readLine()) != null) {
+				
+				
+				entry = line.split(splitBy);
+				if (entry[0].equals(gasStationID + "")) {
+					
+					//System.out.println("Lon: " + entry[7]);
+					//System.out.println("Lon: " + entry[8]);
+					lonLat[0] = Double.parseDouble(entry[7]); 
+					lonLat[1] = Double.parseDouble(entry[8]);
+					break;
+				}
+				
+				
+			}
+			
+			reader.close();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		//System.out.println("******LONLAT: " + lonLat[0]);
+		return lonLat;
 	}
 	
 	public List<GasStation> getGasStations() {

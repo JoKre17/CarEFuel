@@ -22,9 +22,9 @@ public class FixedPathAlgorithm {
 	private Queue<Node> priorityQueue;
 	
 	public FixedPathAlgorithm(List<GasStation> gasStations, int capacity, double gasConsumption) {
-		this.gasStations = gasStations;
+		this.setGasStations(gasStations);
 		this.capacity = capacity;
-		this.gasConsumption = gasConsumption;
+		this.setGasConsumption(gasConsumption);
 		this.nodes = new ArrayList<Node>();
 		this.breakPoints = new ArrayList<Node>();
 		this.slidingWindow = new LinkedList<Node>();
@@ -63,7 +63,9 @@ public class FixedPathAlgorithm {
 		}
 		
 		// find path from break points
-		
+		for (Node n : breakPoints) {
+			driveToNext(n, null);
+		}
 	}
 	
 	/**
@@ -99,5 +101,21 @@ public class FixedPathAlgorithm {
 		return 6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat()) 
 									+ Math.cos(n1.getGasStation().getLat() * Math.cos(n2.getGasStation().getLat()))
 									* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon())));
+	}
+
+	public List<GasStation> getGasStations() {
+		return gasStations;
+	}
+
+	public void setGasStations(List<GasStation> gasStations) {
+		this.gasStations = gasStations;
+	}
+
+	public double getGasConsumption() {
+		return gasConsumption;
+	}
+
+	public void setGasConsumption(double gasConsumption) {
+		this.gasConsumption = gasConsumption;
 	}
 }
