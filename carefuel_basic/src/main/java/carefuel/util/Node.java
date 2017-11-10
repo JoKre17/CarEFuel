@@ -1,6 +1,6 @@
-package com.carefuel.util;
+package carefuel.util;
 
-import com.carefuel.model.GasStation;
+import carefuel.model.GasStation;
 
 public class Node implements Comparable<Node>{
 	

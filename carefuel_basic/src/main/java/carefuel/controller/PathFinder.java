@@ -1,5 +1,11 @@
 package carefuel.controller;
 
+import java.util.List;
+
+import carefuel.util.FixedPathAlgorithm;
+
+import carefuel.model.GasStation;
+
 public class PathFinder {
 
 	private List<GasStation> gasStations;
