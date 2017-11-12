@@ -37,62 +37,58 @@ def _create_tfrecord(name, files):
     # Create a new tfrecord file 'name' from files
     writer = tf.python_io.TFRecordWriter(name)
 
-    # Show progress of the loop
-    with progressbar.ProgressBar(max_value=len(files)) as bar:
-        # Iterate over files
-        for index, file in enumerate(files):
-            # Open file and parse input
-            entries = []
-            with open(file, "r") as csvfile:
-                reader = csv.reader(csvfile, delimiter=';')
-                for row in reader:
-                    entries.append(row)
+    # Iterate over files
+    for index, file in enumerate(files):
+        print("Index: ", index)
+        # Open file and parse input
+        entries = []
+        with open(file, "r") as csvfile:
+            reader = csv.reader(csvfile, delimiter=';')
+            for row in reader:
+                entries.append(row)
 
-            # Abort if file empty
-            if len(entries) < 2:
-                print("Aborted, ", file, " contains not enough entries")
-                continue
+        # Abort if file empty
+        if len(entries) < 2:
+            print("Aborted, ", file, " contains not enough entries")
+            continue
 
-            # Parse entries to a new format: The first entry is seen has hour zero. All following entries are relative
-            # to the first one.
-            hours = []
-            prices = []
-            reference_date = _parse_str_date(entries[0][0])
+        # Parse entries to a new format: The first entry is seen has hour zero. All following entries are relative
+        # to the first one.
+        hours = []
+        prices = []
+        reference_date = _parse_str_date(entries[0][0])
 
-            # Iterate over all entries
-            for entry in entries:
-                time_diff = _parse_str_date(entry[0]) - reference_date
-                hours.append(time_diff.total_seconds() / 3600.0)
-                prices.append(int(entry[1]))
+        # Iterate over all entries
+        for entry in entries:
+            time_diff = _parse_str_date(entry[0]) - reference_date
+            hours.append(time_diff.total_seconds() / 3600.0)
+            prices.append(int(entry[1]))
 
-            # Interpolate the data at every hour
-            f = interpolate.interp1d(hours, prices, kind='linear')
-            hours = np.linspace(0, hours[-1], hours[-1] + 1)
-            prices = f(hours)
+        # Interpolate the data at every hour
+        f = interpolate.interp1d(hours, prices, kind='linear')
+        hours = np.linspace(0, hours[-1], hours[-1] + 1)
+        prices = f(hours)
 
-            # On top of just the last month of the data, generate n_samples_per_file random hours in the second half of
-            # the dataset that are each the last known prices for another new data set
-            current_index = len(prices) - hours_per_month
-            for _ in range(n_samples_per_file):
-                # Generate data set
-                example = _create_data_set(prices, current_index)
+        # On top of just the last month of the data, generate n_samples_per_file random hours in the second half of
+        # the dataset that are each the last known prices for another new data set
+        current_index = len(prices) - hours_per_month
+        for _ in range(n_samples_per_file):
+            # Generate data set
+            example = _create_data_set(prices, current_index)
 
-                if example is None:
-                    break
+            if example is None:
+                break
 
-                # Serialize to string and write to the file
-                writer.write(example.SerializeToString())
+            # Serialize to string and write to the file
+            writer.write(example.SerializeToString())
 
-                # Generate random new index in the second half of the data set
-                current_index = random.randint(math.floor(len(prices) / 2), len(prices) - hours_per_month)
+            # Generate random new index in the second half of the data set
+            current_index = random.randint(math.floor(len(prices) / 2), len(prices) - hours_per_month)
 
-                # Abort if not enough previous months
-                if current_index - hours_per_month < 0:
-                    print("Aborted, not enough entries for current index")
-                    break
-
-            # Update progress bar
-            bar.update(index)
+            # Abort if not enough previous months
+            if current_index - hours_per_month < 0:
+                print("Aborted, not enough entries for current index")
+                break
 
 
     # Cleanup
@@ -150,9 +146,10 @@ def main(_):
     testing_index = math.floor(len(files) - dataset_ratios[2] * len(files))
 
     # Create a new tfrecords file for each data set
-    _create_tfrecord("training.tfrecord", files[training_index:validation_index - 1])
-    _create_tfrecord("validation.tfrecord", files[validation_index:testing_index - 1])
+    #_create_tfrecord("training.tfrecord", files[training_index:validation_index - 1])
+    #_create_tfrecord("validation.tfrecord", files[validation_index:testing_index - 1])
     _create_tfrecord("testing.tfrecord", files[testing_index:])
+
 
 if __name__ == '__main__':
     tf.app.run()

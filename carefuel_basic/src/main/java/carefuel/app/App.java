@@ -5,6 +5,8 @@ import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import carefuel.controller.PricePredictor;
+
 /**
  * Hello world!
  *
@@ -15,9 +17,7 @@ public class App {
 
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Basic at " + new Date().toString());
-
-		testLog();
-		
+		PricePredictor predictor = new PricePredictor();
 	}
 
 	private static void testLog() {
