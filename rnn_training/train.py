@@ -3,8 +3,9 @@ from os.path import join
 
 # Specify input flags
 flags = tf.flags
-flags.DEFINE_string("data_path", None, "Path of the folder containing the .tfrecord files")
-flags.DEFINE_string("save_path", None, "Path to the folder in which the trained models should be saved")
+flags.DEFINE_string("data_path", ".", "Path of the folder containing the .tfrecord files")
+flags.DEFINE_string("save_path", "models/default", "Path to the folder in which the trained models should be saved")
+flags.DEFINE_string("config_path", None, "Path to a file containing a Config dict")
 FLAGS = flags.FLAGS
 
 # Activate verbose logging
@@ -27,13 +28,14 @@ class Config:
     dataset_ratios = (0.8, 0.1, 0.1)
     n_hours_per_month = 744
     max_past_months = 50
-    batch_size = 15
+    batch_size = 5
     num_epochs = 10
     n_layer = 1
     max_price = 3000
     keep_prob = 0.5
-    learning_rate = 2
+    learning_rate = 1
     prefetched_elements = batch_size * 50
+    layer_size = 744
 
 
 def input_fn(path):
@@ -52,7 +54,7 @@ def input_fn(path):
         dataset = tf.data.TFRecordDataset(path)
 
         # Prefetch data for more efficient hardware utilization
-        dataset = dataset.prefetch(Config.prefetched_elements)
+        #dataset = dataset.prefetch(Config.prefetched_elements)
 
         # Convert into tensors
         def _parse_tfrecord_data(feature):
@@ -85,6 +87,18 @@ def input_fn(path):
         return features, next_month
 
 
+def serving_input_receiver_fn():
+  """An input receiver that expects a serialized tf.Example."""
+  feature_spec = {'foo': tf.FixedLenFeature(...),
+                  'bar': tf.VarLenFeature(...)}
+
+  serialized_tf_example = tf.placeholder(dtype=tf.string,
+                                         shape=[default_batch_size],
+                                         name='input_example_tensor')
+  receiver_tensors = {'examples': serialized_tf_example}
+  features = tf.parse_example(serialized_tf_example, feature_spec)
+  return tf.estimator.export.ServingInputReceiver(features, receiver_tensors)
+
 def model_fn(features, labels, mode):
     """
     :param features: Contains a dict with the input data from the previous months in the
@@ -105,7 +119,7 @@ def model_fn(features, labels, mode):
     '''Create hidden LSTM layers'''
     def lstm_layer():
         """ Function to create LSTM cells and incorporate dropout during training"""
-        cell = tf.nn.rnn_cell.LSTMCell(Config.n_hours_per_month, forget_bias=1.0, state_is_tuple=True)
+        cell = tf.nn.rnn_cell.LSTMCell(Config.layer_size, forget_bias=1.0, state_is_tuple=True)
         if mode is not tf.estimator.ModeKeys.TRAIN:
             cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=Config.keep_prob)
         return cell
@@ -136,6 +150,14 @@ def model_fn(features, labels, mode):
     # Indexing of the last calculated element
     output = tf.gather(tf.reshape(output, [-1, Config.n_hours_per_month]), index)
 
+
+    # Apply dropout if training
+    if mode is tf.estimator.ModeKeys.TRAIN and Config.keep_prob < 1:
+        output = tf.nn.dropout(output, Config.keep_prob)
+
+    # Combine output in a densely connected layer
+    output = tf.layers.dense(inputs=output, units=Config.n_hours_per_month, activation=tf.nn.relu)
+
     # Apply dropout if training
     if mode is tf.estimator.ModeKeys.TRAIN and Config.keep_prob < 1:
         output = tf.nn.dropout(output, Config.keep_prob)
@@ -149,7 +171,6 @@ def model_fn(features, labels, mode):
     # Loss function
     next_month = labels / Config.max_price
     loss = tf.losses.absolute_difference(next_month, output)
-
 
     # Define optimizer
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=Config.learning_rate)
@@ -167,8 +188,12 @@ def main(_):
     if not FLAGS.save_path:
         raise ValueError("You need to specify save_path!")
 
+    gpu_options = tf.GPUOptions()
+    config = tf.ConfigProto()
+    #config.gpu_options.per_process_gpu_memory_fraction = 0.5
     # Build the estimator based on the model defined above
-    nn = tf.estimator.Estimator(model_fn=model_fn, model_dir=FLAGS.save_path)
+    nn = tf.estimator.Estimator(model_fn=model_fn, model_dir=FLAGS.save_path,
+                                config=tf.contrib.learn.RunConfig(session_config=config))
 
     # Run training
     for i in range(Config.num_epochs):
@@ -180,7 +205,8 @@ def main(_):
 
     print("Testing:")
     nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")))
-    
+
+
 if __name__ == '__main__':
     tf.app.run()
 
