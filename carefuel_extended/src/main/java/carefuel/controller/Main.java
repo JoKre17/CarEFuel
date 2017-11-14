@@ -1,15 +1,11 @@
 package carefuel.controller;
 
 import java.util.Date;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-import carefuel.model.GasStation;
-import carefuel.model.GasStationPrices;
 
 /**
  *
@@ -33,10 +29,7 @@ public class Main {
 		databaseHandler.setup();
 
 		long timeBefore = System.currentTimeMillis();
-		for (int i = 0; i < 1000; i++) {
-			GasStation gasStation = databaseHandler.getGasStation("00060632-708f-4444-8888-acdc00000001");
-			Set<GasStationPrices> prices = gasStation.getGasStationPrices();
-		}
+		log.info(databaseHandler.getPricePrediction("001975cc-d534-4819-ab35-8e88848c3096", Fuel.DIESEL).toString());
 		log.info((System.currentTimeMillis() - timeBefore) + "ms");
 		databaseHandler.exit();
 	}

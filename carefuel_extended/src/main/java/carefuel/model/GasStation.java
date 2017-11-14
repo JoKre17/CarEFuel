@@ -51,7 +51,11 @@ public class GasStation {
 
 	@OneToMany
 	@JoinColumn(name = "stid")
-	private Set<GasStationPrices> gasStationPrices;
+	private Set<GasStationPrice> gasStationPrices;
+
+	@OneToMany
+	@JoinColumn(name = "stid")
+	private Set<GasStationPricePrediction> gasStationPricePredictions;
 
 	/**
 	 * the default constructor is necessary for hibernate to get all gas stations
@@ -76,9 +80,16 @@ public class GasStation {
 	}
 
 	/**
+	 * @return the gasStationPricePredictions
+	 */
+	public Set<GasStationPricePrediction> getGasStationPricePredictions() {
+		return this.gasStationPricePredictions;
+	}
+
+	/**
 	 * @return the gasStationPrices
 	 */
-	public Set<GasStationPrices> getGasStationPrices() {
+	public Set<GasStationPrice> getGasStationPrices() {
 		return this.gasStationPrices;
 	}
 
@@ -148,10 +159,18 @@ public class GasStation {
 	}
 
 	/**
+	 * @param gasStationPricePredictions
+	 *            the gasStationPricePredictions to set
+	 */
+	public void setGasStationPricePredictions(Set<GasStationPricePrediction> gasStationPricePredictions) {
+		this.gasStationPricePredictions = gasStationPricePredictions;
+	}
+
+	/**
 	 * @param gasStationPrices
 	 *            the gasStationPrices to set
 	 */
-	public void setGasStationPrices(Set<GasStationPrices> gasStationPrices) {
+	public void setGasStationPrices(Set<GasStationPrice> gasStationPrices) {
 		this.gasStationPrices = gasStationPrices;
 	}
 

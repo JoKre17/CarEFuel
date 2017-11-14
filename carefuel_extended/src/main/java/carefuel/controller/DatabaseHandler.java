@@ -1,6 +1,11 @@
 package carefuel.controller;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,8 +14,10 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.springframework.data.util.Pair;
 
 import carefuel.model.GasStation;
+import carefuel.model.GasStationPricePrediction;
 
 /**
  *
@@ -43,9 +50,6 @@ public class DatabaseHandler {
 		session.getTransaction().commit();
 	}
 
-	/**
-	 * closes the session
-	 */
 	public void exit() {
 		// code to close Hibernate Session factory
 		this.sessionFactory.close();
@@ -71,11 +75,71 @@ public class DatabaseHandler {
 	}
 
 	/**
+	 * returns a sorted list of pairs that map dates to prices of a specified
+	 * fueltype
+	 *
+	 * @param id
+	 * @param fuel
+	 * @return
+	 */
+	public List<Pair<Date, Integer>> getPricePrediction(String id, Enum<Fuel> fuel) {
+		Session session = this.sessionFactory.getCurrentSession();
+		session.beginTransaction();
+
+		org.hibernate.Query query = session
+				.createQuery("from " + GasStationPricePrediction.class.getSimpleName() + " where stid='" + id + "'");
+
+		List<GasStationPricePrediction> temp = query.list();
+
+		session.getTransaction().commit();
+
+		List<Pair<Date, Integer>> toReturn = new ArrayList<>();
+
+		if (fuel.equals(Fuel.DIESEL)) {
+			toReturn = temp.stream().map(x -> Pair.of(x.getDate(), x.getDiesel())).collect(Collectors.toList());
+		} else if (fuel.equals(Fuel.E5)) {
+			toReturn = temp.stream().map(x -> Pair.of(x.getDate(), x.getE5())).collect(Collectors.toList());
+		} else if (fuel.equals(Fuel.E10)) {
+			toReturn = temp.stream().map(x -> Pair.of(x.getDate(), x.getE10())).collect(Collectors.toList());
+		}
+
+		Collections.sort(toReturn, new Comparator<Pair<Date, Integer>>() {
+			@Override
+			public int compare(Pair<Date, Integer> o1, Pair<Date, Integer> o2) {
+				return o1.getFirst().compareTo(o2.getFirst());
+			}
+		});
+
+		return toReturn;
+	}
+
+	// public TreeMap<Date, Double> getPricePrediction2(String id, Enum<Fuel> fuel)
+	// {
+	// TreeMap<Date, Double> prices = new TreeMap<>();
+	//
+	// GasStation gasStation = getGasStation(id);
+	//
+	// for (GasStationPricePrediction gspp :
+	// gasStation.getGasStationPricePredictions()) {
+	// prices.put(key, value)
+	// }
+	//
+	// return prices;
+	// }
+
+	public void insertPricePredictions(List<GasStationPricePrediction> predictedPrices) {
+		// TODO
+		// truncate table
+		// insert new objects
+	}
+
+	/**
 	 * loads configuration from hibernate.cfg.xml and sets up the session
 	 */
 	public void setup() {
 		// code to load Hibernate Session factory
-		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure() // configures settings
+		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure() // configures
+																									// settings
 																									// from
 																									// hibernate.cfg.xml
 				.build();
