@@ -1,34 +1,113 @@
 package carefuel.controller;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
 import org.tensorflow.*;
 
 public class PricePredictor {
+	
+	private File gasPricesDirectory; //Points to the directory containing all gas prices
+	
 	public PricePredictor(){
 		SavedModelBundle bundle =
 				SavedModelBundle.load("/home/nils/Uni/InformatiCup/rnn_training/models/model", "serve");
 		Session sess = bundle.session();
+		Graph g = bundle.graph();
 
-		Tensor prevMonths = Tensor.create(new float[50][744], Float.class);
-		Tensor nPrevMonths = Tensor.create(new int[1], Integer.class);
-
-		sess.runner().feed()
-
+		for(int i = 0; i < 500; ++i)
+		{
+			float[][][] matrix = new float[1][50][744];
+			Tensor<Float> prevMonthsTensor = Tensor.create(matrix, Float.class);
+			
+			int[] nPrevMonths = {50};
+			Tensor<Integer> nPrevMonthsTensor = Tensor.create(nPrevMonths, Integer.class);
+			Output output = g.operation("output").output(0);
+			
+			List<Tensor<?>> bla = sess.runner().feed("Teeeest/prev_months", prevMonthsTensor)
+					.feed("Teeeest/n_prev_months", nPrevMonthsTensor)
+					.fetch(output).run();
+			
+			float[][] result = new float[1][744];
+			bla.get(0).copyTo(result);
+			
+			System.out.println(i);
+		}		
 	}
-}
-
-// try to predict for two (2) sets of inputs.
-Tensor inputs = new Tensor(tensorflow.DT_FLOAT, new TensorShape(2, 5));
-FloatBuffer x = this.inputs.createBuffer();
-x.put(new float[]{-6.0f,22.0f,383.0f,27.781754111198122f,-6.5f});
-x.put(new float[]{66.0f,22.0f,2422.0f,45.72160947712418f,0.4f});
-Tensor keepall = new Tensor(tensorflow.DT_FLOAT, new TensorShape(2,1));
-((FloatBuffer)keepall.createBuffer()).put(new float[]{1f,1f});
-TensorVector outputs = new TensorVector();
-// to predict each time, pass in values for placeholders
-outputs.resize(0);
-s=session.Run(new StringTensorPairVector(new String[]{“Placeholder”,“Placeholder_2”},new Tensor[]{inputs,keepall}),new StringVector(“Sigmoid”),new StringVector(),outputs);if(!s.ok()){throw new RuntimeException(s.error_message().getString());}
-// this is how you get back the predicted value from outputs
-FloatBuffer output = this.outputs.get(0).createBuffer();for(
-		int k = 0;k<output.limit();++k){
-	System.out.println(“prediction=” + this.output.get(this.k));
+	
+	public int predictPrice(String maxDate, String predictionDate, int gasStationID)
+	{
+		
+	}
+	
+	public ArrayList<DatePricePair> predictNextMonth(String maxDate, int gasStationID)
+	{
+		
+	}
+	
+	
+	/**
+	 * This function returns a list of all dates and corresponding prices of a single
+	 * gas station with the ID gasStationID.
+	 * @ToDo add functionality to decide between CSV files and database as source
+	 */
+	private ArrayList<DatePricePair> getGasPricesToID(int gasStationID)
+	{
+		
+	}
+	
+	
+	/**
+	 * This function takes a string representing a single date and time
+	 * and parses it into a java Date object. The string is expected to
+	 * be in the format "YYYY-MM-dd Tz". It is important to notice that
+	 * the offset from the GMT, indicated by the formatter z, is expected
+	 * to be in the format +02, as it is in the data base and CSV files
+	 * and not +0200 as it would be commonly used.
+	 * @throws ParseException
+	 */
+	private Date parseDateString(String dateString) throws ParseException {
+		// Append neccessary zeros at the end of the String
+		dateString += "00";
+		SimpleDateFormat dateFormat = new SimpleDateFormat("YYYY-MM-dd Tz");
+		return dateFormat.parse(dateString);
+	}
+	
+	/**
+	 * This class represents a single pair of a java date object and price at that time.
+	 * (Thank you Java, for not providing a generic Pair class :-) ) Objects can be
+	 * created by providing a date object and a price integer. The price
+	 * is expected to be in cents * 10, as it is in the CSV files and database.
+	 * @author nils
+	 *
+	 */
+	public class DatePricePair{
+		private Date date;
+		private int price;
+		
+		public DatePricePair(Date date, int price){
+			this.date = date;
+			this.price = price;
+		}
+		
+		public Date getDate() {
+			return date;
+		}
+		
+		public int getPrice() {
+			return price;
+		}
+		
+		void setPrice(int price) {
+			this.price = price;
+		}
+		
+		void setDate(Date date) {
+			this.date = date;
+		}
+	}
 }

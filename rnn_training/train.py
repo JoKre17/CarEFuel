@@ -27,7 +27,7 @@ params = {
     'dataset_ratios': (0.8, 0.1, 0.1),
     'n_hours_per_month': 744,
     'max_past_months': 50,
-    'batch_size': 15,
+    'batch_size': 5,
     'num_epochs': 10,
     'n_layer': 1,
     'max_price': 3000,  # TODO: better normalization
@@ -100,6 +100,11 @@ def model_fn(features, labels, mode):
     n_prev_months = features['n_prev_months']
     prev_months = features['prev_months']
 
+    # Add names for later usage
+    with tf.name_scope("Teeeest"):
+        n_prev_months = tf.identity(n_prev_months, name="n_prev_months")
+        prev_months = tf.identity(prev_months, name="prev_months")
+
     # Input layer: scale prices into [0,1] -> network can better handle values of that size
     inputs = prev_months / params['max_price']
 
@@ -145,8 +150,10 @@ def model_fn(features, labels, mode):
     # Combine output in a densely connected layer
     output = tf.layers.dense(inputs=output, units=params['n_hours_per_month'], activation=tf.nn.relu)
 
-    # Rescale
+    # Rescale and give name for later usage
     rescaled_output = output * params['max_price']
+    rescaled_output = tf.identity(rescaled_output, name="output")
+
 
     if mode is not tf.estimator.ModeKeys.PREDICT:
         # Loss function
@@ -162,7 +169,7 @@ def model_fn(features, labels, mode):
         loss=loss if mode is not tf.estimator.ModeKeys.PREDICT else None,
         train_op=train_op if mode is tf.estimator.ModeKeys.TRAIN else None,
         predictions=rescaled_output if mode is tf.estimator.ModeKeys.PREDICT else None,
-        export_outputs={'Output': tf.estimator.export.PredictOutput({'Output': rescaled_output})})
+        export_outputs={'output': tf.estimator.export.PredictOutput({'output': rescaled_output})})
 
 
 def main(_):
@@ -184,8 +191,8 @@ def main(_):
 		nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "validation.tfrecord")))
 	'''
     print("Testing:")
-    nn.train(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), max_steps=50)
-    nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), steps=10)
+    nn.train(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), max_steps=1)
+    nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), steps=1)
 
     # Export the trained model
     nn.export_savedmodel(FLAGS.save_path, tf.estimator.export.build_raw_serving_input_receiver_fn(
@@ -194,7 +201,7 @@ def main(_):
                                           shape=[1, params['max_past_months'], params['n_hours_per_month']]),
             'n_prev_months': tf.placeholder(dtype=tf.int32, shape=[1]),
         })
-                         )
+        )
 
 
 if __name__ == '__main__':
