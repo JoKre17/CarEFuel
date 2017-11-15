@@ -5,14 +5,17 @@
 <hibernate-configuration>      
   <session-factory>
     <!-- Database connection settings -->
-    <property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
-    <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/carefuel</property>
-    <property name="hibernate.connection.username">root</property>
+    <property name="connection.driver_class">org.postgresql.Driver</property>
+	<property name="connection.url">jdbc:postgresql://127.0.0.1:5431/carefuel</property>
+	<property name="connection.username">postgres</property>
     <property name="hibernate.connection.password">NJuJh1A!Wln..</property>
     <property name="hibernate.show_sql">true</property>
-    <property name="hibernate.hbm2ddl.auto">update</property>
+    <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+    <property name="current_session_context_class">thread</property> 
     
-    <mapping class="model.GasStation" />
+    <mapping class="carefuel.model.GasStation" />
+    <mapping class="carefuel.model.GasStationPrice" />
+    <mapping class="carefuel.model.GasStationPricePrediction" />
      
   </session-factory>
 </hibernate-configuration>
