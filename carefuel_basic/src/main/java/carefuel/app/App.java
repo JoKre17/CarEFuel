@@ -18,6 +18,13 @@ public class App {
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Basic at " + new Date().toString());
 		PricePredictor predictor = new PricePredictor();
+		try {
+			int price = predictor.predictPrice("2017-08-21 23:03:06+02", "2017-08-28 23:03:06+02", 14095);
+			System.out.printf("Predicted Price: %d\n", price);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	private static void testLog() {
@@ -28,5 +35,4 @@ public class App {
 		log.error("Hello World!");
 		log.fatal("Hello World!");
 	}
-
 }

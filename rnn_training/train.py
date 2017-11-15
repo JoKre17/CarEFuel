@@ -113,7 +113,7 @@ def model_fn(features, labels, mode):
     def lstm_layer():
         """ Function to create LSTM cells and incorporate dropout during training"""
         cell = tf.nn.rnn_cell.LSTMCell(params['n_hours_per_month'], forget_bias=1.0, state_is_tuple=True)
-        if mode is not tf.estimator.ModeKeys.TRAIN:
+        if mode != tf.estimator.ModeKeys.TRAIN:
             cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=params['keep_prob'])
         return cell
 
@@ -144,7 +144,7 @@ def model_fn(features, labels, mode):
     output = tf.gather(tf.reshape(output, [-1, params['n_hours_per_month']]), index)
 
     # Apply dropout if training
-    if mode is tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
+    if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
         output = tf.nn.dropout(output, params['keep_prob'])
 
     # Combine output in a densely connected layer
@@ -155,7 +155,7 @@ def model_fn(features, labels, mode):
     rescaled_output = tf.identity(rescaled_output, name="output")
 
 
-    if mode is not tf.estimator.ModeKeys.PREDICT:
+    if mode != tf.estimator.ModeKeys.PREDICT:
         # Loss function
         next_month = labels / params['max_price']
         loss = tf.losses.absolute_difference(next_month, output)
@@ -166,9 +166,9 @@ def model_fn(features, labels, mode):
 
     return tf.estimator.EstimatorSpec(
         mode=mode,
-        loss=loss if mode is not tf.estimator.ModeKeys.PREDICT else None,
-        train_op=train_op if mode is tf.estimator.ModeKeys.TRAIN else None,
-        predictions=rescaled_output if mode is tf.estimator.ModeKeys.PREDICT else None,
+        loss=loss if mode == tf.estimator.ModeKeys.PREDICT else None,
+        train_op=train_op if mode == tf.estimator.ModeKeys.TRAIN else None,
+        predictions=rescaled_output if mode == tf.estimator.ModeKeys.PREDICT else None,
         export_outputs={'output': tf.estimator.export.PredictOutput({'output': rescaled_output})})
 
 
@@ -191,8 +191,8 @@ def main(_):
 		nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "validation.tfrecord")))
 	'''
     print("Testing:")
-    nn.train(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), max_steps=1)
-    nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), steps=1)
+    nn.train(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), max_steps=300)
+    nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), steps=10)
 
     # Export the trained model
     nn.export_savedmodel(FLAGS.save_path, tf.estimator.export.build_raw_serving_input_receiver_fn(
