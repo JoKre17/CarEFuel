@@ -20,23 +20,15 @@ import carefuel.model.GasStation;
 import carefuel.model.GasStationPricePrediction;
 
 /**
-<<<<<<< HEAD
- * 
-=======
  *
->>>>>>> 71fd5f6bfb2796d1afb20d921bd6915ae63393ba
  * This class manages the database containing all information about gas stations
  * and prices and offers functionality to request and update data.
  *
  */
 public class DatabaseHandler {
 
-<<<<<<< HEAD
-	final static Logger log = LogManager.getLogger(DatabaseHandler.class);
-=======
 	private static final Logger log = LogManager.getLogger(Main.class);
 
->>>>>>> 71fd5f6bfb2796d1afb20d921bd6915ae63393ba
 	protected SessionFactory sessionFactory;
 
 	/**
@@ -46,18 +38,6 @@ public class DatabaseHandler {
 	 *            of GasStations
 	 *
 	 */
-<<<<<<< HEAD
-	public void setup() {
-		// code to load Hibernate Session factory
-		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure() // configures settings
-																									// from
-																									// hibernate.cfg.xml
-				.build();
-		try {
-			sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
-		} catch (Exception ex) {
-			StandardServiceRegistryBuilder.destroy(registry);
-=======
 	public void createGasStations(List<GasStation> list) {
 		// code to save a gas station
 		Session session = this.sessionFactory.openSession();
@@ -65,7 +45,6 @@ public class DatabaseHandler {
 
 		for (GasStation gas : list) {
 			session.saveOrUpdate(gas);
->>>>>>> 71fd5f6bfb2796d1afb20d921bd6915ae63393ba
 		}
 
 		session.getTransaction().commit();
@@ -77,30 +56,16 @@ public class DatabaseHandler {
 	}
 
 	/**
-<<<<<<< HEAD
-	 * GasStations will be created in the DB, if they are not already created
-	 * 
-	 * @param list
-	 *            of GasStations
-	 * 
-=======
 	 * return a gas station by id
 	 *
 	 * @param uuid
 	 * @return
->>>>>>> 71fd5f6bfb2796d1afb20d921bd6915ae63393ba
 	 */
 	public GasStation getGasStation(String uuid) {
 		GasStation gasStation;
 
 		Session session = this.sessionFactory.getCurrentSession();
 		session.beginTransaction();
-<<<<<<< HEAD
-
-		for (GasStation gas : list) {
-			session.saveOrUpdate(gas);
-		}
-=======
 		org.hibernate.Query query = session
 				.createQuery("from " + GasStation.class.getName() + " where id='" + uuid + "'");
 		gasStation = (GasStation) query.uniqueResult();
@@ -125,7 +90,6 @@ public class DatabaseHandler {
 				.createQuery("from " + GasStationPricePrediction.class.getSimpleName() + " where stid='" + id + "'");
 
 		List<GasStationPricePrediction> temp = query.list();
->>>>>>> 71fd5f6bfb2796d1afb20d921bd6915ae63393ba
 
 		session.getTransaction().commit();
 
@@ -170,20 +134,6 @@ public class DatabaseHandler {
 	}
 
 	/**
-<<<<<<< HEAD
-	 * returns all GasStations in the database in a list
-	 * 
-	 * @return all GasStations
-	 */
-	@SuppressWarnings({ "unchecked" })
-	public List<GasStation> getAllGasStations() {
-		List<GasStation> gasStations = new LinkedList<>();
-
-		Session session = sessionFactory.openSession();
-		gasStations = session.createCriteria(GasStation.class).list();
-		System.out.println(gasStations.get(0));
-		return gasStations;
-=======
 	 * loads configuration from hibernate.cfg.xml and sets up the session
 	 */
 	public void setup() {
@@ -200,6 +150,5 @@ public class DatabaseHandler {
 			ex.printStackTrace();
 			StandardServiceRegistryBuilder.destroy(registry);
 		}
->>>>>>> 71fd5f6bfb2796d1afb20d921bd6915ae63393ba
 	}
 }

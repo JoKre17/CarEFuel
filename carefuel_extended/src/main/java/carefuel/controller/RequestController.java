@@ -24,6 +24,6 @@ public class RequestController {
 	@ResponseBody
 	public GasStation getGasStationById(@PathVariable long id) {
 		// return "{station: {id: " + id + "}}";
-		return new GasStation(0, "Test Gas Station", "Brand Name", "Test Street", 69, "12345", "Test City", 10, 10);
+		return new GasStation();
 	}
 }
