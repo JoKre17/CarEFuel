@@ -26,34 +26,46 @@ import org.tensorflow.Tensor;
 
 import carefuel.app.App;
 
+
+/**
+ * The PricePredictor class enables the user to predict the prices of a gas station up to one month in the
+ * future. It uses a pretrained tensorflow model that needs to be located in carefuel_basic/rnn_model.
+ * @author nils
+ *
+ */
 public class PricePredictor {
 	private static final Logger log = LogManager.getLogger(App.class);
 
 	private Session session;
 	private Graph graph;
-	private final String modelPath = "/home/nils/Uni/InformatiCup/rnn_training/models/model";
-	private final String gasPricesDirectory = "/home/nils/Uni/InformatiCup/input_files/gasprices/";
+	private String modelPath;
+	private String gasPricesDirectory;
 	private final int hoursPerMonth = 744;
-	private final int maxPrevMonths = 50; //All gas stations have a maximum of 50 previous months
+	private final int maxPrevMonths = 50; //All gas stations have a maximum of 50 previous months of entries
 
 	/**
 	 * @ToDo add functionality to decide between CSV files and database as data source
 	 */
 	public PricePredictor(){
-		// Initialize tensorflow session and graph with pretrained model
+		// Set file paths
+		modelPath = System.getProperty("user.dir") + "/rnn_model/";
+		gasPricesDirectory = System.getProperty("user.dir") + "/../input_files/gasprices/";
+		
+		// Initialize TensorFlow session and graph with pretrained model
 		SavedModelBundle bundle =
 				SavedModelBundle.load(modelPath, "serve");
 		session = bundle.session();
 		graph = bundle.graph();
+		
 	}
 
 	/**
 	 * This function returns a list of all dates and corresponding prices of a single
 	 * gas station with the ID gasStationID.
 	 * @ToDo add functionality to decide between CSV files and database as source
-	 * @return the according list of dates and prices or null if file cannot be opened
+	 * @return the according list of dates and prices or null if file cannot be opened 
 	 */
-	private ArrayList<Pair<Date, Integer>> getGasPricesToID(final int gasStationID)
+	private ArrayList<Pair<Date, Integer>> getGasPricesToID(final int gasStationID) throws Exception
 	{
 		try {
 			/****Parse from CSV files for now****/
@@ -61,7 +73,7 @@ public class PricePredictor {
 			File csvDirectory = new File(gasPricesDirectory);
 			if(!csvDirectory.exists()) {
 				log.error("Could not find directory with gas price csv files");
-				return null;
+				throw new Exception();
 			}
 			File[] matches = csvDirectory.listFiles(new FilenameFilter()
 			{
@@ -75,7 +87,7 @@ public class PricePredictor {
 			//Exactly one file should be found
 			if(matches.length != 1) {
 				log.error("Could not find gas price csv file in directory");
-				return null;
+				throw new Exception();
 			}
 			File csvFile = matches[0];
 
@@ -97,9 +109,9 @@ public class PricePredictor {
 			}
 			return result;
 		} catch(Exception e) {
-			//If any error occurs return null
+			//If any error occurs throw exception
 			log.error("Error while parsing CSV file");
-			return null;
+			throw new Exception();
 		}
 	}
 
@@ -165,7 +177,7 @@ public class PricePredictor {
 	/**
 	 * This function takes a string representing a single date and time
 	 * and parses it into a java Date object. The string is expected to
-	 * be in the format "YYYY-MM-dd Tz". It is important to notice that
+	 * be in the format "yyyy-MM-dd HH:mm:ssz". It is important to notice that
 	 * the offset from the GMT, indicated by the formatter z, is expected
 	 * to be in the format +02, as it is in the data base and CSV files
 	 * and not +0200 as it would be commonly used.
@@ -193,7 +205,7 @@ public class PricePredictor {
 		//Check if something went wrong
 		if(prices == null) {
 			log.error("Something went wrong during price prediction");
-			return 0;
+			throw new Exception();
 		}
 
 		Date maxDate = parseDateString(maxDateString);
@@ -229,14 +241,12 @@ public class PricePredictor {
 	 * @param gasStationID ID of the corresponding gas station
 	 * @return the gasprices of the next month at every hour after maxDateString. The
 	 * 	first entry contains the price exactly one hour after maxDateString
+	 * @throws Exception 
 	 */
-	public float[] predictNextMonth(String maxDateString, int gasStationID)
+	public float[] predictNextMonth(String maxDateString, int gasStationID) throws Exception
 	{
 		//First load all entries from the gas station and return null if an error occured
 		ArrayList<Pair<Date, Integer>> datePriceList = getGasPricesToID(gasStationID);
-		if(datePriceList == null) {
-			return null;
-		}
 
 		//Next, find the first entry that is in the next month
 		Date maxDate;
@@ -244,7 +254,7 @@ public class PricePredictor {
 			maxDate = parseDateString(maxDateString);
 		} catch (ParseException e) {
 			log.error("Error while parsing maxDateString");
-			return null;
+			throw new Exception();
 		}
 		int firstEntryIndex = 0;
 		for(int i = 0; i < datePriceList.size(); ++i) {
@@ -267,10 +277,6 @@ public class PricePredictor {
 		float[][] interpolatedPrices = interpolatePrices(
 				datePriceList.subList(0, firstEntryIndex + 1), maxDate);
 
-		//In case something went wrong, return null
-		if(interpolatedPrices == null) {
-			return null;
-		}
 
 		/*
 		 * The network expects exactly maxPrevMonths = 50 entries in the first
@@ -294,13 +300,14 @@ public class PricePredictor {
 		int[] nPrevMonthsArray = {nPrevMonths};
 		Tensor<Integer> nPrevMonthsTensor = Tensor.create(nPrevMonthsArray, Integer.class);
 
-		//Create the output tensor of the network
-		Output output = graph.operation("output").output(0);
+		//Fetch the output tensor of the network
+		Output output = graph.operation("Output/rescaled_output").output(0);
 
 		//Feed the input tensors and run the TensorFlow graph
 		float[][] result = new float[1][744];
-		session.runner().feed("Teeeest/prev_months", prevMonthsTensor)
-		.feed("Teeeest/n_prev_months", nPrevMonthsTensor)
+		session.runner()
+		.feed("Input/prev_months", prevMonthsTensor)
+		.feed("Input/n_prev_months", nPrevMonthsTensor)
 		.fetch(output)
 		.run()
 		.get(0).copyTo(result);
