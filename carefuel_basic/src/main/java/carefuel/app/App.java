@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import carefuel.util.Parser;
 import carefuel.controller.PricePredictor;
 
-
+//ok
 /**
  * Hello world!
  *

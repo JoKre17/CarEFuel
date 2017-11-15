@@ -25,7 +25,7 @@ import org.tensorflow.Session;
 import org.tensorflow.Tensor;
 
 import carefuel.app.App;
-
+//ok
 /**
  * The PricePredictor class enables the user to predict the prices of a gas
  * station up to one month in the future. It uses a pretrained tensorflow model
