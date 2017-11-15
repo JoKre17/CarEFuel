@@ -1,7 +1,6 @@
 package carefuel.util;
 
 import java.util.ArrayList;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -20,7 +19,7 @@ public class FixedPathAlgorithm {
 	private List<Node> breakPoints;
 	private LinkedList<Node> slidingWindow;
 	private Queue<Node> priorityQueue;
-	
+
 	public FixedPathAlgorithm(List<GasStation> gasStations, int capacity, double gasConsumption) {
 		this.setGasStations(gasStations);
 		this.capacity = capacity;
@@ -29,30 +28,30 @@ public class FixedPathAlgorithm {
 		this.breakPoints = new ArrayList<Node>();
 		this.slidingWindow = new LinkedList<Node>();
 		this.priorityQueue = new PriorityQueue<Node>();
-		
+
 		this.literGasPerKilometer = gasConsumption / 100;
 		this.range = capacity * (1 / literGasPerKilometer);
 		System.out.println("Reichweite: " + range);
-		
-		for (GasStation g: gasStations) {
+
+		for (GasStation g : gasStations) {
 			nodes.add(new Node(g));
 		}
 	}
-	
+
 	public void run() {
-		//find break points
+		// find break points
 		slidingWindow.add(nodes.get(0));
 		priorityQueue.add(nodes.get(0));
 		double windowCapacity = range;
-		
+
 		for (int i = 0; !slidingWindow.isEmpty(); i++) {
-			if (windowCapacity - (distance(nodes.get(i-1), nodes.get(i))) <  0) {
+			if (windowCapacity - (distance(nodes.get(i - 1), nodes.get(i))) < 0) {
 				Node n = slidingWindow.getLast();
 				slidingWindow.remove(n);
 				n.setNext(priorityQueue.poll());
-				
+
 			}
-			if (windowCapacity - (distance(nodes.get(i-1), nodes.get(i))) >=  0) {
+			if (windowCapacity - (distance(nodes.get(i - 1), nodes.get(i))) >= 0) {
 				slidingWindow.add(nodes.get(i));
 				priorityQueue.add(nodes.get(i));
 				nodes.get(i).setPrev(priorityQueue.peek());
@@ -61,16 +60,16 @@ public class FixedPathAlgorithm {
 				}
 			}
 		}
-		
+
 		// find path from break points
 		for (Node n : breakPoints) {
 			driveToNext(n, null);
 		}
 	}
-	
+
 	/**
-	 * Funktion die für alle Breakpoints aufgerufen wird und den nächsten anzufahrenden Tankstopp, sowie
-	 * die Menge an Benzin berechnet.
+	 * Funktion die für alle Breakpoints aufgerufen wird und den nächsten
+	 * anzufahrenden Tankstopp, sowie die Menge an Benzin berechnet.
 	 * 
 	 * @param from
 	 * @param to
@@ -80,14 +79,13 @@ public class FixedPathAlgorithm {
 			// just fill enough to get to "to"
 			from.setFuelToBuy(literGasPerKilometer * distance(from, to));
 			from.setNextOnBestPath(to);
-		}
-		else {
+		} else {
 			// fill the tank and drive to from.next
 			from.setFuelToBuy(capacity - from.getGasInTank());
 			from.setNextOnBestPath(from.getNext());
 		}
 	}
-	
+
 	/**
 	 * Funktion die die Distanz zwischen zwei Tankstellen berechnet.
 	 * Großkreisentfernung.
@@ -98,9 +96,9 @@ public class FixedPathAlgorithm {
 	 */
 	private double distance(Node n1, Node n2) {
 		// berechne Distanz
-		return 6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat()) 
-									+ Math.cos(n1.getGasStation().getLat() * Math.cos(n2.getGasStation().getLat()))
-									* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon())));
+		return 6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat())
+				+ Math.cos(n1.getGasStation().getLat() * Math.cos(n2.getGasStation().getLat()))
+						* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon())));
 	}
 
 	public List<GasStation> getGasStations() {
