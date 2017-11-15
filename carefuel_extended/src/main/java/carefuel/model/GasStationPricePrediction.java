@@ -4,38 +4,46 @@
 package carefuel.model;
 
 import java.util.Date;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+
+import org.hibernate.annotations.Type;
 
 /**
  * @author Wolfgang
  *
  */
 @Entity
-@Table(name = "gas_station_information_history")
-public class GasStationPrices {
+@Table(name = "gas_station_information_prediction")
+public class GasStationPricePrediction {
 
 	@ManyToOne
+	@JoinColumn(name = "stid", insertable = false, updatable = false)
 	private GasStation gasStation;
 	@Id
 	@Column(name = "id")
 	private long id;
+	@Column(name = "stid")
+	@Type(type = "pg-uuid")
+	private UUID stid;
 	@Temporal(TemporalType.DATE)
 	private Date date;
 	@Column(name = "e5")
-	private double e5;
+	private int e5;
 	@Column(name = "e10")
-	private double e10;
+	private int e10;
 	@Column(name = "diesel")
-	private double diesel;
+	private int diesel;
 
-	public GasStationPrices() {
+	public GasStationPricePrediction() {
 
 	}
 
@@ -49,21 +57,21 @@ public class GasStationPrices {
 	/**
 	 * @return the diesel
 	 */
-	public double getDiesel() {
+	public int getDiesel() {
 		return this.diesel;
 	}
 
 	/**
 	 * @return the e10
 	 */
-	public double getE10() {
+	public int getE10() {
 		return this.e10;
 	}
 
 	/**
 	 * @return the e5
 	 */
-	public double getE5() {
+	public int getE5() {
 		return this.e5;
 	}
 
@@ -82,6 +90,13 @@ public class GasStationPrices {
 	}
 
 	/**
+	 * @return the stid
+	 */
+	public UUID getStid() {
+		return this.stid;
+	}
+
+	/**
 	 * @param date
 	 *            the date to set
 	 */
@@ -93,7 +108,7 @@ public class GasStationPrices {
 	 * @param diesel
 	 *            the diesel to set
 	 */
-	public void setDiesel(double diesel) {
+	public void setDiesel(int diesel) {
 		this.diesel = diesel;
 	}
 
@@ -101,7 +116,7 @@ public class GasStationPrices {
 	 * @param e10
 	 *            the e10 to set
 	 */
-	public void setE10(double e10) {
+	public void setE10(int e10) {
 		this.e10 = e10;
 	}
 
@@ -109,7 +124,7 @@ public class GasStationPrices {
 	 * @param e5
 	 *            the e5 to set
 	 */
-	public void setE5(double e5) {
+	public void setE5(int e5) {
 		this.e5 = e5;
 	}
 
@@ -129,15 +144,22 @@ public class GasStationPrices {
 		this.id = id;
 	}
 
+	/**
+	 * @param stid
+	 *            the stid to set
+	 */
+	public void setStid(UUID stid) {
+		this.stid = stid;
+	}
+
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "GasStationPrices [gasStation=" + this.gasStation + ", id=" + this.id + ", date=" + this.date + ", e5="
-				+ this.e5 + ", e10=" + this.e10 + ", diesel=" + this.diesel + "]";
+		return "GasStationPricePrediction [gasStation=" + this.gasStation + ", id=" + this.id + ", date=" + this.date
+				+ ", e5=" + this.e5 + ", e10=" + this.e10 + ", diesel=" + this.diesel + "]";
 	}
-
 }
