@@ -1,4 +1,6 @@
-/carefuel_server/target
+/carefuel_extended/target
+/carefuel_basic/.classpath
 *.tfrecord
 /.idea/
 /rnn_training/models
+

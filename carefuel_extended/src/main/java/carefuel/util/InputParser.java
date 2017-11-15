@@ -24,11 +24,11 @@ import carefuel.model.GasStation;
  */
 public class InputParser {
 
-	private static final String[] FILE_HEADER_MAPPING_GASSTATIONS = { "id", "name", "brand", "streetName", "houseNumber",
-			"postalCode", "city", "latitude", "longitude" };
-	
-	private static final String[] FILE_HEADER_MAPPING_SINGLE_GASSTATION = { "id", "name", "brand", "streetName", "houseNumber",
-			"postalCode", "city", "latitude", "longitude" };
+	private static final String[] FILE_HEADER_MAPPING_GASSTATIONS = { "id", "name", "brand", "streetName",
+			"houseNumber", "postalCode", "city", "latitude", "longitude" };
+
+	private static final String[] FILE_HEADER_MAPPING_SINGLE_GASSTATION = { "id", "name", "brand", "streetName",
+			"houseNumber", "postalCode", "city", "latitude", "longitude" };
 
 	public InputParser() {
 
@@ -69,6 +69,11 @@ public class InputParser {
 			csvRecords = csvParser.getRecords();
 		} catch (IOException e1) {
 			// log.error("File \"" + fileName + "\" error on reading! Aborting!");
+			try {
+				csvParser.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			return list;
 		}
 
@@ -93,6 +98,11 @@ public class InputParser {
 			}
 		}
 
+		try {
+			csvParser.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return list;
 	}
 

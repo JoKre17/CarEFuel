@@ -3,6 +3,8 @@ package carefuel.controller;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
@@ -13,12 +15,13 @@ import carefuel.model.GasStation;
 
 /**
  * 
- * This class manages the database containing all information about gas stations and prices and
- * offers functionality to request and update data.
+ * This class manages the database containing all information about gas stations
+ * and prices and offers functionality to request and update data.
  *
  */
 public class DatabaseHandler {
 
+	final static Logger log = LogManager.getLogger(DatabaseHandler.class);
 	protected SessionFactory sessionFactory;
 
 	/**
@@ -26,13 +29,14 @@ public class DatabaseHandler {
 	 */
 	public void setup() {
 		// code to load Hibernate Session factory
-		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder()
-		        .configure() // configures settings from hibernate.cfg.xml
-		        .build();
+		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure() // configures settings
+																									// from
+																									// hibernate.cfg.xml
+				.build();
 		try {
-		    sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
+			sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
 		} catch (Exception ex) {
-		    StandardServiceRegistryBuilder.destroy(registry);
+			StandardServiceRegistryBuilder.destroy(registry);
 		}
 	}
 
@@ -46,30 +50,33 @@ public class DatabaseHandler {
 
 	/**
 	 * GasStations will be created in the DB, if they are not already created
-	 * @param list of GasStations
+	 * 
+	 * @param list
+	 *            of GasStations
 	 * 
 	 */
 	public void createGasStations(List<GasStation> list) {
 		// code to save a gas station
 		Session session = sessionFactory.openSession();
 		session.beginTransaction();
-		
+
 		for (GasStation gas : list) {
 			session.saveOrUpdate(gas);
 		}
-		
+
 		session.getTransaction().commit();
 		session.close();
 	}
 
 	/**
 	 * returns all GasStations in the database in a list
+	 * 
 	 * @return all GasStations
 	 */
-	@SuppressWarnings({ "deprecation", "unchecked" })
+	@SuppressWarnings({ "unchecked" })
 	public List<GasStation> getAllGasStations() {
-		List<GasStation> gasStations = new LinkedList();
-		
+		List<GasStation> gasStations = new LinkedList<>();
+
 		Session session = sessionFactory.openSession();
 		gasStations = session.createCriteria(GasStation.class).list();
 		System.out.println(gasStations.get(0));
