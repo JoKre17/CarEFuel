@@ -1,4 +1,12 @@
+<<<<<<< HEAD
 /carefuel_server/target
 *.tfrecord
 /.idea/
 /rnn_training/models
+=======
+*.tfrecord
+/.idea/
+
+rnn_training/.idea/
+rnn_training/model
+>>>>>>> 6aaa6afd1cf98fea9209157989579ed7f1b7309c

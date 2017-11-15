@@ -22,4 +22,3 @@ public class PathFinder {
 		f.run();
 	}
 }
-
