@@ -16,8 +16,27 @@ function submitButtonPressed() {
 	}
 	
 	var request = {'from': from, 'to': to, 'capacity': capacity, 'consumption': consumption};
+	var GET_Request_url = "rest/path?"
+	for(var key in request) {
+		GET_Request_url += key + "=" + request[key] + "&"
+	}
+	GET_Request_url = GET_Request_url.substring(0, GET_Request_url.length-1)
+	request['request'] = GET_Request_url;
 	
-	console.log(request);
+	console.log(request['request']);
+	
+	$.ajax({ 
+        type: "GET",
+        dataType: "json",
+        url: request['request'],
+        success: function(data){ 
+        	console.log("receive data:");
+           console.log(data);
+        },
+        complete: function(xhr, textStatus) {
+            console.log(xhr.status);
+        } 
+    });
 
 }
 
