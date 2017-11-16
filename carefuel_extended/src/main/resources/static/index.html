@@ -20,71 +20,123 @@
 </head>
 
 <body>
+	<div id="controlContainer" class="control-container ui">
+		<div>
+			<img class="ui image hide-button"
+				src="images/arrow_left_grey_100_100.png"
+				onclick="hideButtonPressed()"></img>
+		</div>
+		<div class="section">
+			<img class="image" src="images/carefuel_icon_wide.png" />
+		</div>
+<!-- 		<div class="section" style="padding: 5px"> -->
+<!-- 			<a href="impressum.html">Impressum</a> -->
+<!-- 		</div> -->
+		<div class="section">
+			<div class="form-block">
+				<form id="route-form" name="route-form">
+					<div class="form-entry">
+						<label class="form label" for="from">Start</label> <input
+							class="form input" type="text" name="from" id="from"
+							placeholder="From" required="" />
+					</div>
 
-	 	<div id="controlContainer" class="control-container ui">
-			<div><img class="ui image hide-button" src="images/arrow_left_grey_100_100.png" onclick="hideButtonPressed()"></img></div>
-			<div class="section"><img class="image" src="images/carefuel_icon_wide.png" /></div>
-			<div class="section">
-				<div class="form-block">
-					<form id="route-form" name="route-form">
 					<div class="form-entry">
-						<label class="form label" for="from">Start</label>
-						<input class="form input" type="text" name="from" id="from" placeholder="From" required=""/>
+						<label class="form label" for="to">Destination</label> <input
+							class="form input" type="text" name="to" id="to" placeholder="To"
+							required="" />
 					</div>
-					
+
 					<div class="form-entry">
-						<label class="form label" for="to">Destination</label>
-						<input class="form input" type="text" name="to" id="to" placeholder="To" required=""/>
+						<label class="form label" for="capacity">Tank capacity [ l
+							]</label> <input class="form input" type="number" name="capacity"
+							id="capacity" placeholder="3" />
 					</div>
-					
+
 					<div class="form-entry">
-						<label class="form label" for="capacity">Tank capacity [ l ]</label>
-						<input class="form input" type="number" name="capacity" id="capacity" placeholder="3"/>
+						<label class="form label" for="field-2">Fuel consumpton [
+							l / 100 km ]</label> <input class="form input" type="number" step="0.1"
+							name="consumption" id="consumption" placeholder="5.6" />
 					</div>
-					
-					<div class="form-entry">
-						<label class="form label" for="field-2">Fuel consumpton [ l / 100 km ]</label>
-						<input class="form input" type="number" step="0.1" name="consumption" id="consumption" placeholder="5.6" />
-					</div>
-					
-					<input class="form submit-button" type="button" value="Route" onclick="return submitButtonPressed();"/>
-					
-					</form>
-					
-				</div>
-			</div>
-			<div class="section">
-				Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam 
-				 nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam 
-				 erat, sed diam voluptua. At vero eos et accusam et justo duo dolores 
-				 et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est 
-				 Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur 
-				 sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et 
-				 dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam 
-				 et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea 
-				 takimata sanctus est Lorem ipsum dolor sit amet. 
-				 Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam 
-				 nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam 
-				 erat, sed diam voluptua. At vero eos et accusam et justo duo dolores 
-				 et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est 
-				 Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur 
-				 sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et 
-				 dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam 
-				 et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea 
-				 takimata sanctus est Lorem ipsum dolor sit amet. 
-			 </div>
-		</div>
-		
-		<div id="mapContainer" class="map-container">
-			<div class="google-map" id="map">
-				<script 
-					 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0&callback=initMap" 
-					 async defer></script> 
+
+					<input class="form submit-button" type="button" value="Route"
+						onclick="return submitButtonPressed();" />
+
+				</form>
+
 			</div>
 		</div>
-		
-		<div id="routeContainer" class="route-container ui">
+		<div class="section">Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor
+			sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+			invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+			At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+			kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+			amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+			diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
+			erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
+			et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+			Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet.</div>
+	</div>
+
+	<div id="mapContainer" class="map-container">
+		<div class="google-map" id="map">
+			<script
+				src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0&callback=initMap"
+				async defer></script>
 		</div>
+	</div>
+
+	<div id="routeContainer" class="route-container ui">
+		<div class="section">Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor
+			sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+			invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+			At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+			kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+			amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+			diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
+			erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
+			et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+			Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet.</div>
+		<div class="section">Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor
+			sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+			invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+			At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+			kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+			amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+			diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
+			erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
+			et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+			Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet.</div>
+	</div>
+	<footer class="footer">
+		<div class="section" style="padding: 5px">
+			<a href="impressum.html">Impressum</a>
+		</div>
+	</footer>
 </body>
 
 </html>
