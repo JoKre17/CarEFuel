@@ -27,7 +27,7 @@ params = {
     'dataset_ratios': (0.8, 0.1, 0.1),
     'n_hours_per_month': 744,
     'max_past_months': 50,
-    'batch_size': 1,
+    'batch_size': 5,
     'num_epochs': 10,
     'n_layer': 1,
     'max_price': 3000,  # TODO: better normalization
@@ -150,11 +150,22 @@ def model_fn(features, labels, mode):
     # Combine output in a densely connected layer
     output = tf.layers.dense(inputs=output, units=params['n_hours_per_month'], activation=tf.nn.relu)
 
+    # Apply dropout if training
+    if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
+        output = tf.nn.dropout(output, params['keep_prob'])
+
+    # Combine output in a densely connected layer
+    output = tf.layers.dense(inputs=output, units=params['n_hours_per_month'], activation=tf.nn.relu)
+    
+    if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
+        output = tf.nn.dropout(output, params['keep_prob'])
+
+    output = tf.layers.dense(inputs=output, units=params['n_hours_per_month'], activation=tf.nn.relu)
+
     # Rescale and give name for later usage
     with tf.name_scope("Output"):
         rescaled_output = output * params['max_price']
         rescaled_output = tf.identity(rescaled_output, name="rescaled_output")
-
 
     if mode != tf.estimator.ModeKeys.PREDICT:
         # Loss function
@@ -173,6 +184,14 @@ def model_fn(features, labels, mode):
         export_outputs={'output': tf.estimator.export.PredictOutput({'output': rescaled_output})})
 
 
+def save_model(estimator):
+    estimator.export_savedmodel(FLAGS.save_path, tf.estimator.export.build_raw_serving_input_receiver_fn(
+        {
+            'prev_months': tf.placeholder(dtype=tf.float32,
+                                          shape=[1, params['max_past_months'], params['n_hours_per_month']]),
+            'n_prev_months': tf.placeholder(dtype=tf.int32, shape=[1]),
+        }))
+
 def main(_):
     if not FLAGS.data_path:
         raise ValueError("You need to specify data_path!")
@@ -183,7 +202,6 @@ def main(_):
     nn = tf.estimator.Estimator(model_fn=model_fn, model_dir=FLAGS.save_path)
 
     # Run training
-
     for i in range(params['num_epochs']):
         print("Epoch ", i + 1, ":")
         nn.train(input_fn=lambda: input_fn(join(FLAGS.data_path, "training.tfrecord")))
@@ -191,17 +209,11 @@ def main(_):
         print("Evaluation:")
         nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "validation.tfrecord")))
 
-    print("Testing:")
-    nn.train(input_fn=lambda: input_fn(join(FLAGS.data_path, "training.tfrecord")), max_steps=50)
-    nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")), steps=1)
+        # Export the trained model
+        save_model(nn)
 
-    # Export the trained model
-    nn.export_savedmodel(FLAGS.save_path, tf.estimator.export.build_raw_serving_input_receiver_fn(
-        {
-            'prev_months': tf.placeholder(dtype=tf.float32,
-                                          shape=[1, params['max_past_months'], params['n_hours_per_month']]),
-            'n_prev_months': tf.placeholder(dtype=tf.int32, shape=[1]),
-        }))
+    print("Testing:")
+    nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")))
 
 
 if __name__ == '__main__':
