@@ -1,11 +1,8 @@
 package carefuel.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
 
 import carefuel.model.GasStation;
 
@@ -19,7 +16,8 @@ public class FixedPathAlgorithm {
 	private List<Node> nodes;
 	private List<Node> breakPoints;
 	private LinkedList<Node> slidingWindow;
-	private Queue<Node> priorityQueue;
+	// private Queue<Node> priorityQueue;
+	private MyPriorityQueue priorityQueue;
 
 	public FixedPathAlgorithm(List<GasStation> gasStations, int capacity, double gasConsumption) {
 		this.setGasStations(gasStations);
@@ -28,7 +26,8 @@ public class FixedPathAlgorithm {
 		this.nodes = new ArrayList<Node>();
 		this.breakPoints = new ArrayList<Node>();
 		this.slidingWindow = new LinkedList<Node>();
-		this.priorityQueue = new PriorityQueue<Node>();
+		// this.priorityQueue = new PriorityQueue<Node>();
+		this.priorityQueue = new MyPriorityQueue();
 
 		this.literGasPerKilometer = gasConsumption / 100;
 		this.range = capacity * (1 / literGasPerKilometer);
@@ -45,43 +44,40 @@ public class FixedPathAlgorithm {
 		priorityQueue.add(nodes.get(0));
 		double windowCapacity = range;
 		double currentFill = 0;
-		
+
 		System.out.println("Capacity: " + windowCapacity);
 
 		System.out.println("------------------------------------------ Nodes-----------------");
 		for (Node n : nodes) {
 			System.out.println(n.getGasStation().getID());
 		}
-		
-		
+
 		for (int i = 0; !slidingWindow.isEmpty(); i++) {
 			System.out.println("*********** Iteration " + i + " ****************");
 			System.out.println("Capacity: " + currentFill + "/" + windowCapacity);
-			/*System.out.println("The slidingwindow contains: ");
-			for (Node n : slidingWindow) {
-				System.out.println(n.getGasStation().getID() + ", ");
-			}*/
+			/*
+			 * System.out.println("The slidingwindow contains: "); for (Node n :
+			 * slidingWindow) { System.out.println(n.getGasStation().getID() +
+			 * ", "); }
+			 */
 			System.out.println("The priorityQueue contains: ");
 			for (Node n : priorityQueue) {
 				System.out.println(n.getGasStation().getID() + "(" + n.getGasStation().getPredictedPrice() + ")");
 			}
-			
-			
+
 			System.out.println("\n Distance to next: " + (distance(nodes.get(i), nodes.get(i + 1))));
-			
+
 			if (windowCapacity - currentFill - (distance(nodes.get(i), nodes.get(i + 1))) < 0) {
 				Node n = slidingWindow.getLast();
 				slidingWindow.remove(n);
 				n.setNext(priorityQueue.poll());
 				System.out.println("***\n");
-				System.out.print("Removed " + n.getGasStation().getID() + 
-								   ", oldCapacity: " + currentFill);  
+				System.out.print("Removed " + n.getGasStation().getID() + ", oldCapacity: " + currentFill);
 				currentFill -= distance(n, slidingWindow.get(slidingWindow.size() - 2));
 				System.out.print(", newCapacity: " + currentFill + "\n");
 				System.out.println("next of the removed is set to: " + n.getNext().getGasStation().getID());
 			}
-			
-			
+
 			if (windowCapacity - currentFill - (distance(nodes.get(i), nodes.get(i + 1))) >= 0) {
 				slidingWindow.add(nodes.get(i + 1));
 				priorityQueue.add(nodes.get(i + 1));
@@ -89,7 +85,11 @@ public class FixedPathAlgorithm {
 				nodes.get(i + 1).setPrev(priorityQueue.peek());
 				if (nodes.get(i + 1).getPrev().equals(nodes.get(i + 1))) {
 					breakPoints.add(nodes.get(i + 1));
+					System.out.println("new BreakPoint: " + nodes.get(i + 1));
 				}
+				System.out.println("Added " + nodes.get(i + 1));
+				System.out.println("Prev of " + nodes.get(i + 1).getGasStation().getID() + ": "
+						+ nodes.get(i + 1).getPrev().getGasStation().getID());
 			}
 		}
 
@@ -130,7 +130,8 @@ public class FixedPathAlgorithm {
 		// berechne Distanz
 		return (6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat())
 				+ Math.cos(n1.getGasStation().getLat() * Math.cos(n2.getGasStation().getLat()))
-						* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon()))) / 1000);
+						* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon())))
+				/ 1000);
 	}
 
 	public List<GasStation> getGasStations() {
