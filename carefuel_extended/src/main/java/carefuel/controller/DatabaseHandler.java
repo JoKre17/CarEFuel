@@ -5,10 +5,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
@@ -113,24 +115,30 @@ public class DatabaseHandler {
 		return toReturn;
 	}
 
-	// public TreeMap<Date, Double> getPricePrediction2(String id, Enum<Fuel> fuel)
-	// {
-	// TreeMap<Date, Double> prices = new TreeMap<>();
-	//
-	// GasStation gasStation = getGasStation(id);
-	//
-	// for (GasStationPricePrediction gspp :
-	// gasStation.getGasStationPricePredictions()) {
-	// prices.put(key, value)
-	// }
-	//
-	// return prices;
-	// }
+	/**
+	 * truncates the whole prediction table and inserts all predictions of the set
+	 * of predictions
+	 *
+	 * @param predictedPrices
+	 *            all predicted prices of all gas stations
+	 */
+	public void insertPricePredictions(Set<GasStationPricePrediction> predictedPrices) {
 
-	public void insertPricePredictions(List<GasStationPricePrediction> predictedPrices) {
-		// TODO
-		// truncate table
-		// insert new objects
+		try {
+			truncateTable(GasStationPricePrediction.tableName);
+
+			// insert new predictions
+			Session session = this.sessionFactory.getCurrentSession();
+			session.beginTransaction();
+			for (GasStationPricePrediction predicted : predictedPrices) {
+				session.save(predicted);
+			}
+			session.getTransaction().commit();
+		} catch (NullPointerException e) {
+			log.error("NullPointerException");
+			log.error("No predicted Prices to insert, refusing!");
+		}
+
 	}
 
 	/**
@@ -138,17 +146,28 @@ public class DatabaseHandler {
 	 */
 	public void setup() {
 		// code to load Hibernate Session factory
-		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure() // configures
-																									// settings
-																									// from
-																									// hibernate.cfg.xml
-				.build();
+		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure().build();
 		try {
 			this.sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
 			this.sessionFactory.openSession();
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			log.error("Error setting up the database connection!");
+			log.error(ex);
 			StandardServiceRegistryBuilder.destroy(registry);
 		}
+	}
+
+	/**
+	 * Truncates a database table
+	 * 
+	 * @param tableName
+	 *            table to truncate
+	 */
+	private void truncateTable(String tableName) {
+		Session session = this.sessionFactory.getCurrentSession();
+		session.beginTransaction();
+		Query query = session.createSQLQuery("truncate " + tableName);
+		query.executeUpdate();
+		session.getTransaction().commit();
 	}
 }

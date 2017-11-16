@@ -25,6 +25,7 @@ import org.hibernate.annotations.Type;
 @Table(name = "gas_station_information_prediction")
 public class GasStationPricePrediction {
 
+	public static final String tableName = "gas_station_information_prediction";
 	@ManyToOne
 	@JoinColumn(name = "stid", insertable = false, updatable = false)
 	private GasStation gasStation;
@@ -40,11 +41,28 @@ public class GasStationPricePrediction {
 	private int e5;
 	@Column(name = "e10")
 	private int e10;
+
 	@Column(name = "diesel")
 	private int diesel;
 
 	public GasStationPricePrediction() {
 
+	}
+
+	/**
+	 * @param stid
+	 * @param date
+	 * @param e5
+	 * @param e10
+	 * @param diesel
+	 */
+	public GasStationPricePrediction(UUID stid, Date date, int e5, int e10, int diesel) {
+		super();
+		this.stid = stid;
+		this.date = date;
+		this.e5 = e5;
+		this.e10 = e10;
+		this.diesel = diesel;
 	}
 
 	/**
