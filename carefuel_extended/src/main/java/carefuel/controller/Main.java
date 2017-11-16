@@ -3,7 +3,6 @@ package carefuel.controller;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,9 +32,10 @@ public class Main {
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
 		Set<GasStationPricePrediction> testSet = new HashSet<>();
-		testSet.add(new GasStationPricePrediction(UUID.fromString("550e8400-e29b-11d4-a716-446655440000"), new Date(),
-				124, 154, 175));
-		databaseHandler.insertPricePredictions(testSet);
+		// testSet.add(new
+		// GasStationPricePrediction(UUID.fromString("550e8400-e29b-11d4-a716-446655440000"),
+		// new Date(), 124, 154, 175));
+		// databaseHandler.insertPricePredictions(testSet);
 		databaseHandler.exit();
 	}
 }

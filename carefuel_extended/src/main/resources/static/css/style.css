@@ -24,7 +24,7 @@ body, html {
 	top: 0px;
 	bottom: 0px;
 	z-index: 1;
-	background-color: #f0f0f0bf;
+	background-color: #f0f0f0;
 }
 
 .image {
@@ -41,8 +41,8 @@ body, html {
 	bottom: 0px;
 	right: 0px;
 	min-width: 200px;
-	width: 20%; 
-	text-align : right;
+	width: 20%;
+	text-align: right;
 	background: aliceblue; /* For browsers that do not support gradients */
 	background: -webkit-linear-gradient(90deg, rgba(240, 248, 255, 0.3),
 		aliceblue); /* For Safari 5.1 to 6.0 */
@@ -52,6 +52,12 @@ body, html {
 		aliceblue); /* For Firefox 3.6 to 15 */
 	background: linear-gradient(90deg, rgba(240, 248, 255, 0.3), aliceblue);
 	text-align: right; /* Standard syntax (must be last) */
+}
+
+.transparent {
+	zoom: 1;
+	filter: alpha(opacity = 80);
+	opacity: 0.80;
 }
 
 ::-webkit-scrollbar {
@@ -94,6 +100,7 @@ body, html {
 	width: 100%;
 	height: 38px;
 	margin-bottom: 10px;
+	padding-left: 5px;
 }
 
 .form.submit-button {
@@ -165,6 +172,10 @@ body, html {
 	/*********/
 	/* Right */
 	/*********/
+	.route-container {
+		width: 100%;
+		top: 85%;
+	}
 	.heading {
 		display: block;
 		margin-right: auto;
@@ -178,13 +189,15 @@ body, html {
 @media ( max-height : 450px) {
 	.form.label {
 		display: inline-block;
-		width: 49%;
+		width: 45%;
 		margin-top: 2px;
 		margin-bottom: 2px;
+		font-size: 12px;
+		font-weight: normal;
 	}
 	.form.input {
 		display: inline-block;
-		width: 49%;
+		width: 45%;
 		height: 20px;
 		margin-bottom: 0px;
 	}
