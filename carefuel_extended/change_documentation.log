@@ -89,6 +89,12 @@ CREATE INDEX index_on_date_stid
     (stid)
     TABLESPACE pg_default;
 
+# import dumps on windows
+# Default psql path if not changed
+# Use port 5431 since it is so defined in the project (5432 used by mysql)
+"C:\Program Files\PostgreSQL\9.4\bin\psql" -d carefuel -U postgres -p 5431 < history.dump
+"C:\Program Files\PostgreSQL\9.4\bin\psql" -d carefuel -U postgres -p 5431 < history.dump.1
+
 
 # Google Maps API
 
