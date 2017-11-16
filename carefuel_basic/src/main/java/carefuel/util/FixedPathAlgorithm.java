@@ -1,6 +1,7 @@
 package carefuel.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -43,20 +44,51 @@ public class FixedPathAlgorithm {
 		slidingWindow.add(nodes.get(0));
 		priorityQueue.add(nodes.get(0));
 		double windowCapacity = range;
+		double currentFill = 0;
+		
+		System.out.println("Capacity: " + windowCapacity);
 
+		System.out.println("------------------------------------------ Nodes-----------------");
+		for (Node n : nodes) {
+			System.out.println(n.getGasStation().getID());
+		}
+		
+		
 		for (int i = 0; !slidingWindow.isEmpty(); i++) {
-			if (windowCapacity - (distance(nodes.get(i - 1), nodes.get(i))) < 0) {
+			System.out.println("*********** Iteration " + i + " ****************");
+			System.out.println("Capacity: " + currentFill + "/" + windowCapacity);
+			/*System.out.println("The slidingwindow contains: ");
+			for (Node n : slidingWindow) {
+				System.out.println(n.getGasStation().getID() + ", ");
+			}*/
+			System.out.println("The priorityQueue contains: ");
+			for (Node n : priorityQueue) {
+				System.out.println(n.getGasStation().getID() + "(" + n.getGasStation().getPredictedPrice() + ")");
+			}
+			
+			
+			System.out.println("\n Distance to next: " + (distance(nodes.get(i), nodes.get(i + 1))));
+			
+			if (windowCapacity - currentFill - (distance(nodes.get(i), nodes.get(i + 1))) < 0) {
 				Node n = slidingWindow.getLast();
 				slidingWindow.remove(n);
 				n.setNext(priorityQueue.poll());
-
+				System.out.println("***\n");
+				System.out.print("Removed " + n.getGasStation().getID() + 
+								   ", oldCapacity: " + currentFill);  
+				currentFill -= distance(n, slidingWindow.get(slidingWindow.size() - 2));
+				System.out.print(", newCapacity: " + currentFill + "\n");
+				System.out.println("next of the removed is set to: " + n.getNext().getGasStation().getID());
 			}
-			if (windowCapacity - (distance(nodes.get(i - 1), nodes.get(i))) >= 0) {
-				slidingWindow.add(nodes.get(i));
-				priorityQueue.add(nodes.get(i));
-				nodes.get(i).setPrev(priorityQueue.peek());
-				if (nodes.get(i).getPrev().equals(nodes.get(i))) {
-					breakPoints.add(nodes.get(i));
+			
+			
+			if (windowCapacity - currentFill - (distance(nodes.get(i), nodes.get(i + 1))) >= 0) {
+				slidingWindow.add(nodes.get(i + 1));
+				priorityQueue.add(nodes.get(i + 1));
+				currentFill += distance(nodes.get(i), nodes.get(i + 1));
+				nodes.get(i + 1).setPrev(priorityQueue.peek());
+				if (nodes.get(i + 1).getPrev().equals(nodes.get(i + 1))) {
+					breakPoints.add(nodes.get(i + 1));
 				}
 			}
 		}
@@ -87,7 +119,7 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Funktion die die Distanz zwischen zwei Tankstellen berechnet.
+	 * Funktion die die Distanz zwischen zwei Tankstellen in KM berechnet.
 	 * Großkreisentfernung.
 	 * 
 	 * @param n1
@@ -96,9 +128,9 @@ public class FixedPathAlgorithm {
 	 */
 	private double distance(Node n1, Node n2) {
 		// berechne Distanz
-		return 6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat())
+		return (6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat())
 				+ Math.cos(n1.getGasStation().getLat() * Math.cos(n2.getGasStation().getLat()))
-						* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon())));
+						* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon()))) / 1000);
 	}
 
 	public List<GasStation> getGasStations() {

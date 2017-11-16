@@ -8,11 +8,12 @@ public class GasStation {
 	private double lon;
 	private double lat;
 	
-	public GasStation(String arrivalDate, int ID, double lon, double lat) {
+	public GasStation(String arrivalDate, int ID, double lon, double lat, int predictedPrice) {
 		this.setArrivalDate(arrivalDate);
 		this.setID(ID);
 		this.setLon(lon);
 		this.setLat(lat);
+		this.setPredictedPrice(predictedPrice);
 	}
 
 	public String getArrivalDate() {

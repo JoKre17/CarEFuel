@@ -7,7 +7,7 @@ import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import carefuel.util.Parser;
-import carefuel.controller.PricePredictor;
+import carefuel.controller.PathFinder;
 
 //ok
 /**
@@ -28,17 +28,8 @@ public class App {
         Parser parser = new Parser(file);
         parser.parse();
         
-        //parser.getLonLat(24983);
-
-		PricePredictor predictor = new PricePredictor();
-		try {
-			int price = predictor.predictPrice("2017-08-21 23:03:06+02", "2017-08-28 23:03:06+02", 14095);
-			System.out.printf("Predicted Price: %d\n", price);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
+        PathFinder pf = new PathFinder(parser.getGasStations(), parser.getCapacity());
+        pf.computeBestPath();
 	}
 
 	private static void testLog() {
