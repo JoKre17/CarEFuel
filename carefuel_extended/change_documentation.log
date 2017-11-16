@@ -45,3 +45,55 @@ psql carefuel < history.dump.1
 #create index to perform queries
 CREATE INDEX index_on_stid
 	ON gas_station_information_history (stid);
+	
+#create new database table for our predictions
+-- Table: public.gas_station_information_prediction
+
+CREATE TABLE public.gas_station_information_prediction
+(
+    id integer NOT NULL,
+    stid uuid NOT NULL,
+    e5 smallint,
+    e10 smallint,
+    diesel smallint,
+    date timestamp(0) with time zone,
+    CONSTRAINT gas_station_information_prediction_pkey PRIMARY KEY (id),
+    CONSTRAINT gas_station_has_gas_station_information_predictions FOREIGN KEY (stid)
+        REFERENCES public.gas_station (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE public.gas_station_information_prediction
+    OWNER to postgres;
+
+-- Index: index_on_date_prediction
+
+-- DROP INDEX public.index_on_date_prediction;
+
+CREATE INDEX index_on_date_prediction
+    ON public.gas_station_information_prediction USING btree
+    (date)
+    TABLESPACE pg_default;
+
+-- Index: index_on_date_stid
+
+-- DROP INDEX public.index_on_date_stid;
+
+CREATE INDEX index_on_date_stid
+    ON public.gas_station_information_prediction USING btree
+    (stid)
+    TABLESPACE pg_default;
+
+
+# Google Maps API
+
+Erstellung eines Google Account carefuel.luh
+
+Mail:	carefuel.luh@gmail.com
+Password: NJuJh1A!Wln..
+API-Key: AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0
