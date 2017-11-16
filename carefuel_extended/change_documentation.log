@@ -88,3 +88,12 @@ CREATE INDEX index_on_date_stid
     ON public.gas_station_information_prediction USING btree
     (stid)
     TABLESPACE pg_default;
+
+
+# Google Maps API
+
+Erstellung eines Google Account carefuel.luh
+
+Mail:	carefuel.luh@gmail.com
+Password: NJuJh1A!Wln..
+API-Key: AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0
