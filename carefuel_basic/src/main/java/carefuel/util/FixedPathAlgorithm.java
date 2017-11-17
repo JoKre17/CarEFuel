@@ -13,7 +13,7 @@ public class FixedPathAlgorithm {
 	private double gasConsumption;
 	private double literGasPerKilometer;
 	private double range;
-	private List<Node> nodes;
+	private LinkedList<Node> nodes;
 	private List<Node> breakPoints;
 	private LinkedList<Node> slidingWindow;
 	// private Queue<Node> priorityQueue;
@@ -23,7 +23,7 @@ public class FixedPathAlgorithm {
 		this.setGasStations(gasStations);
 		this.capacity = capacity;
 		this.setGasConsumption(gasConsumption);
-		this.nodes = new ArrayList<Node>();
+		this.nodes = new LinkedList<Node>();
 		this.breakPoints = new ArrayList<Node>();
 		this.slidingWindow = new LinkedList<Node>();
 		// this.priorityQueue = new PriorityQueue<Node>();
@@ -39,60 +39,69 @@ public class FixedPathAlgorithm {
 	}
 
 	public void run() {
-		// find break points
-		slidingWindow.add(nodes.get(0));
-		priorityQueue.add(nodes.get(0));
+		
+		//init lists
 		double windowCapacity = range;
 		double currentFill = 0;
-
+		
+		Node first = nodes.poll();
+		slidingWindow.add(first);
+		priorityQueue.add(first);
+		first.setPrev(priorityQueue.getFirst());
+		
 		System.out.println("Capacity: " + windowCapacity);
 
 		System.out.println("------------------------------------------ Nodes-----------------");
 		for (Node n : nodes) {
 			System.out.println(n.getGasStation().getID());
 		}
-
-		for (int i = 0; !slidingWindow.isEmpty(); i++) {
-			System.out.println("*********** Iteration " + i + " ****************");
-			System.out.println("Capacity: " + currentFill + "/" + windowCapacity);
-			/*
-			 * System.out.println("The slidingwindow contains: "); for (Node n :
-			 * slidingWindow) { System.out.println(n.getGasStation().getID() +
-			 * ", "); }
-			 */
-			System.out.println("The priorityQueue contains: ");
-			for (Node n : priorityQueue) {
-				System.out.println(n.getGasStation().getID() + "(" + n.getGasStation().getPredictedPrice() + ")");
-			}
-
-			System.out.println("\n Distance to next: " + (distance(nodes.get(i), nodes.get(i + 1))));
-
-			if (windowCapacity - currentFill - (distance(nodes.get(i), nodes.get(i + 1))) < 0) {
-				Node n = slidingWindow.getLast();
-				slidingWindow.remove(n);
-				n.setNext(priorityQueue.poll());
-				System.out.println("***\n");
-				System.out.print("Removed " + n.getGasStation().getID() + ", oldCapacity: " + currentFill);
-				currentFill -= distance(n, slidingWindow.get(slidingWindow.size() - 2));
-				System.out.print(", newCapacity: " + currentFill + "\n");
-				System.out.println("next of the removed is set to: " + n.getNext().getGasStation().getID());
-			}
-
-			if (windowCapacity - currentFill - (distance(nodes.get(i), nodes.get(i + 1))) >= 0) {
-				slidingWindow.add(nodes.get(i + 1));
-				priorityQueue.add(nodes.get(i + 1));
-				currentFill += distance(nodes.get(i), nodes.get(i + 1));
-				nodes.get(i + 1).setPrev(priorityQueue.peek());
-				if (nodes.get(i + 1).getPrev().equals(nodes.get(i + 1))) {
-					breakPoints.add(nodes.get(i + 1));
-					System.out.println("new BreakPoint: " + nodes.get(i + 1));
+		
+		while(!slidingWindow.isEmpty()) {
+			if (!nodes.isEmpty()) {
+				
+				System.out.println("*********** Iteration ****************");
+				System.out.println("Nodes left: " + nodes.size());
+				System.out.println("Capacity: " + currentFill + "/" + windowCapacity);
+				System.out.println("The priorityQueue contains: ");
+				for (Node n : priorityQueue) {
+					System.out.println(n.getGasStation().getID() + "(" + n.getGasStation().getPredictedPrice() + ")");
 				}
-				System.out.println("Added " + nodes.get(i + 1));
-				System.out.println("Prev of " + nodes.get(i + 1).getGasStation().getID() + ": "
-						+ nodes.get(i + 1).getPrev().getGasStation().getID());
+
+				System.out.println("\n Distance to next: " + distance(slidingWindow.getFirst(), nodes.getFirst()));
+
+
+				if (distance(slidingWindow.getFirst(), nodes.getFirst()) > windowCapacity - currentFill) {
+					first = slidingWindow.getFirst();
+					slidingWindow.remove(first);
+					priorityQueue.remove(first);
+					System.out.println("***\n");
+					System.out.print("Removed " + first.getGasStation().getID() + ", oldCapacity: " + currentFill);
+					currentFill -= distance(first, slidingWindow.getFirst());
+					first.setNext(priorityQueue.getFirst());
+					System.out.print(", newCapacity: " + currentFill + "\n");
+					System.out.println("next of the removed is set to: " + first.getNext().getGasStation().getID());
+				}
+				else {
+					Node last = slidingWindow.getLast();
+					Node newNode = nodes.poll();
+					slidingWindow.add(newNode);
+					priorityQueue.add(newNode);
+					currentFill += distance(last, newNode);
+					newNode.setPrev(priorityQueue.getFirst());
+					System.out.println("Added " + newNode.getGasStation().getID() + "(" + newNode.getGasStation().getPredictedPrice() + ")");
+					System.out.println("Prev of " + newNode.getGasStation().getID() + ": "
+							+ newNode.getPrev().getGasStation().getID());
+				}
+			}
+			else {
+				first = slidingWindow.getFirst();
+				slidingWindow.remove(first);
+				priorityQueue.remove(first);
+				//currentFill -= distance(slidingWindow.getFirst(), first);
+				//first.setNext(priorityQueue.getFirst());
 			}
 		}
-
+		
 		// find path from break points
 		for (Node n : breakPoints) {
 			driveToNext(n, null);
