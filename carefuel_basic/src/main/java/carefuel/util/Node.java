@@ -8,8 +8,8 @@ public class Node implements Comparable<Node> {
 	private Node prev;
 	private GasStation gasStation;
 	private Node nextOnBestPath;
-	private double fuelToBuy;
-	private double gasInTank;
+	private double fuelToBuy = 0;
+	private double gasInTank = 0;
 
 	public Node(GasStation g) {
 		this.setGasStation(g);
