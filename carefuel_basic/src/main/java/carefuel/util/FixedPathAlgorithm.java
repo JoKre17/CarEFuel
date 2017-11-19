@@ -39,7 +39,7 @@ public class FixedPathAlgorithm {
 		}
 	}
 
-	public void run() {
+	public List<Node> run() {
 
 		// init lists
 		double windowCapacity = range;
@@ -96,7 +96,6 @@ public class FixedPathAlgorithm {
 					newNode.setPrev(priorityQueue.getFirst());
 					if (newNode.equals(newNode.getPrev())) {
 						breakPoints.add(newNode);
-						System.out.println("new BP");
 					}
 					// System.out.println("Added " +
 					// newNode.getGasStation().getID() + "("
@@ -177,11 +176,14 @@ public class FixedPathAlgorithm {
 		System.out.println("\nSolution: ");
 		for (Node n = breakPoints.get(0); n.getNextOnBestPath() != null; n = n.getNextOnBestPath()) {
 			System.out.println(n.getGasStation().getID() + "(" + n.getGasStation().getPredictedPrice() + ")");
-			System.out.println("Fill: " + n.getFuelToBuy() + ", d: " + indirectDistance(n, n.getNextOnBestPath())
-					+ ", liter necessary: " + indirectDistance(n, n.getNextOnBestPath()) * literGasPerKilometer);
+			System.out.println("Tank: " + n.getGasInTank() + ", Fill: " + n.getFuelToBuy() + ", d: "
+					+ indirectDistance(n, n.getNextOnBestPath()) + ", liter necessary: "
+					+ indirectDistance(n, n.getNextOnBestPath()) * literGasPerKilometer);
 		}
 		System.out.println(breakPoints.get(breakPoints.size() - 1).getGasStation().getID() + "("
 				+ breakPoints.get(breakPoints.size() - 1).getGasStation().getPredictedPrice() + ")");
+
+		return gasStations;
 	}
 
 	/**
@@ -192,14 +194,27 @@ public class FixedPathAlgorithm {
 	 * @param to
 	 */
 	private void driveToNext(Node from, Node to) {
+		// System.out.println("From: " + from.getGasStation().getID() + ", to: "
+		// + to.getGasStation().getID());
+		// System.out.println("Distance: " + indirectDistance(from, to));
 		if (indirectDistance(from, to) <= range) {
 			// just fill enough to get to "to"
 			from.setFuelToBuy(literGasPerKilometer * indirectDistance(from, to));
+			// System.out.println("Before - Gas In Tank: " +
+			// from.getGasInTank());
+			from.setGasInTank(from.getGasInTank() + from.getFuelToBuy());
 			from.setNextOnBestPath(to);
+			// System.out.println("After - Gas In Tank: " +
+			// from.getGasInTank());
 			to.setGasInTank(from.getGasInTank() - literGasPerKilometer * indirectDistance(from, to));
 		} else {
 			// fill the tank and drive to from.next
 			from.setFuelToBuy(capacity - from.getGasInTank());
+			// System.out.println("Before - Gas In Tank: " +
+			// from.getGasInTank());
+			from.setGasInTank(from.getGasInTank() + from.getFuelToBuy());
+			// System.out.println("After - Gas In Tank: " +
+			// from.getGasInTank());
 			from.setNextOnBestPath(from.getNext());
 			from.getNextOnBestPath().setGasInTank(
 					from.getGasInTank() - literGasPerKilometer * indirectDistance(from, from.getNextOnBestPath()));
