@@ -3,6 +3,7 @@ package carefuel.util;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +15,7 @@ public class Parser {
 	private File file;
 	private int capacity;
 	private List<GasStation> gasStations;
+	private String predictionTimeStamp = "";
 
 	public Parser(File file) {
 		// to-do
@@ -35,7 +37,7 @@ public class Parser {
 			capacity = Integer.parseInt(reader.readLine());
 			PricePredictor predictor = new PricePredictor();
 
-			String maxPredictionDate = "";
+			predictionTimeStamp = "";
 			int n = 0;
 
 			while ((line = reader.readLine()) != null) {
@@ -43,7 +45,7 @@ public class Parser {
 				entry = line.split(splitBy);
 
 				if (n == 0) {
-					maxPredictionDate = entry[0];
+					predictionTimeStamp = entry[0];
 					n++;
 				}
 
@@ -52,7 +54,7 @@ public class Parser {
 				// }
 
 				Double[] tmp = getLonLat(Integer.parseInt(entry[1]));
-				int predictedPrice = predictor.predictPrice(maxPredictionDate, entry[0], Integer.parseInt(entry[1]));
+				int predictedPrice = predictor.predictPrice(predictionTimeStamp, entry[0], Integer.parseInt(entry[1]));
 				// System.out.println(predictedPrice);
 				GasStation station = new GasStation(entry[0], Integer.parseInt(entry[1]), tmp[0], tmp[1],
 						predictedPrice);
@@ -61,6 +63,8 @@ public class Parser {
 
 			reader.close();
 			System.out.println("************** Parser ends ***********************");
+			safePredictedData();
+			System.out.println("************** Predicted prices safed to resource/predictedPrices.txt");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -98,6 +102,25 @@ public class Parser {
 
 		// System.out.println("******LONLAT: " + lonLat[0]);
 		return lonLat;
+	}
+	
+	/**
+	 * Safe data predicted by the PricePredictor as .txt file to /resource/predictedPrices.txt
+	 */
+	private void safePredictedData() {
+		try {
+			PrintWriter out = new PrintWriter(System.getProperty("user.dir") + "/resource/predictedPrices.txt");
+
+			for (GasStation g : gasStations) {
+				out.println(predictionTimeStamp + ";" + g.getArrivalDate() + ";"
+						+ g.getID() + ";" + g.getPredictedPrice());
+			}
+			out.flush();
+			out.close();
+		}
+		catch (Exception e) {
+			
+		}
 	}
 
 	public List<GasStation> getGasStations() {
