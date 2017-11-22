@@ -12,17 +12,18 @@
 <link rel="stylesheet" href="css/style.css">
 
 <!-- Local JavaScript -->
-<script type="text/javascript" src="js/jquery-3.2.1.min.js "></script>
-<script type="text/javascript" src="js/map.js "></script>
-<script type="text/javascript" src="js/gui.js "></script>
-<script type="text/javascript" src="js/control.js "></script>
+<script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="js/map.js"></script>
+<script type="text/javascript" src="js/gui.js"></script>
+<script type="text/javascript" src="js/control.js"></script>
+<script type="text/javascript" src="js/route.js"></script>
 
 </head>
 
 <body>
-	<div id="controlContainer" class="control-container ui">
+	<div id="controlContainer" class="control-container ui transparent">
 		<div>
-			<img class="ui image hide-button"
+			<img class="ui image hide-button" id="hide"
 				src="images/arrow_left_grey_100_100.png"
 				onclick="hideButtonPressed()"></img>
 		</div>
@@ -38,13 +39,13 @@
 					<div class="form-entry">
 						<label class="form label" for="from">Start</label> <input
 							class="form input" type="text" name="from" id="from"
-							placeholder="From" required="" />
+							placeholder="From" required />
 					</div>
 
 					<div class="form-entry">
 						<label class="form label" for="to">Destination</label> <input
 							class="form input" type="text" name="to" id="to" placeholder="To"
-							required="" />
+							required />
 					</div>
 
 					<div class="form-entry">
@@ -60,7 +61,7 @@
 					</div>
 
 					<input class="form submit-button" type="button" value="Route"
-						onclick="return submitButtonPressed();" />
+						onclick="submitButtonPressed()" />
 
 				</form>
 
@@ -94,7 +95,7 @@
 		</div>
 	</div>
 
-	<div id="routeContainer" class="route-container ui">
+	<div id="routeContainer" class="route-container ui transparent" onclick="routeContainerPressed()">
 		<div class="section">Lorem ipsum dolor sit amet, consetetur
 			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
 			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam

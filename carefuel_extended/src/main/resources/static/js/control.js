@@ -55,12 +55,47 @@ function hideButtonPressed() {
 			}
 		});
 		
+		var $elem = $('#hide');
+	    // we use a pseudo object for the animation
+	    // (starts from `0` to `angle`), you can name it as you want
+	    $({deg: 0}).animate({deg: 180}, {
+	        duration: 350,
+	        step: function(now) {
+	            $elem.css({
+	                transform: 'rotate(' + now + 'deg)'
+	            });
+	        }
+	    });
+		
 	} else {
 		container.style.maxWidth = CONTROL_MAX_WIDTH + 'px';
 		container.style.left = "-" + width;
 		
 		$(container).animate({left: "0%"});
+		
+		
+		var $elem = $('#hide');
+	    // we use a pseudo object for the animation
+	    // (starts from `0` to `angle`), you can name it as you want
+	    $({deg: 180}).animate({deg: 360}, {
+	        duration: 350,
+	        step: function(now) {
+	            $elem.css({
+	                transform: 'rotate(' + now + 'deg)'
+	            });
+	        }
+	    }, {
+			complete: function () {
+				$elem.css({
+	                transform: 'rotate(0deg)'
+	            });
+			}
+		});
 	}
+	
+	
+	
+
 
 }
 

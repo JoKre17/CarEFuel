@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,6 +58,20 @@ public class DatabaseHandler {
 		this.sessionFactory.close();
 	}
 
+	public Set<GasStation> getAllGasStations() {
+		Set<GasStation> gasStations = new HashSet<>();
+
+		Session session = this.sessionFactory.openSession();
+		session.beginTransaction();
+
+		Query query = session.createQuery("from " + GasStation.class.getSimpleName());
+		gasStations = (Set<GasStation>) query.list().stream().collect(Collectors.toSet());
+
+		session.getTransaction().commit();
+
+		return gasStations;
+	}
+
 	/**
 	 * return a gas station by id
 	 *
@@ -68,8 +83,7 @@ public class DatabaseHandler {
 
 		Session session = this.sessionFactory.getCurrentSession();
 		session.beginTransaction();
-		org.hibernate.Query query = session
-				.createQuery("from " + GasStation.class.getName() + " where id='" + uuid + "'");
+		Query query = session.createQuery("from " + GasStation.class.getSimpleName() + " where id='" + uuid + "'");
 		gasStation = (GasStation) query.uniqueResult();
 
 		session.getTransaction().commit();
@@ -159,7 +173,7 @@ public class DatabaseHandler {
 
 	/**
 	 * Truncates a database table
-	 * 
+	 *
 	 * @param tableName
 	 *            table to truncate
 	 */

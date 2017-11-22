@@ -9,7 +9,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.annotations.Type;
+import org.json.JSONObject;
+
+import carefuel.controller.Main;
 
 /**
  * Entity class to represent the table GASSTATION in the database
@@ -20,6 +25,8 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name = "gas_station")
 public class GasStation {
+	private static final Logger log = LogManager.getLogger(Main.class);
+
 	@Id // tells hibernate that this is the primary key
 	@Type(type = "pg-uuid")
 	@Column(name = "id", unique = true, updatable = false)
@@ -230,6 +237,27 @@ public class GasStation {
 		this.streetName = streetName;
 	}
 
+	/**
+	 * returns the gas station in json format
+	 * 
+	 * @return
+	 */
+	public JSONObject toJSON() {
+		JSONObject json = new JSONObject();
+
+		json.put("id", getId());
+		json.put("name", getName());
+		json.put("brand", getBrand());
+		json.put("street", getStreetName());
+		json.put("houseNumer", getHouseNumber());
+		json.put("postalCode", getPostalCode());
+		json.put("city", getCity());
+		json.put("lat", getLatitude());
+		json.put("lng", getLongitude());
+
+		return json;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 *
@@ -242,5 +270,4 @@ public class GasStation {
 				+ this.city + ", latitude=" + this.latitude + ", longitude=" + this.longitude + ", gasStationPrices="
 				+ this.gasStationPrices + "]";
 	}
-
 }
