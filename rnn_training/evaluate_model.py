@@ -16,6 +16,7 @@ def evaluate(next_month, prediction):
     """
     plt.figure(1)
 
+    print(prediction[0])
     plt.plot(next_month[0:48], label='next month')
     plt.plot(prediction[0:48], label='prediction')
     plt.show()

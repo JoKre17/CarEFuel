@@ -215,8 +215,7 @@ public class PricePredictor {
 		Date maxDate = parseDateString(maxDateString);
 		Date predictionDate = parseDateString(predictionDateString);
 
-		// Get the number"2017-08-21 23:03:06+02" of hours from maxDate and
-		// predictionDate
+		// Get the number  of hours from maxDate and predictionDate
 		double nHours = (predictionDate.getTime() - maxDate.getTime()) / ((double) 3600 * 1000);
 
 		// Interpolate the value using the previous and next hour
@@ -237,7 +236,7 @@ public class PricePredictor {
 
 	/**
 	 * This function uses the neural network in order to predict all prices of a
-	 * given gas station using for the next month since 'maxDate'. It uses all
+	 * given gas station for the next month since 'maxDate'. It uses all
 	 * previous data before 'maxDate'. Note that 'maxDate' has to be BEFORE the last
 	 * entry in the corresponding data set of the gas station.
 	 * 
@@ -257,12 +256,7 @@ public class PricePredictor {
 
 		// Next, find the first entry that is in the next month
 		Date maxDate;
-		try {
-			maxDate = parseDateString(maxDateString);
-		} catch (ParseException e) {
-			log.error("Error while parsing maxDateString");
-			throw new Exception();
-		}
+		maxDate = parseDateString(maxDateString);
 		int firstEntryIndex = 0;
 		for (int i = 0; i < datePriceList.size(); ++i) {
 			// Find the first element that is not before maxdate
@@ -274,7 +268,7 @@ public class PricePredictor {
 
 		/*
 		 * Interpolate the data from the first to the entry at lastEntryIndex at every
-		 * hour The array interpolatedPrices is of the form [?][nHoursPerMonth], where ?
+		 * hour. The array interpolatedPrices is of the form [?][nHoursPerMonth], where ?
 		 * is the number of "whole" months, i.e. every month that still has 31 days á 24
 		 * hours of entries. Note that the array is in reversed form, meaning it goes
 		 * back in time. Therefore, interpolatedPrices[0][0] contains the last price of

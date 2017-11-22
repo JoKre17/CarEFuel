@@ -5,6 +5,12 @@ from os.path import join
 flags = tf.flags
 flags.DEFINE_string("data_path", None, "Path of the folder containing the .tfrecord files")
 flags.DEFINE_string("save_path", None, "Path to the folder in which the trained models should be saved")
+flags.DEFINE_string("batch_size", None, "Batch Size to use during training")
+flags.DEFINE_string("num_epochs", None, "Number of training steps on the whole data set")
+flags.DEFINE_string("keep_prob", None, "Dropout probability for all layers during training")
+flags.DEFINE_string("learning_rate", None, "Learning Rate for the Adam Optimizer")
+flags.DEFINE_string("network_definition", None, "Textual representation of the network architecture. See train.py")
+
 FLAGS = flags.FLAGS
 
 # Activate verbose logging
@@ -13,9 +19,9 @@ tf.logging.set_verbosity(tf.logging.INFO)
 """
     Parameter dict: Hyperparameters for this training and the model
 
-    dataset_ratios: Split all available data into training, validation and testing data according these
     n_hours_month: Number of hours per month (assuming every month has 31 days). Also defines the number of unrolls of
-        of the network due to the LSTM cells
+        of the network due to the LSTM cells. Currently set to 31 * 24 / 2, as all available data is interpolated only
+        every two hours, due to the fact that on average all gas stations have 8 - 10 entries per day.
     batch_size: Training parameter: Batch size for every training step
     num_epochs: Specifies how often the network is trained on the complete dataset
     n_layer: Number of hidden LSTM layers of the network
@@ -24,12 +30,10 @@ tf.logging.set_verbosity(tf.logging.INFO)
     learning_rate: Learning rate during training. TODO: add learning decay
 """
 params = {
-    'dataset_ratios': (0.8, 0.1, 0.1),
-    'n_hours_per_month': 744,
+    'n_hours_per_month': 372,
     'max_past_months': 50,
-    'batch_size': 5,
+    'batch_size': 1,
     'num_epochs': 10,
-    'n_layer': 1,
     'max_price': 3000,  # TODO: better normalization
     'keep_prob': 0.5,
     'learning_rate': 1,
@@ -108,14 +112,40 @@ def model_fn(features, labels, mode):
     # Input layer: scale prices into [0,1] -> network can better handle values of that size
     inputs = prev_months / params['max_price']
 
-    '''Create hidden LSTM layers'''
-
+    '''Create hidden layer'''
     def lstm_layer():
         """ Function to create LSTM cells and incorporate dropout during training"""
         cell = tf.nn.rnn_cell.LSTMCell(params['n_hours_per_month'], forget_bias=1.0, state_is_tuple=True)
-        if mode != tf.estimator.ModeKeys.TRAIN:
+        if mode == tf.estimator.ModeKeys.TRAIN:
             cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=params['keep_prob'])
         return cell
+
+    def dense_layer(input, size):
+        """Function to create a dense layer with 'size' nodes that applies dropout during training"""
+        if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
+            input = tf.nn.dropout(input, params['keep_prob'])
+
+        # Combine output in a densely connected layer
+        return tf.layers.dense(inputs=input, units=size, activation=tf.nn.relu)
+
+    '''
+        Parse the network architecture string.
+        It has the following format: layer_name [arg1 arg2 ...];layer_name [arg1 arg2 ...];...
+        layer_name can be either of the following, with the corresponding arguments
+        - dense output_size -> Creates a fully connected layer from the prev layer with 'output_size' nodes
+        - rnn 5 -> Creates 5 lstm cells of size n_hours_per_month 
+    '''
+    network_definition = FLAGS.network_definition.split(";")
+
+    # Iterate over all layers and build them step by step
+    for layer in network_definition:
+        args = layer.split()
+        # Build the corresponding layer
+        if args[0] == "dense":
+            print("dense, ", args[1])
+        elif args[0] == "rnn":
+
+    return
 
     # Create all hidden layers
     hidden_layers = tf.contrib.rnn.MultiRNNCell([lstm_layer() for _ in range(params['n_layer'])], state_is_tuple=True)
@@ -150,18 +180,6 @@ def model_fn(features, labels, mode):
     # Combine output in a densely connected layer
     output = tf.layers.dense(inputs=output, units=params['n_hours_per_month'], activation=tf.nn.relu)
 
-    # Apply dropout if training
-    if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
-        output = tf.nn.dropout(output, params['keep_prob'])
-
-    # Combine output in a densely connected layer
-    output = tf.layers.dense(inputs=output, units=params['n_hours_per_month'], activation=tf.nn.relu)
-    
-    if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
-        output = tf.nn.dropout(output, params['keep_prob'])
-
-    output = tf.layers.dense(inputs=output, units=params['n_hours_per_month'], activation=tf.nn.relu)
-
     # Rescale and give name for later usage
     with tf.name_scope("Output"):
         rescaled_output = output * params['max_price']
@@ -173,7 +191,7 @@ def model_fn(features, labels, mode):
         loss = tf.losses.absolute_difference(next_month, output)
 
         # Define optimizer
-        optimizer = tf.train.GradientDescentOptimizer(learning_rate=params['learning_rate'])
+        optimizer = tf.train.AdamOptimizer()
         train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
 
     return tf.estimator.EstimatorSpec(
@@ -192,11 +210,23 @@ def save_model(estimator):
             'n_prev_months': tf.placeholder(dtype=tf.int32, shape=[1]),
         }))
 
+
 def main(_):
+    # Parse input
     if not FLAGS.data_path:
         raise ValueError("You need to specify data_path!")
     if not FLAGS.save_path:
         raise ValueError("You need to specify save_path!")
+    if not FLAGS.network_definition:
+        raise ValueError("Need the network definition!")
+    if FLAGS.batch_size:
+        params["batch_size"] = FLAGS.batch_size
+    if FLAGS.keep_prob:
+        params["keep_prob"] = FLAGS.keep_prob
+    if FLAGS.learning_rate:
+        params["learning_rate"] = FLAGS.learning_rate
+    if FLAGS.batch_size:
+        params["batch_size"] = FLAGS.batch_size
 
     # Build the estimator based on the model defined above
     nn = tf.estimator.Estimator(model_fn=model_fn, model_dir=FLAGS.save_path)
