@@ -6,6 +6,11 @@ import java.util.List;
 
 import carefuel.model.GasStation;
 
+/**
+ * The algorithms is the fixed path algorithm taken from "To Fill or not to
+ * Fill: The Gas Station Problem" by Khuller et. al.(available at
+ * https://dl.acm.org/citation.cfm?doid=1978782.1978791)
+ */
 public class FixedPathAlgorithm {
 
 	private List<Node> gasStations;
@@ -18,6 +23,16 @@ public class FixedPathAlgorithm {
 	private LinkedList<Node> slidingWindow;
 	private MyPriorityQueue priorityQueue;
 
+	/**
+	 * Constructor of FixedPathAlgorithm
+	 *
+	 * @param gasStations
+	 *            list of gas stations along the given route
+	 * @param capacity
+	 *            gas capacity
+	 * @param gasConsumption
+	 *            gas consumption per 100km
+	 */
 	public FixedPathAlgorithm(List<GasStation> gasStations, int capacity, double gasConsumption) {
 		// this.setGasStations(gasStations);
 		this.capacity = capacity;
@@ -39,8 +54,15 @@ public class FixedPathAlgorithm {
 		}
 	}
 
+	/**
+	 * 2-parted algorithm. First part: find break points, which are the cheapest
+	 * gas stations that can be reached with one tank fill. Second part: Find
+	 * best tanking behavior on the fixed path.
+	 *
+	 * @return list of nodes with their assigned amount of gas to fill at a gas
+	 *         station.
+	 */
 	public List<Node> run() {
-
 		// init lists
 		double windowCapacity = range;
 		double currentFill = 0;
@@ -187,9 +209,9 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Funktion die für alle Breakpoints aufgerufen wird und den nächsten
-	 * anzufahrenden Tankstopp, sowie die Menge an Benzin berechnet.
-	 * 
+	 * Function that is called to examine the best tanking behavior between two
+	 * break points
+	 *
 	 * @param from
 	 * @param to
 	 */
@@ -199,7 +221,11 @@ public class FixedPathAlgorithm {
 		// System.out.println("Distance: " + indirectDistance(from, to));
 		if (indirectDistance(from, to) <= range) {
 			// just fill enough to get to "to"
-			from.setFuelToBuy(literGasPerKilometer * indirectDistance(from, to));
+			double gasToBuy = 0.0;
+			if (from.getGasInTank() < literGasPerKilometer * indirectDistance(from, to)) {
+				gasToBuy = literGasPerKilometer * indirectDistance(from, to) - from.getGasInTank();
+			}
+			from.setFuelToBuy(gasToBuy);
 			// System.out.println("Before - Gas In Tank: " +
 			// from.getGasInTank());
 			from.setGasInTank(from.getGasInTank() + from.getFuelToBuy());
@@ -223,9 +249,9 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Funktion die die Distanz zwischen zwei Tankstellen in KM berechnet.
-	 * Großkreisentfernung.
-	 * 
+	 * Direct distance between two nodes in km computed by the great-circle
+	 * distance
+	 *
 	 * @param n1
 	 * @param n2
 	 * @return
@@ -238,6 +264,14 @@ public class FixedPathAlgorithm {
 				/ 1000;
 	}
 
+	/**
+	 * Computes the indirect distance between two not necessarily directly
+	 * connected gas stations.
+	 *
+	 * @param n1
+	 * @param n2
+	 * @return
+	 */
 	private double indirectDistance(Node n1, Node n2) {
 		double distance = 0;
 
@@ -253,10 +287,17 @@ public class FixedPathAlgorithm {
 		return distance;
 	}
 
+	/**
+	 * @return gas consumption
+	 */
 	public double getGasConsumption() {
 		return gasConsumption;
 	}
 
+	/**
+	 * @param gasConsumption
+	 *            new gas consumption for the algorithm
+	 */
 	public void setGasConsumption(double gasConsumption) {
 		this.gasConsumption = gasConsumption;
 	}
