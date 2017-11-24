@@ -319,6 +319,7 @@ public class PricePredictor {
 		Tensor<Integer> nPrevMonthsTensor = Tensor.create(nPrevMonthsArray, Integer.class);
 
 		// Fetch the output tensor of the network
+		@SuppressWarnings("rawtypes")
 		Output output = graph.operation("Output/rescaled_output").output(0);
 
 		// Feed the input tensors and run the TensorFlow graph
