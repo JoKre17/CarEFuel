@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import carefuel.controller.PathFinder;
+import carefuel.util.Evaluator;
 import carefuel.util.Parser;
 
 /**
@@ -39,6 +40,10 @@ public class App {
 
 		PathFinder pf = new PathFinder(parser.getGasStations(), parser.getCapacity());
 		pf.computeBestPath();
+
+		Evaluator ev = new Evaluator(parser.getGasStations());
+		ev.evaluate();
+
 	}
 
 	/*
