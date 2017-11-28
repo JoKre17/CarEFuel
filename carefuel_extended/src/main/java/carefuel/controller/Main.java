@@ -27,7 +27,11 @@ public class Main {
 
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
-		log.info(databaseHandler.getAllGasStations().stream().findFirst().get().toJSON().toString());
+		// databaseHandler.test();
+		// log.info(databaseHandler.getAllGasStations().stream().findFirst().get().toJSON().toString());
+
+		// Sollte ggf raus, da die Spring Applikation ja noch läuft und die DB benötigt
+		// wird
 		databaseHandler.exit();
 	}
 }

@@ -42,12 +42,12 @@ public class GasStation {
 	private String streetName;
 
 	@Column(name = "house_number")
-	private int houseNumber;
+	private String houseNumber;
 
 	@Column(name = "post_code")
 	private String postalCode;
 
-	@Column(name = "city")
+	@Column(name = "place")
 	private String city;
 
 	@Column(name = "lat")
@@ -103,7 +103,7 @@ public class GasStation {
 	/**
 	 * @return the houseNumber
 	 */
-	public int getHouseNumber() {
+	public String getHouseNumber() {
 		return this.houseNumber;
 	}
 
@@ -185,7 +185,7 @@ public class GasStation {
 	 * @param houseNumber
 	 *            the houseNumber to set
 	 */
-	public void setHouseNumber(int houseNumber) {
+	public void setHouseNumber(String houseNumber) {
 		this.houseNumber = houseNumber;
 	}
 
