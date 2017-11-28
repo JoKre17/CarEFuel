@@ -42,6 +42,11 @@ public class Edge<E> implements Comparable<E>{
 	public double getValue() {
 		return this.distance * this.weight;
 	}
+	
+	@Override
+	public String toString() {
+		return from + " => " + to;
+	}
 
 	@Override
 	public int compareTo(Object arg0) {

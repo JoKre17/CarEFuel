@@ -1,12 +1,15 @@
 package carefuel.controller;
 
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import carefuel.model.GasStation;
 import carefuel.path.PathFinder;
 
 /**
@@ -31,10 +34,25 @@ public class Main {
 
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
-		log.info(databaseHandler.getAllGasStations().stream().findFirst().get().toJSON().toString());
+
+		List<GasStation> allStations = databaseHandler.getAllGasStations().stream().collect(Collectors.toList());
+		log.info(allStations.stream().findFirst().get().toJSON().toString());
+		
+		int randomStart = (int) (Math.random() * (allStations.size()-1));
+		int randomEnd = (int) (Math.random() * (allStations.size()-1));
+		
+		GasStation start = allStations.get(randomStart);
+		GasStation end = allStations.get(randomEnd);
+		double range = (3.0/5.6) * 100;
 		
 		pathFinder = new PathFinder(databaseHandler);
+		log.info(pathFinder.explorativeAStar(start, end, range));
 		
+		// databaseHandler.test();
+		// log.info(databaseHandler.getAllGasStations().stream().findFirst().get().toJSON().toString());
+
+		// Sollte ggf raus, da die Spring Applikation ja noch läuft und die DB benötigt
+		// wird
 		databaseHandler.exit();
 	}
 }

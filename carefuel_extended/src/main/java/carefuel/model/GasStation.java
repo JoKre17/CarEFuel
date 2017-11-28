@@ -1,5 +1,6 @@
 package carefuel.model;
 
+import java.io.Serializable;
 import java.util.Set;
 
 import javax.persistence.Column;
@@ -20,8 +21,8 @@ import org.json.JSONObject;
  */
 @Entity
 @Table(name = "gas_station")
-public class GasStation {
-//	private static final Logger log = LogManager.getLogger(Main.class);
+public class GasStation implements Serializable {
+	// private static final Logger log = LogManager.getLogger(Main.class);
 
 	@Id // tells hibernate that this is the primary key
 	@Type(type = "pg-uuid")
@@ -38,12 +39,12 @@ public class GasStation {
 	private String streetName;
 
 	@Column(name = "house_number")
-	private int houseNumber;
+	private String houseNumber;
 
 	@Column(name = "post_code")
 	private String postalCode;
 
-	@Column(name = "city")
+	@Column(name = "place")
 	private String city;
 
 	@Column(name = "lat")
@@ -99,7 +100,7 @@ public class GasStation {
 	/**
 	 * @return the houseNumber
 	 */
-	public int getHouseNumber() {
+	public String getHouseNumber() {
 		return this.houseNumber;
 	}
 
@@ -181,7 +182,7 @@ public class GasStation {
 	 * @param houseNumber
 	 *            the houseNumber to set
 	 */
-	public void setHouseNumber(int houseNumber) {
+	public void setHouseNumber(String houseNumber) {
 		this.houseNumber = houseNumber;
 	}
 
@@ -232,9 +233,15 @@ public class GasStation {
 	public void setStreetName(String streetName) {
 		this.streetName = streetName;
 	}
-	
+
+	/**
+	 * Computes distance in kilometers
+	 * @param other
+	 * @return
+	 */
 	public double computeDistanceToGasStation(GasStation other) {
-		return 0;
+		return 6378.388 * Math.acos(Math.sin(latitude) * Math.sin(other.getLatitude())
+				+ Math.cos(latitude) * Math.cos(other.getLatitude()) * Math.cos(other.getLongitude() - longitude));
 	}
 
 	/**
@@ -269,5 +276,16 @@ public class GasStation {
 				+ this.streetName + ", houseNumber=" + this.houseNumber + ", postalCode=" + this.postalCode + ", city="
 				+ this.city + ", latitude=" + this.latitude + ", longitude=" + this.longitude + ", gasStationPrices="
 				+ this.gasStationPrices + "]";
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if(other instanceof GasStation) {
+			GasStation o = (GasStation) other;
+			
+			return id.equals(o.getId());
+		}
+		
+		else return false;
 	}
 }

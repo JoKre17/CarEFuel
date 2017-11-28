@@ -1,23 +1,20 @@
 package carefuel.path;
 
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.stream.Collectors;
-
 public class Vertex<E> {
 
+	Graph graph;
 	private E value;
 	
 	// This is the maximal range where connections will be considered
-	private static double range;
+	protected static double range;
 	
-	private PriorityQueue<Edge<E>> connections;
+//	private PriorityQueue<Edge<E>> neighbours;
 	
 	
 	public Vertex(E value) {
 		this.value = value;
 		
-		connections = new PriorityQueue<>();
+//		neighbours = new PriorityQueue<>();
 	}
 	
 	public void setValue(E value) {
@@ -28,21 +25,21 @@ public class Vertex<E> {
 		return this.value;
 	}
 	
-	public void addConnections(List<Edge<E>> connections) {
-		this.connections.addAll(connections);
-	}
+//	public void addNeighbours(List<Edge<E>> connections) {
+//		this.neighbours.addAll(connections);
+//	}
+//	
+//	public void addNeighbour(Edge<E> connection) {
+//		this.neighbours.add(connection);
+//	}
+//	
+//	public void clearNeighbours() {
+//		this.neighbours.clear();
+//	}
 	
-	public void addConnection(Edge<E> connection) {
-		this.connections.add(connection);
-	}
-	
-	public void clearConnections() {
-		this.connections.clear();
-	}
-	
-	public List<Edge<E>> getConnections() {
-		return connections.stream().filter(e -> e.getDistance() <= range).collect(Collectors.toList());
-	}
+//	public List<Edge<E>> getNeighbours() {
+//		return neighbours.stream().filter(e -> e.getDistance() <= range).collect(Collectors.toList());
+//	}
 	
 	
 	

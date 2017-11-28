@@ -1,10 +1,8 @@
 package carefuel.path;
 
 import java.io.File;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,8 +26,8 @@ public class PathFinder {
 
 		double startTime = System.currentTimeMillis();
 		loadGraph();
-		log.info("Loading graph completed in " + (System.currentTimeMillis()-startTime)/1000.0 + " seconds.");
-		
+		log.info("Loading graph completed in " + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds.");
+
 	}
 
 	private void loadGraph() {
@@ -38,7 +36,6 @@ public class PathFinder {
 		} else {
 			loadGraphFromDatabase();
 		}
-
 	}
 
 	private void loadGraphFromFile(File f) {
@@ -50,39 +47,59 @@ public class PathFinder {
 	 */
 	private void loadGraphFromDatabase() {
 		log.info("Loading Graph from database");
-		
-		this.graph = new Graph<GasStation>();
 
 		log.info("Fetching all stations from database.");
 		double fetchStartTime = System.currentTimeMillis();
-		Set<GasStation> allStations = dbHandler.getAllGasStations();
+		List<GasStation> allStations = dbHandler.getAllGasStations().stream().collect(Collectors.toList());
 		log.info("Fetched " + allStations.size() + " stations.");
-		log.info("Fetching all stations took " + (System.currentTimeMillis()-fetchStartTime)/1000.0 + " seconds.");
+		log.info("Fetching all stations took " + (System.currentTimeMillis() - fetchStartTime) / 1000.0 + " seconds.");
 
-		List<Vertex<GasStation>> allVertices = new LinkedList<>();
+		graph = new Graph<GasStation>(allStations.size());
+		double[][] distances = graph.getDistances();
 
 		log.info("Building all vertices and edges for each station.");
 		double buildStartTime = System.currentTimeMillis();
-		for (Iterator<GasStation> iter = allStations.iterator(); iter.hasNext();) {
-			GasStation from = iter.next();
-			Vertex<GasStation> vertex = new Vertex<GasStation>(from);
 
-			for (Iterator<GasStation> connectionIter = allStations.iterator(); connectionIter.hasNext();) {
-				GasStation to = connectionIter.next();
+		GasStation[] allStationsArray = allStations.toArray(new GasStation[1]);
 
-				if (from.equals(to)) {
+		int perc = 0;
+		for (int i = 0; i < allStationsArray.length; i++) {
+//			GasStation from = allStationsArray[i];
+			
+			double[] neighbourDistances = new double[allStations.size()];
+
+			for(int j = 0; j < allStationsArray.length; j++) {
+				if(i == j) {
 					continue;
 				}
-
-				Edge<GasStation> connection = new Edge<>(from, to);
-				vertex.addConnection(connection);
+				
+				double distance = allStationsArray[i].computeDistanceToGasStation(allStationsArray[j]);
+				neighbourDistances[j] = distance;
 			}
-
-			allVertices.add(vertex);
+			
+			distances[i] = neighbourDistances;
+			
+			if (((int) ((double) (i) / allStations.size() * 100)) > perc) {
+				log.info("Vertices: " + perc + " %");
+				perc++;
+			}
 		}
-		log.info("Building all vertices and edges took " + (System.currentTimeMillis()-buildStartTime)/1000.0 + " seconds.");
+		
+		graph.setDistances(distances);
+		graph.setVertices(allStations);
 
-		this.graph.addVertices(allVertices);
+		log.info("Building all vertices and edges took " + (System.currentTimeMillis() - buildStartTime) / 1000.0
+				+ " seconds.");
+
+	}
+
+	public List<Edge<GasStation>> explorativeAStar(GasStation start, GasStation end, double maxRange) {
+
+		graph.setMaxRange(maxRange);
+
+		log.info(graph.getNeighbours(start).size());
+
+		return null;
 	}
 
 }
