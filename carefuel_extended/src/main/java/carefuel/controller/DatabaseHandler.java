@@ -58,6 +58,7 @@ public class DatabaseHandler {
 		this.sessionFactory.close();
 	}
 
+	@SuppressWarnings("unchecked")
 	public Set<GasStation> getAllGasStations() {
 		Set<GasStation> gasStations = new HashSet<>();
 
@@ -105,6 +106,7 @@ public class DatabaseHandler {
 		org.hibernate.Query query = session
 				.createQuery("from " + GasStationPricePrediction.class.getSimpleName() + " where stid='" + id + "'");
 
+		@SuppressWarnings("unchecked")
 		List<GasStationPricePrediction> temp = query.list();
 
 		session.getTransaction().commit();

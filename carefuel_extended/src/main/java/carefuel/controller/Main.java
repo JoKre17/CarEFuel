@@ -7,6 +7,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import carefuel.path.PathFinder;
+
 /**
  *
  * Main is the entry class of the application. It starts the webserver (with
@@ -20,6 +22,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Main {
 
 	private static final Logger log = LogManager.getLogger(Main.class);
+	
+	private static PathFinder pathFinder;
 
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Extended at " + new Date().toString());
@@ -28,6 +32,9 @@ public class Main {
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
 		log.info(databaseHandler.getAllGasStations().stream().findFirst().get().toJSON().toString());
+		
+		pathFinder = new PathFinder(databaseHandler);
+		
 		databaseHandler.exit();
 	}
 }

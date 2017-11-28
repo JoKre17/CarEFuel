@@ -9,12 +9,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.hibernate.annotations.Type;
 import org.json.JSONObject;
-
-import carefuel.controller.Main;
 
 /**
  * Entity class to represent the table GASSTATION in the database
@@ -25,7 +21,7 @@ import carefuel.controller.Main;
 @Entity
 @Table(name = "gas_station")
 public class GasStation {
-	private static final Logger log = LogManager.getLogger(Main.class);
+//	private static final Logger log = LogManager.getLogger(Main.class);
 
 	@Id // tells hibernate that this is the primary key
 	@Type(type = "pg-uuid")
@@ -235,6 +231,10 @@ public class GasStation {
 	 */
 	public void setStreetName(String streetName) {
 		this.streetName = streetName;
+	}
+	
+	public double computeDistanceToGasStation(GasStation other) {
+		return 0;
 	}
 
 	/**
