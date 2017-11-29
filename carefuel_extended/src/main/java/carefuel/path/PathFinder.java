@@ -103,15 +103,6 @@ public class PathFinder {
 
 		}
 
-		// make it symmetrical
-		// for (int i = 0; i < distances.length; i++) {
-		// for (int j = 0; j < distances[i].length - i; j++) {
-		// if (distances[i][j] == null) {
-		// distances[i][j] = distances[j][i];
-		// }
-		// }
-		// }
-
 		graph.setDistances(distances);
 		graph.setVertices(allStations);
 
