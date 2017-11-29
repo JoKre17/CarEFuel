@@ -62,8 +62,6 @@ public class Graph<E> {
 		for (int i = 0; i < neighbourDistances.length; i++) {
 			Short distance = neighbourDistances[i];
 
-			log.info(i + ": " + distance);
-
 			if (distance <= Vertex.range) {
 				Edge<E> edge = new Edge<E>(vertex, vertices.get(i));
 				edge.setDistance(distance);

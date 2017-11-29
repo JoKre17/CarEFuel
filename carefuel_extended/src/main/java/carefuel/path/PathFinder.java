@@ -138,7 +138,16 @@ public class PathFinder {
 
 		graph.setMaxRange(maxRange);
 
-		log.info(graph.getNeighbours(start).size());
+		log.info("Start:");
+		log.info(start);
+
+		log.info("Neighbours:");
+		for (Edge<GasStation> g : graph.getNeighbours(start)) {
+			log.info(g.getTo());
+		}
+
+		log.info("End:");
+		log.info(end);
 
 		return null;
 	}
