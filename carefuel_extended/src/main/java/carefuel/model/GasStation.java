@@ -1,13 +1,10 @@
 package carefuel.model;
 
 import java.io.Serializable;
-import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
@@ -53,13 +50,13 @@ public class GasStation implements Serializable {
 	@Column(name = "lng")
 	private double longitude;
 
-	@OneToMany
-	@JoinColumn(name = "stid")
-	private Set<GasStationPrice> gasStationPrices;
-
-	@OneToMany
-	@JoinColumn(name = "stid")
-	private Set<GasStationPricePrediction> gasStationPricePredictions;
+	// @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	// @JoinColumn(name = "stid")
+	// private Set<GasStationPrice> gasStationPrices;
+	//
+	// @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	// @JoinColumn(name = "stid")
+	// private Set<GasStationPricePrediction> gasStationPricePredictions;
 
 	/**
 	 * the default constructor is necessary for hibernate to get all gas stations
@@ -83,19 +80,19 @@ public class GasStation implements Serializable {
 		return this.city;
 	}
 
-	/**
-	 * @return the gasStationPricePredictions
-	 */
-	public Set<GasStationPricePrediction> getGasStationPricePredictions() {
-		return this.gasStationPricePredictions;
-	}
-
-	/**
-	 * @return the gasStationPrices
-	 */
-	public Set<GasStationPrice> getGasStationPrices() {
-		return this.gasStationPrices;
-	}
+	// /**
+	// * @return the gasStationPricePredictions
+	// */
+	// public Set<GasStationPricePrediction> getGasStationPricePredictions() {
+	// return this.gasStationPricePredictions;
+	// }
+	//
+	// /**
+	// * @return the gasStationPrices
+	// */
+	// public Set<GasStationPrice> getGasStationPrices() {
+	// return this.gasStationPrices;
+	// }
 
 	/**
 	 * @return the houseNumber
@@ -162,21 +159,22 @@ public class GasStation implements Serializable {
 		this.city = city;
 	}
 
-	/**
-	 * @param gasStationPricePredictions
-	 *            the gasStationPricePredictions to set
-	 */
-	public void setGasStationPricePredictions(Set<GasStationPricePrediction> gasStationPricePredictions) {
-		this.gasStationPricePredictions = gasStationPricePredictions;
-	}
-
-	/**
-	 * @param gasStationPrices
-	 *            the gasStationPrices to set
-	 */
-	public void setGasStationPrices(Set<GasStationPrice> gasStationPrices) {
-		this.gasStationPrices = gasStationPrices;
-	}
+	// /**
+	// * @param gasStationPricePredictions
+	// * the gasStationPricePredictions to set
+	// */
+	// public void setGasStationPricePredictions(Set<GasStationPricePrediction>
+	// gasStationPricePredictions) {
+	// this.gasStationPricePredictions = gasStationPricePredictions;
+	// }
+	//
+	// /**
+	// * @param gasStationPrices
+	// * the gasStationPrices to set
+	// */
+	// public void setGasStationPrices(Set<GasStationPrice> gasStationPrices) {
+	// this.gasStationPrices = gasStationPrices;
+	// }
 
 	/**
 	 * @param houseNumber
@@ -235,16 +233,6 @@ public class GasStation implements Serializable {
 	}
 
 	/**
-	 * Computes distance in kilometers
-	 * @param other
-	 * @return
-	 */
-	public double computeDistanceToGasStation(GasStation other) {
-		return 6378.388 * Math.acos(Math.sin(latitude) * Math.sin(other.getLatitude())
-				+ Math.cos(latitude) * Math.cos(other.getLatitude()) * Math.cos(other.getLongitude() - longitude));
-	}
-
-	/**
 	 * returns the gas station in json format
 	 * 
 	 * @return
@@ -274,18 +262,18 @@ public class GasStation implements Serializable {
 	public String toString() {
 		return "GasStation [id=" + this.id + ", name=" + this.name + ", brand=" + this.brand + ", streetName="
 				+ this.streetName + ", houseNumber=" + this.houseNumber + ", postalCode=" + this.postalCode + ", city="
-				+ this.city + ", latitude=" + this.latitude + ", longitude=" + this.longitude + ", gasStationPrices="
-				+ this.gasStationPrices + "]";
+				+ this.city + ", latitude=" + this.latitude + ", longitude=" + this.longitude + "]";
 	}
-	
+
 	@Override
 	public boolean equals(Object other) {
-		if(other instanceof GasStation) {
+		if (other instanceof GasStation) {
 			GasStation o = (GasStation) other;
-			
+
 			return id.equals(o.getId());
 		}
-		
-		else return false;
+
+		else
+			return false;
 	}
 }
