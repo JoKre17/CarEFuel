@@ -42,15 +42,21 @@ public class Main {
 		List<GasStation> allStations = databaseHandler.getAllGasStations().stream().collect(Collectors.toList());
 		log.info(allStations.stream().findFirst().get().toJSON().toString());
 
+		// allStations = allStations.subList(0, 100);
+		// Test EA* Algorithm
 		int randomStart = (int) (Math.random() * (allStations.size() - 1));
 		int randomEnd = (int) (Math.random() * (allStations.size() - 1));
 
 		GasStation start = allStations.get(randomStart);
 		GasStation end = allStations.get(randomEnd);
+		log.info("Start: " + allStations.indexOf(start) + " : " + start.getId());
+		log.info("End  : " + allStations.indexOf(end) + " : " + end.getId());
 		double range = (3.0 / 5.6) * 100;
 
+		log.info("Assumed max U:" + range);
 		pathFinder = new PathFinder(databaseHandler);
-		log.info(pathFinder.explorativeAStar(start, end, range));
+		log.info(pathFinder.explorativeAStar(start, end, range, 0));
+		log.info(pathFinder.explorativeAStar(start, end, range, 1));
 
 		// databaseHandler.test();
 		// log.info(databaseHandler.getAllGasStations().stream().findFirst().get().toJSON().toString());

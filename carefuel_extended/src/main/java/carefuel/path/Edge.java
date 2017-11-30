@@ -1,69 +1,56 @@
 package carefuel.path;
 
-public class Edge<E> implements Comparable<E>{
-	
-	private E from;
-	private E to;
-	
-	private double distance;
+public class Edge<E> implements Comparable<Edge<E>> {
+
+	private Vertex<E> from;
+	private Vertex<E> to;
+
+	private Double distance;
 	private double weight;
-	
-	public Edge(E from, E to) {
+
+	public Edge(Vertex<E> from, Vertex<E> to) {
 		this.from = from;
 		this.to = to;
-		
+
 		weight = 1;
 	}
-	
-	public E getFrom() {
+
+	public Vertex<E> getFrom() {
 		return from;
 	}
-	
-	public E getTo() {
+
+	public Vertex<E> getTo() {
 		return to;
 	}
-	
+
 	public void setDistance(double distance) {
 		this.distance = distance;
 	}
-	
-	public double getDistance() {
+
+	public Double getDistance() {
 		return this.distance;
 	}
-	
+
 	public void setWeight(double weight) {
 		this.weight = weight;
 	}
-	
+
 	public double getWeight() {
 		return this.weight;
 	}
-	
-	public double getValue() {
-		return this.distance * this.weight;
+
+	public double getValue(double x) {
+		return this.distance * (1.0 + (this.weight - 1.0) * x);
 	}
-	
+
 	@Override
 	public String toString() {
 		return from + " => " + to;
 	}
 
 	@Override
-	public int compareTo(Object arg0) {
-		if(arg0 instanceof Edge) {
-			@SuppressWarnings("unchecked")
-			Edge<E> other = (Edge<E>) arg0;
-			
-			if(this.getValue() < other.getValue()) {
-				return 1;
-			} else {
-				return -1;
-			}
-		}
-		
-		return 0;
+	public int compareTo(Edge<E> other) {
+		return distance.compareTo(other.getDistance());
 	}
-	
-	
 
 }

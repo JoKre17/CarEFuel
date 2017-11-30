@@ -233,6 +233,29 @@ public class GasStation implements Serializable {
 	}
 
 	/**
+	 * Computes distance in kilometers
+	 * 
+	 * @param other
+	 * @return
+	 */
+	public static double computeDistanceToGasStation(double lat_a, double lon_a, double lat_b, double lon_b) {
+		return 6378.388 * Math
+				.acos(Math.sin(lat_a) * Math.sin(lat_b) + Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a));
+	}
+
+	/**
+	 * Computes distance in kilometers
+	 * 
+	 * @param other
+	 * @return
+	 */
+	public double computeDistanceToGasStation(GasStation from, GasStation to) {
+		return 6378.388
+				* Math.acos(Math.sin(from.getLatitude()) * Math.sin(to.getLatitude()) + Math.cos(from.getLatitude())
+						* Math.cos(to.getLatitude()) * Math.cos(to.getLongitude() - from.getLongitude()));
+	}
+
+	/**
 	 * returns the gas station in json format
 	 * 
 	 * @return
@@ -266,14 +289,33 @@ public class GasStation implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object other) {
-		if (other instanceof GasStation) {
-			GasStation o = (GasStation) other;
-
-			return id.equals(o.getId());
-		}
-
-		else
-			return false;
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof GasStation)) {
+			return false;
+		}
+		GasStation other = (GasStation) obj;
+		if (id == null) {
+			if (other.id != null) {
+				return false;
+			}
+		} else if (!id.equals(other.id)) {
+			return false;
+		}
+		return true;
+	}
+
 }
