@@ -58,6 +58,9 @@ public class Main {
 		log.info(pathFinder.explorativeAStar(start, end, range, 0));
 		log.info(pathFinder.explorativeAStar(start, end, range, 1));
 
+		// databaseHandler.getNeighbors(UUID.fromString("550e8400-e29b-11d4-a717-446655440000"),
+		// 100000);
+
 		// databaseHandler.test();
 		// log.info(databaseHandler.getAllGasStations().stream().findFirst().get().toJSON().toString());
 
