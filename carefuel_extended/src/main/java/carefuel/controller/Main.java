@@ -42,7 +42,6 @@ public class Main {
 		List<GasStation> allStations = databaseHandler.getAllGasStations().stream().collect(Collectors.toList());
 		log.info(allStations.stream().findFirst().get().toJSON().toString());
 
-		// allStations = allStations.subList(0, 100);
 		// Test EA* Algorithm
 		int randomStart = (int) (Math.random() * (allStations.size() - 1));
 		int randomEnd = (int) (Math.random() * (allStations.size() - 1));
@@ -51,12 +50,12 @@ public class Main {
 		GasStation end = allStations.get(randomEnd);
 		log.info("Start: " + allStations.indexOf(start) + " : " + start.getId());
 		log.info("End  : " + allStations.indexOf(end) + " : " + end.getId());
-		double range = (3.0 / 5.6) * 100;
+		double range = (5.0 / 5.6) * 100;
 
 		log.info("Assumed max U:" + range);
 		pathFinder = new PathFinder(databaseHandler);
 		log.info(pathFinder.explorativeAStar(start, end, range, 0));
-		log.info(pathFinder.explorativeAStar(start, end, range, 1));
+//		log.info(pathFinder.explorativeAStar(start, end, range, 1));
 
 		// databaseHandler.getNeighbors(UUID.fromString("550e8400-e29b-11d4-a717-446655440000"),
 		// 100000);
@@ -66,6 +65,6 @@ public class Main {
 
 		// Sollte ggf raus, da die Spring Applikation ja noch läuft und die DB benötigt
 		// wird
-		databaseHandler.exit();
+//		databaseHandler.exit();
 	}
 }

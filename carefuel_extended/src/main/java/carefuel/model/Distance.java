@@ -78,5 +78,49 @@ public class Distance implements Serializable {
 	public void setId_2(UUID id_2) {
 		this.id_2 = id_2;
 	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		long temp;
+		temp = Double.doubleToLongBits(distance);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result + ((id_1 == null) ? 0 : id_1.hashCode());
+		result = prime * result + ((id_2 == null) ? 0 : id_2.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof Distance)) {
+			return false;
+		}
+		Distance other = (Distance) obj;
+		if (Double.doubleToLongBits(distance) != Double.doubleToLongBits(other.distance)) {
+			return false;
+		}
+		if (id_1 == null) {
+			if (other.id_1 != null) {
+				return false;
+			}
+		} else if (!id_1.equals(other.id_1)) {
+			return false;
+		}
+		if (id_2 == null) {
+			if (other.id_2 != null) {
+				return false;
+			}
+		} else if (!id_2.equals(other.id_2)) {
+			return false;
+		}
+		return true;
+	}
 
 }

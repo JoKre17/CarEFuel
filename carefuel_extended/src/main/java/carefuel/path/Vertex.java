@@ -1,5 +1,6 @@
 package carefuel.path;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.stream.Collectors;
@@ -13,7 +14,10 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 
 	Graph<E> graph;
 	private E value;
-	private Double cost;
+	private Double hCost;
+	private Double gCost;
+	
+	public List<Double> gCostHistory = new ArrayList<>();
 
 	// This is the maximal range where connections will be considered
 	protected static double range;
@@ -53,17 +57,31 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 				neighbours.stream().filter(e -> e.getDistance() <= range).collect(Collectors.toList()));
 	}
 
-	public void setCost(double cost) {
-		this.cost = cost;
+	public void setHCost(double hCost) {
+		this.hCost = hCost;
 	}
 
-	public Double getCost() {
-		return this.cost;
+	public Double getHCost() {
+		return this.hCost;
+	}
+	
+	public void setGCost(double gCost) {
+		this.gCost = gCost;
+		gCostHistory.add(this.gCost);
+	}
+	
+	public Double getGCost() {
+		return this.gCost;
 	}
 
 	@Override
+	public String toString() {
+		return gCost.toString();
+	}
+	
+	@Override
 	public int compareTo(Vertex<E> other) {
-		return cost.compareTo(other.getCost());
+		return hCost.compareTo(other.getHCost());
 	}
 
 	@Override

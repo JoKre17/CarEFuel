@@ -1,5 +1,6 @@
 package carefuel.path;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -10,16 +11,18 @@ public class Graph<E> {
 
 	private static final Logger log = LogManager.getLogger(Graph.class);
 
-	private List<E> vertices;
+	private List<E> values;
+	private List<Vertex<E>> vertices;
 	private Short[][] distances;
 	private int size;
 
-	public Graph(List<E> vertices, Short[][] distances) throws Exception {
-		if (vertices.size() != distances.length) {
+	public Graph(List<E> values, Short[][] distances) throws Exception {
+		if (values.size() != distances.length) {
 			throw new Exception("Dimensions of vertices and distances don't get along!");
 		}
 
-		this.vertices = vertices;
+		this.values = values;
+		this.vertices = new ArrayList<>();
 		this.setDistances(distances);
 	}
 
@@ -34,17 +37,20 @@ public class Graph<E> {
 		this.size = distances.length;
 
 	}
-
-	private void setSize(int size) {
-		this.size = size;
-		distances = new Short[size][size];
+	
+	public void setMaxRange(double maxRange) {
+		Vertex.range = maxRange;
 	}
 
 	public int getSize() {
 		return this.size;
 	}
 
-	public List<E> getVertices() {
+	public List<E> getValues() {
+		return this.values;
+	}
+	
+	public List<Vertex<E>> getVertices() {
 		return this.vertices;
 	}
 
@@ -59,13 +65,13 @@ public class Graph<E> {
 			return neighbours;
 		}
 
-		Short[] neighbourDistances = distances[vertices.indexOf(node.getValue())];
+		Short[] neighbourDistances = distances[values.indexOf(node.getValue())];
 
 		for (int i = 0; i < neighbourDistances.length; i++) {
 			Short distance = neighbourDistances[i];
 
 			if (distance <= Vertex.range) {
-				Edge<E> edge = new Edge<E>(node, createVertex(vertices.get(i)));
+				Edge<E> edge = new Edge<E>(node, createVertex(values.get(i)));
 				edge.setDistance(distance);
 				// TODO set weight of edge to the price
 				edge.setWeight(1);
@@ -76,12 +82,19 @@ public class Graph<E> {
 		return neighbours;
 	}
 
-	public void setMaxRange(double maxRange) {
-		Vertex.range = maxRange;
-	}
-
 	public Vertex<E> createVertex(E value) {
-		return new Vertex<E>(value);
+		Vertex<E> node = getVertexByValue(value);
+		if(node == null) {
+			node = new Vertex<E>(value);
+			this.vertices.add(node);
+		}
+		return node;
 	}
-
+	
+	public Vertex<E> getVertexByValue(E value) {
+		Vertex<E> vertex = vertices.stream().filter(v -> v.getValue().equals(value)).findFirst().orElse(null);
+		
+		return vertex;
+	}
+	
 }
