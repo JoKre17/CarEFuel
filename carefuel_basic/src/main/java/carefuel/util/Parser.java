@@ -127,7 +127,8 @@ public class Parser {
 	 */
 	private void safePredictedData() {
 		try {
-			PrintWriter out = new PrintWriter(System.getProperty("user.dir") + "/resource/predictedPrices.txt");
+			PrintWriter out = new PrintWriter(
+					System.getProperty("user.dir") + "/out/" + file.getName() + "-predictedPrices.txt");
 
 			for (GasStation g : gasStations) {
 				out.println(

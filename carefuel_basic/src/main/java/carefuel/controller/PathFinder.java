@@ -21,6 +21,7 @@ public class PathFinder {
 	private List<Node> bestPath;
 	private int capacity;
 	private final double gasConsumption = 5.6;
+	private String fileName;
 
 	/**
 	 * Constructor of the Path finder.
@@ -28,9 +29,10 @@ public class PathFinder {
 	 * @param gasStations
 	 * @param capacity
 	 */
-	public PathFinder(List<GasStation> gasStations, int capacity) {
+	public PathFinder(List<GasStation> gasStations, int capacity, String fileName) {
 		this.gasStations = gasStations;
 		this.capacity = capacity;
+		this.fileName = fileName;
 	}
 
 	/**
@@ -51,7 +53,7 @@ public class PathFinder {
 	 */
 	private void safePath() {
 		try {
-			PrintWriter out = new PrintWriter(System.getProperty("user.dir") + "/resource/solution.txt");
+			PrintWriter out = new PrintWriter(System.getProperty("user.dir") + "/out/" + fileName + "-solution.txt");
 
 			for (Node n : bestPath) {
 				out.println(n.getGasStation().getArrivalDate() + ";" + n.getGasStation().getID() + ";"

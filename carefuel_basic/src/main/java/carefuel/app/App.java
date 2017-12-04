@@ -33,17 +33,60 @@ public class App {
 
 		// testLog();
 
-		File file = new File(System.getProperty("user.dir") + "/resource/Bertha Benz Memorial Route.csv");
+		// File file = new File(System.getProperty("user.dir") +
+		// "/resource/routes/Bertha Benz Memorial Route.csv");
 
-		Parser parser = new Parser(file);
-		parser.parse();
+		while (true) {
+			File file = getOperation();
 
-		PathFinder pf = new PathFinder(parser.getGasStations(), parser.getCapacity());
-		pf.computeBestPath();
+			if (file == null) {
+				// evaluate gasoline prices
+			} else {
+				// calculate beste filling strategy
+				Parser parser = new Parser(file);
+				parser.parse();
 
-		Evaluator ev = new Evaluator(parser.getGasStations());
-		ev.evaluate();
+				PathFinder pf = new PathFinder(parser.getGasStations(), parser.getCapacity(), file.getName());
+				pf.computeBestPath();
 
+				Evaluator ev = new Evaluator(parser.getGasStations());
+				ev.evaluate();
+			}
+		}
+	}
+
+	private static File getOperation() {
+		System.out.println("Select the route: ");
+		File routeFolder = new File(System.getProperty("user.dir") + "/resource/routes/");
+		int i = 0;
+		for (; i < routeFolder.listFiles().length; i++) {
+			File f = routeFolder.listFiles()[i];
+			System.out.println("[" + i + "] " + f.getName());
+		}
+		System.out.println("[" + i + "] Evaluate gasoline prices");
+
+		String in = "";
+		try {
+			in = System.console().readLine();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("!!!   Please run the .jar in the target folder   !!!");
+			System.exit(-1);
+
+		}
+
+		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
+		if (n == -1) {
+			System.out.println("*** Please enter a valid nummber ***");
+			getOperation();
+		}
+
+		// evaluation
+		if (n > i) {
+			return null;
+		}
+
+		return routeFolder.listFiles()[n];
 	}
 
 	/*
