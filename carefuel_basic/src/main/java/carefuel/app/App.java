@@ -40,11 +40,13 @@ public class App {
 			File file = getOperation();
 
 			if (file == null) {
-				// evaluate gasoline prices
+				// Predict gasoline prices
+				Parser parser = new Parser(null);
+				parser.parseGasStationsToPredict(getFileToPredictPrices());
 			} else {
 				// calculate beste filling strategy
 				Parser parser = new Parser(file);
-				parser.parse();
+				parser.parseRoute();
 
 				PathFinder pf = new PathFinder(parser.getGasStations(), parser.getCapacity(), file.getName());
 				pf.computeBestPath();
@@ -56,14 +58,15 @@ public class App {
 	}
 
 	private static File getOperation() {
-		System.out.println("Select the route: ");
+		System.out.println("\n\nSelect the route: ");
 		File routeFolder = new File(System.getProperty("user.dir") + "/resource/routes/");
-		int i = 0;
-		for (; i < routeFolder.listFiles().length; i++) {
-			File f = routeFolder.listFiles()[i];
+		int i = 1;
+		for (; (i - 1) < routeFolder.listFiles().length; i++) {
+			File f = routeFolder.listFiles()[i - 1];
 			System.out.println("[" + i + "] " + f.getName());
 		}
-		System.out.println("[" + i + "] Evaluate gasoline prices");
+		System.out.println("[" + i + "] Predict gasoline prices");
+		System.out.println("[" + (i + 1) + "] Exit");
 
 		String in = "";
 		try {
@@ -82,11 +85,47 @@ public class App {
 		}
 
 		// evaluation
-		if (n > i) {
+		if (n == i) {
 			return null;
+			// Exit
+		} else if (n == i + 1) {
+			System.exit(-1);
 		}
 
-		return routeFolder.listFiles()[n];
+		return routeFolder.listFiles()[n - 1];
+	}
+
+	private static File getFileToPredictPrices() {
+		System.out.println("\n\nSelect the file to predict prices for: ");
+		File folder = new File(System.getProperty("user.dir") + "/resource/pricePrediction/");
+		int i = 1;
+		for (; (i - 1) < folder.listFiles().length; i++) {
+			File f = folder.listFiles()[i - 1];
+			System.out.println("[" + i + "] " + f.getName());
+		}
+		System.out.println("[" + i + "] Exit");
+
+		String in = "";
+		try {
+			in = System.console().readLine();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("!!!   Please run the .jar in the target folder   !!!");
+			System.exit(-1);
+
+		}
+
+		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
+		if (n == -1) {
+			System.out.println("*** Please enter a valid nummber ***");
+			getFileToPredictPrices();
+		}
+
+		if (n == i) {
+			System.exit(-1);
+		}
+
+		return folder.listFiles()[n - 1];
 	}
 
 	/*

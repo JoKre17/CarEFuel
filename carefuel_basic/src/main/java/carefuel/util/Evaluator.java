@@ -34,17 +34,23 @@ public class Evaluator {
 	 * predicted and the actual gasoline price.
 	 */
 	public void evaluate() {
-		System.out.println("\n-------------------- Evaluation ---------------------");
+		boolean outputEnabled = false;
+		if (true) {
+			System.out.println("\n-------------------- Evaluation ---------------------");
+		}
 		double sum = 0;
 
-		System.out.println("Gas Station Analysis: ");
+		if (outputEnabled) {
+			System.out.println("Gas Station Analysis: ");
+		}
 		for (GasStation g : gasStations) {
 
 			double diff = Math.abs(g.getPredictedPrice() - getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
-			System.out.println("Predicted: " + g.getPredictedPrice());
-			System.out.println("Actual: " + getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
-			System.out.println("Difference: " + diff + "\n");
-
+			if (outputEnabled) {
+				System.out.println("Predicted: " + g.getPredictedPrice());
+				System.out.println("Actual: " + getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
+				System.out.println("Difference: " + diff + "\n");
+			}
 			sum += diff;
 		}
 

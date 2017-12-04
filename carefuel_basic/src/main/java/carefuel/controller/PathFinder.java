@@ -53,7 +53,8 @@ public class PathFinder {
 	 */
 	private void safePath() {
 		try {
-			PrintWriter out = new PrintWriter(System.getProperty("user.dir") + "/out/" + fileName + "-solution.txt");
+			PrintWriter out = new PrintWriter(
+					System.getProperty("user.dir") + "/out/routes/" + fileName + "-solution.txt");
 
 			for (Node n : bestPath) {
 				out.println(n.getGasStation().getArrivalDate() + ";" + n.getGasStation().getID() + ";"
