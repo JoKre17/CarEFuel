@@ -130,55 +130,65 @@ def model_fn(features, labels, mode):
 
     '''
         Parse the network architecture string.
-        It has the following format: layer_name [arg1 arg2 ...];layer_name [arg1 arg2 ...];...
-        layer_name can be either of the following, with the corresponding arguments
+        It has the following format: name [arg1 arg2 ...];name [arg1 arg2 ...];...
+        name can be either of the following, with the corresponding arguments
+        - rnn lstm lstm -> Creates 2 lstm cells of size n_hours_per_month (always should be the first argument) as the
+            recurrent unit of this network
         - dense output_size -> Creates a fully connected layer from the prev layer with 'output_size' nodes
-        - rnn 5 -> Creates 5 lstm cells of size n_hours_per_month 
+        - 
     '''
     network_definition = FLAGS.network_definition.split(";")
+    print(network_definition)
 
+    # output continuously contains the tensor to the last layer built in the following loop
+    output = inputs
     # Iterate over all layers and build them step by step
     for layer in network_definition:
-        args = layer.split()
+        args = layer.split(",")
         # Build the corresponding layer
-        if args[0] == "dense":
-            print("dense, ", args[1])
-        elif args[0] == "rnn":
+        if args[0] == "rnn":
+            # Create all hidden layer at once
+            layers = []
+            for layer_name in args[1:]:
+                if layer_name == "lstm":
+                    layers.append(lstm_layer())
 
-    return
+            hidden_layers = tf.contrib.rnn.MultiRNNCell(layers, state_is_tuple=True)
 
-    # Create all hidden layers
-    hidden_layers = tf.contrib.rnn.MultiRNNCell([lstm_layer() for _ in range(params['n_layer'])], state_is_tuple=True)
 
-    ''' ------------MAGIC! Unrolling of the RNN network-------------'''
-    # Input is now a list of length max_past_months of tensors with shape (batch_size, n_hours_per_month)
-    input = tf.unstack(inputs, num=params['max_past_months'], axis=1)
+            ''' ------------MAGIC! Unrolling of the RNN network-------------'''
+            # Input is now a list of length max_past_months of tensors with shape (batch_size, n_hours_per_month)
+            input = tf.unstack(inputs, num=params['max_past_months'], axis=1)
 
-    # Providing the sequence_length parameter allows for dynamic calculation. Only n_prev_months are calculated,
-    # the last entries of rnn_output contain only zeros!
-    rnn_output, _ = tf.contrib.rnn.static_rnn(hidden_layers, input, sequence_length=n_prev_months, dtype=tf.float32)
+            # Providing the sequence_length parameter allows for dynamic calculation. Only n_prev_months are calculated,
+            # the last entries of rnn_output contain only zeros!
+            rnn_output, _ = tf.contrib.rnn.static_rnn(hidden_layers, input, sequence_length=n_prev_months,
+                                                      dtype=tf.float32)
 
-    '''
-    Hack to build the indexing and retrieve the right output 
-    (from https://github.com/aymericdamien/TensorFlow-Examples/blob/master/examples/3_NeuralNetworks/dynamic_rnn.py
-    '''
-    # 'output' is a list of output at every timestep, we pack them in a Tensor
-    # and change back dimension to [batch_size, n_step, n_input]
-    rnn_output = tf.stack(rnn_output)
-    output = tf.transpose(rnn_output, [1, 0, 2])
+            '''
+            Hack to build the indexing and retrieve the right output 
+            (from https://github.com/aymericdamien/TensorFlow-Examples/blob/master/examples/3_NeuralNetworks/dynamic_rnn.py
+            '''
+            # 'output' is a list of output at every timestep, we pack them in a Tensor
+            # and change back dimension to [batch_size, n_step, n_input]
+            rnn_output = tf.stack(rnn_output)
+            output = tf.transpose(rnn_output, [1, 0, 2])
 
-    batch_size = tf.shape(output)[0]
-    # Start indices for each sample
-    index = tf.range(0, batch_size) * params['max_past_months'] + (n_prev_months - 1)
-    # Indexing of the last calculated element
-    output = tf.gather(tf.reshape(output, [-1, params['n_hours_per_month']]), index)
+            batch_size = tf.shape(output)[0]
+            # Start indices for each sample
+            index = tf.range(0, batch_size) * params['max_past_months'] + (n_prev_months - 1)
+            # Indexing of the last calculated element
+            output = tf.gather(tf.reshape(output, [-1, params['n_hours_per_month']]), index)
 
-    # Apply dropout if training
-    if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
-        output = tf.nn.dropout(output, params['keep_prob'])
+        elif args[0] == "dense":
+            size = int(args[1])
+            # Apply dropout if training
+            if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
+                output = tf.nn.dropout(output, params['keep_prob'])
 
-    # Combine output in a densely connected layer
-    output = tf.layers.dense(inputs=output, units=params['n_hours_per_month'], activation=tf.nn.relu)
+            # Combine output in a densely connected layer
+            output = tf.layers.dense(inputs=output, units=size, activation=tf.nn.relu)
+
 
     # Rescale and give name for later usage
     with tf.name_scope("Output"):
@@ -190,8 +200,8 @@ def model_fn(features, labels, mode):
         next_month = labels / params['max_price']
         loss = tf.losses.absolute_difference(next_month, output)
 
-        # Define optimizer
-        optimizer = tf.train.AdamOptimizer()
+        # Define optimizer for training
+        optimizer = tf.train.AdamOptimizer(params["learning_rate"])
         train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
 
     return tf.estimator.EstimatorSpec(
@@ -203,6 +213,7 @@ def model_fn(features, labels, mode):
 
 
 def save_model(estimator):
+    """Takes an estimator and stores the meta graph containing the trained variables to FLAGS.save_path"""
     estimator.export_savedmodel(FLAGS.save_path, tf.estimator.export.build_raw_serving_input_receiver_fn(
         {
             'prev_months': tf.placeholder(dtype=tf.float32,
@@ -220,13 +231,15 @@ def main(_):
     if not FLAGS.network_definition:
         raise ValueError("Need the network definition!")
     if FLAGS.batch_size:
-        params["batch_size"] = FLAGS.batch_size
+        params["batch_size"] = int(FLAGS.batch_size)
     if FLAGS.keep_prob:
-        params["keep_prob"] = FLAGS.keep_prob
+        params["keep_prob"] = float(FLAGS.keep_prob)
     if FLAGS.learning_rate:
-        params["learning_rate"] = FLAGS.learning_rate
+        params["learning_rate"] = float(FLAGS.learning_rate)
     if FLAGS.batch_size:
-        params["batch_size"] = FLAGS.batch_size
+        params["batch_size"] = int(FLAGS.batch_size)
+
+    print(params)
 
     # Build the estimator based on the model defined above
     nn = tf.estimator.Estimator(model_fn=model_fn, model_dir=FLAGS.save_path)

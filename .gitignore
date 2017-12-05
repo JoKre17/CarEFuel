@@ -1,7 +1,7 @@
 *.tfrecord
 rnn_training/.idea/
 rnn_training/model
-/.idea/
-
+.idea/
+.pyc
 rnn_training/.idea/
 rnn_training/model
