@@ -30,7 +30,7 @@ import carefuel.app.App;
  * The PricePredictor class enables the user to predict the prices of a gas
  * station up to one month in the future. It uses a pretrained tensorflow model
  * that needs to be located in carefuel_basic/rnn_model.
- * 
+ *
  * @author nils
  *
  */
@@ -42,7 +42,8 @@ public class PricePredictor {
 	private String modelPath;
 	private String gasPricesDirectory;
 	private final int hoursPerMonth = 744;
-	private final int maxPrevMonths = 50; // All gas stations have a maximum of 50 previous months of entries
+	private final int maxPrevMonths = 50; // All gas stations have a maximum of
+											// 50 previous months of entries
 
 	/**
 	 * @ToDo add functionality to decide between CSV files and database as data
@@ -63,8 +64,9 @@ public class PricePredictor {
 	/**
 	 * This function returns a list of all dates and corresponding prices of a
 	 * single gas station with the ID gasStationID.
-	 * 
-	 * @ToDo add functionality to decide between CSV files and database as source
+	 *
+	 * @ToDo add functionality to decide between CSV files and database as
+	 *       source
 	 * @return the according list of dates and prices or null if file cannot be
 	 *         opened
 	 */
@@ -114,9 +116,9 @@ public class PricePredictor {
 	}
 
 	/**
-	 * This function interpolates the data given by 'datePriceList' at every hour
-	 * linearly.
-	 * 
+	 * This function interpolates the data given by 'datePriceList' at every
+	 * hour linearly.
+	 *
 	 * @param datePriceList
 	 *            should contain a list of ordered dates and prices from the
 	 *            beginning to the last entry, where the last entry has to be
@@ -124,10 +126,10 @@ public class PricePredictor {
 	 * @param maxDate
 	 *            is the last date that can be used for the prediction
 	 *
-	 * @return Returns a two dimensional array of interpolated data. The first index
-	 *         corresponds to the month and second to the hour of the month,
-	 *         resulting in the shape [?][nHoursPerMonth]. The data is in reversed
-	 *         order and begins at maxDate.
+	 * @return Returns a two dimensional array of interpolated data. The first
+	 *         index corresponds to the month and second to the hour of the
+	 *         month, resulting in the shape [?][nHoursPerMonth]. The data is in
+	 *         reversed order and begins at maxDate.
 	 */
 	private float[][] interpolatePrices(List<Pair<Date, Integer>> datePriceList, Date maxDate) {
 		// Create the data points for the interpolation
@@ -138,9 +140,12 @@ public class PricePredictor {
 		for (int i = datePriceList.size() - 1; i >= 0; i--) {
 			Date currentDate = datePriceList.get(i).getLeft();
 			int currentPrice = datePriceList.get(i).getRight();
-			long diff = (lastDate.getTime() - currentDate.getTime()); // difference in milliseconds;
+			long diff = (lastDate.getTime() - currentDate.getTime()); // difference
+																		// in
+																		// milliseconds;
 
-			// Just in case two dates are added at the same time, slightly move the point to
+			// Just in case two dates are added at the same time, slightly move
+			// the point to
 			// the right for one ms
 			if (i < (datePriceList.size() - 1)) {
 				if (diff == x[datePriceList.size() - i - 2]) {
@@ -155,12 +160,13 @@ public class PricePredictor {
 		PolynomialSplineFunction func = new LinearInterpolator().interpolate(x, y);
 
 		/*
-		 * Use the function to interpolate data at every our of each month, beginning
-		 * with 'maxDate'
+		 * Use the function to interpolate data at every our of each month,
+		 * beginning with 'maxDate'
 		 */
 
 		// Calculate the number of 'whole' months contained in the data
-		long diff_hours = (maxDate.getTime() - datePriceList.get(0).getLeft().getTime()) / (3600 * 1000); // number of
+		long diff_hours = (maxDate.getTime() - datePriceList.get(0).getLeft().getTime()) / (3600 * 1000); // number
+																											// of
 																											// hours
 																											// contained
 		int nMonths = (int) diff_hours / hoursPerMonth;
@@ -180,12 +186,13 @@ public class PricePredictor {
 	}
 
 	/**
-	 * This function takes a string representing a single date and time and parses
-	 * it into a java Date object. The string is expected to be in the format
-	 * "yyyy-MM-dd HH:mm:ssz". It is important to notice that the offset from the
-	 * GMT, indicated by the formatter z, is expected to be in the format +02, as it
-	 * is in the data base and CSV files and not +0200 as it would be commonly used.
-	 * 
+	 * This function takes a string representing a single date and time and
+	 * parses it into a java Date object. The string is expected to be in the
+	 * format "yyyy-MM-dd HH:mm:ssz". It is important to notice that the offset
+	 * from the GMT, indicated by the formatter z, is expected to be in the
+	 * format +02, as it is in the data base and CSV files and not +0200 as it
+	 * would be commonly used.
+	 *
 	 * @throws ParseException
 	 */
 	private Date parseDateString(String dateString) throws ParseException {
@@ -199,7 +206,7 @@ public class PricePredictor {
 	/**
 	 * Convenience function. Calls predictNextMonth and calculates the price at
 	 * predictionDate. See predictNextMonth for more information.
-	 * 
+	 *
 	 * @return the predicted price in cent * 10 at predictionDate.
 	 */
 	public int predictPrice(String maxDateString, String predictionDateString, int gasStationID) throws Exception {
@@ -215,7 +222,8 @@ public class PricePredictor {
 		Date maxDate = parseDateString(maxDateString);
 		Date predictionDate = parseDateString(predictionDateString);
 
-		// Get the number  of hours from maxDate and predictionDate
+		// Get the number"2017-08-21 23:03:06+02" of hours from maxDate and
+		// predictionDate
 		double nHours = (predictionDate.getTime() - maxDate.getTime()) / ((double) 3600 * 1000);
 
 		// Interpolate the value using the previous and next hour
@@ -236,27 +244,33 @@ public class PricePredictor {
 
 	/**
 	 * This function uses the neural network in order to predict all prices of a
-	 * given gas station for the next month since 'maxDate'. It uses all
-	 * previous data before 'maxDate'. Note that 'maxDate' has to be BEFORE the last
-	 * entry in the corresponding data set of the gas station.
-	 * 
+	 * given gas station using for the next month since 'maxDate'. It uses all
+	 * previous data before 'maxDate'. Note that 'maxDate' has to be BEFORE the
+	 * last entry in the corresponding data set of the gas station.
+	 *
 	 * @param maxDateString
 	 *            beginning of the month at which to predict
 	 * @param gasStationID
 	 *            ID of the corresponding gas station
-	 * @return the gasprices of the next month at every hour after maxDateString.
-	 *         The first entry contains the price exactly one hour after
-	 *         maxDateString
+	 * @return the gasprices of the next month at every hour after
+	 *         maxDateString. The first entry contains the price exactly one
+	 *         hour after maxDateString
 	 * @throws Exception
 	 */
 	public float[] predictNextMonth(String maxDateString, int gasStationID) throws Exception {
-		// First load all entries from the gas station and return null if an error
+		// First load all entries from the gas station and return null if an
+		// error
 		// occured
 		ArrayList<Pair<Date, Integer>> datePriceList = getGasPricesToID(gasStationID);
 
 		// Next, find the first entry that is in the next month
 		Date maxDate;
-		maxDate = parseDateString(maxDateString);
+		try {
+			maxDate = parseDateString(maxDateString);
+		} catch (ParseException e) {
+			log.error("Error while parsing maxDateString");
+			throw new Exception();
+		}
 		int firstEntryIndex = 0;
 		for (int i = 0; i < datePriceList.size(); ++i) {
 			// Find the first element that is not before maxdate
@@ -267,39 +281,45 @@ public class PricePredictor {
 		}
 
 		/*
-		 * Interpolate the data from the first to the entry at lastEntryIndex at every
-		 * hour. The array interpolatedPrices is of the form [?][nHoursPerMonth], where ?
-		 * is the number of "whole" months, i.e. every month that still has 31 days á 24
-		 * hours of entries. Note that the array is in reversed form, meaning it goes
-		 * back in time. Therefore, interpolatedPrices[0][0] contains the last price of
-		 * the month before the month that needs to be predicted,
+		 * Interpolate the data from the first to the entry at lastEntryIndex at
+		 * every hour The array interpolatedPrices is of the form
+		 * [?][nHoursPerMonth], where ? is the number of "whole" months, i.e.
+		 * every month that still has 31 days á 24 hours of entries. Note that
+		 * the array is in reversed form, meaning it goes back in time.
+		 * Therefore, interpolatedPrices[0][0] contains the last price of the
+		 * month before the month that needs to be predicted,
 		 * interpolatedPrices[0][1] the price before that and so on.
 		 */
 		float[][] interpolatedPrices = interpolatePrices(datePriceList.subList(0, firstEntryIndex + 1), maxDate);
 
 		/*
-		 * The network expects exactly maxPrevMonths = 50 entries in the first dimension
-		 * of the input tensor (even though not all data from the first months may be
-		 * accessible). Therefore, fill in the according number of zero arrays
+		 * The network expects exactly maxPrevMonths = 50 entries in the first
+		 * dimension of the input tensor (even though not all data from the
+		 * first months may be accessible). Therefore, fill in the according
+		 * number of zero arrays
 		 */
 		int nPrevMonths = interpolatedPrices.length;
 		int nMissingEntries = maxPrevMonths - nPrevMonths;
 		float[][] zeros = new float[nMissingEntries][hoursPerMonth];
 		float[][] combinedInput = ArrayUtils.addAll(interpolatedPrices, zeros);
 
-		// Add another dimension (the network expects three dimensions, due to batches)
+		// Add another dimension (the network expects three dimensions, due to
+		// batches)
 		float[][][] input = { combinedInput };
 
-		// Create the first input tensor of shape (1, 50, 744) containing the previous
+		// Create the first input tensor of shape (1, 50, 744) containing the
+		// previous
 		// months
 		Tensor<Float> prevMonthsTensor = Tensor.create(input, Float.class);
 
-		// Also create an input tensor for the number of previous months of shape (1, 1)
+		// Also create an input tensor for the number of previous months of
+		// shape (1, 1)
 		// -> network avoids using the padded inputs
 		int[] nPrevMonthsArray = { nPrevMonths };
 		Tensor<Integer> nPrevMonthsTensor = Tensor.create(nPrevMonthsArray, Integer.class);
 
 		// Fetch the output tensor of the network
+		@SuppressWarnings("rawtypes")
 		Output output = graph.operation("Output/rescaled_output").output(0);
 
 		// Feed the input tensors and run the TensorFlow graph

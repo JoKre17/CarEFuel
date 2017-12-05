@@ -182,3 +182,114 @@ CREATE INDEX index_on_date_stid
     ON public.gas_station_information_prediction USING btree
     (stid)
     TABLESPACE pg_default;
+	
+	
+
+	
+	
+	
+	
+	
+-- Table: public.distances
+
+-- DROP TABLE public.distances;
+
+CREATE TABLE public.distances
+(
+    id_1 uuid NOT NULL,
+    id_2 uuid NOT NULL,
+    distance double precision,
+    CONSTRAINT distances_pkey PRIMARY KEY (id_1, id_2),
+    CONSTRAINT distances_id_1_fkey FOREIGN KEY (id_1)
+        REFERENCES public.gas_station (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT distances_id_2_fkey FOREIGN KEY (id_2)
+        REFERENCES public.gas_station (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE public.distances
+    OWNER to postgres;
+
+-- Index: index_on_distance
+
+-- DROP INDEX public.index_on_distance;
+
+CREATE INDEX index_on_distance
+    ON public.distances USING btree
+    (distance)
+    TABLESPACE pg_default;
+
+-- Index: index_on_id_1
+
+-- DROP INDEX public.index_on_id_1;
+
+CREATE INDEX index_on_id_1
+    ON public.distances USING btree
+    (id_1)
+    TABLESPACE pg_default;
+
+-- Index: index_on_id_2
+
+-- DROP INDEX public.index_on_id_2;
+
+CREATE INDEX index_on_id_2
+    ON public.distances USING btree
+    (id_2)
+    TABLESPACE pg_default;
+	
+
+	
+	
+	
+	
+-- FUNCTION: public.calculate_distances()
+
+-- DROP FUNCTION public.calculate_distances();
+
+CREATE FUNCTION public.calculate_distances()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$
+DECLARE
+  dest record;
+
+BEGIN
+  FOR dest IN (SELECT * FROM gas_station) LOOP
+    IF NEW.id <> dest.id THEN
+      IF (TG_OP = 'INSERT') THEN
+        INSERT INTO distances SELECT NEW.id, dest.id, 6378.388* acos(sin(NEW.lat) * sin(dest.lat) + cos(NEW.lat)
+						* cos(dest.lat) * cos(dest.lng - NEW.lng));
+      END IF;
+      IF (TG_OP = 'UPDATE') THEN
+        UPDATE distances SET distance = 6378.388* acos(sin(NEW.lat) * sin(dest.lat) + cos(NEW.lat)
+						* cos(dest.lat) * cos(dest.lng - NEW.lng)) WHERE (id_1 = NEW.id AND id_2 = dest.id) OR (id_1 = dest.id AND id_2 = NEW.id);
+      END IF;
+    END IF;
+  END LOOP;
+  RETURN NULL;
+END
+$BODY$;
+
+ALTER FUNCTION public.calculate_distances()
+    OWNER TO postgres;
+	
+
+-- Trigger: update_distances
+
+-- DROP TRIGGER update_distances ON public.gas_station;
+
+CREATE TRIGGER update_distances
+    AFTER INSERT OR UPDATE 
+    ON public.gas_station
+    FOR EACH ROW
+    EXECUTE PROCEDURE public.calculate_distances();
+	
