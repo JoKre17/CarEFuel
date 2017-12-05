@@ -239,20 +239,13 @@ public class GasStation implements Serializable {
 	 * @return
 	 */
 	public static double computeDistanceToGasStation(double lat_a, double lon_a, double lat_b, double lon_b) {
+		lat_a = Math.toRadians(lat_a);
+		lat_b = Math.toRadians(lat_b);
+		lon_a = Math.toRadians(lon_a);
+		lon_b = Math.toRadians(lon_b);
+
 		return 6378.388 * Math
 				.acos(Math.sin(lat_a) * Math.sin(lat_b) + Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a));
-	}
-
-	/**
-	 * Computes distance in kilometers
-	 * 
-	 * @param other
-	 * @return
-	 */
-	public double computeDistanceToGasStation(GasStation from, GasStation to) {
-		return 6378.388
-				* Math.acos(Math.sin(from.getLatitude()) * Math.sin(to.getLatitude()) + Math.cos(from.getLatitude())
-						* Math.cos(to.getLatitude()) * Math.cos(to.getLongitude() - from.getLongitude()));
 	}
 
 	/**
