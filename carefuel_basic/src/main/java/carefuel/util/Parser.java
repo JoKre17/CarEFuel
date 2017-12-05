@@ -177,7 +177,7 @@ public class Parser {
 			PrintWriter out = new PrintWriter(
 					System.getProperty("user.dir") + "/out/pricePrediction/" + file.getName() + "-predictedPrices.txt");
 
-			for (Pair p : gasStationTimePairs) {
+			for (Pair<?, ?> p : gasStationTimePairs) {
 				out.println(p.getValue() + ";" + ((GasStation) p.getKey()).getArrivalDate() + ";"
 						+ ((GasStation) p.getKey()).getID() + ";" + ((GasStation) p.getKey()).getPredictedPrice());
 			}
