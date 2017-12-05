@@ -14,7 +14,8 @@ from scipy import interpolate
 '''
     This script converts the available gas price data into a format that's favourable for training. It creates the three
     files training.tfrecords validation.tfrecords and test.tfrecord, in which all available data is divided into
-    training, validation and test data.
+    training, validation and test data. When looking at the average entries per day it becomes clear that it should be
+    sufficient to interpolate the data every two hours.
 '''
 
 # Parse user input
@@ -28,11 +29,15 @@ dataset_ratios = (0.8, 0.1, 0.1)
 # Number of data samples taken per file
 n_samples_per_file = 5
 
-# Extract distinct months (last month and previous months) for training of the neural network
+# Extract distinct months of 'hours_per_month' hours(last month and previous months) for training of the neural network
 hours_per_month = 31 * 24
+
+# Number of data points per month
+n_data_points = int(hours_per_month / 2)
 
 
 def _create_tfrecord(name, files):
+    """Create the tfrecord file from all entries in 'files'"""
     print("Creating ", name)
     # Create a new tfrecord file 'name' from files
     writer = tf.python_io.TFRecordWriter(name)
@@ -53,7 +58,7 @@ def _create_tfrecord(name, files):
                 print("Aborted, ", file, " contains not enough entries")
                 continue
 
-            # Parse entries to a new format: The first entry is seen has hour zero. All following entries are relative
+            # Parse entries to a new format: The first entry is seen as hour zero. All following entries are relative
             # to the first one.
             hours = []
             prices = []
@@ -65,14 +70,14 @@ def _create_tfrecord(name, files):
                 hours.append(time_diff.total_seconds() / 3600.0)
                 prices.append(int(entry[1]))
 
-            # Interpolate the data at every hour
+            # Interpolate the data at every two hours
             f = interpolate.interp1d(hours, prices, kind='linear')
-            hours = np.linspace(0, hours[-1], hours[-1] + 1)
+            hours = np.linspace(0, hours[-1], (hours[-1] + 1) / 2)
             prices = f(hours)
 
             # On top of just the last month of the data, generate n_samples_per_file random hours in the second half of
             # the dataset that are each the last known prices for another new data set
-            current_index = len(prices) - hours_per_month
+            current_index = len(prices) - n_data_points
             for _ in range(n_samples_per_file):
                 # Generate data set
                 example = _create_data_set(prices, current_index)
@@ -84,10 +89,10 @@ def _create_tfrecord(name, files):
                 writer.write(example.SerializeToString())
 
                 # Generate random new index in the second half of the data set
-                current_index = random.randint(math.floor(len(prices) / 2), len(prices) - hours_per_month)
+                current_index = random.randint(math.floor(len(prices) / 2), len(prices) - n_data_points)
 
                 # Abort if not enough previous months
-                if current_index - hours_per_month < 0:
+                if current_index - n_data_points < 0:
                     print("Aborted, not enough entries for current index")
                     break
 
@@ -100,13 +105,15 @@ def _create_tfrecord(name, files):
 
 
 def _create_data_set(_prices, month_index):
-    next_month = _prices[month_index:month_index + hours_per_month]
+    """Creates a new data set from all data in _prices. Month index represents the first entry of the month that
+    is going to be predicted"""
+    next_month = _prices[month_index:month_index + n_data_points]
     prev_months = []
 
     n_prev_months = 0
-    while (month_index - hours_per_month) >= 0:
-        month_index -= hours_per_month
-        prev_months.append(_prices[month_index:month_index + hours_per_month])
+    while (month_index - n_data_points) >= 0:
+        month_index -= n_data_points
+        prev_months.append(_prices[month_index:month_index + n_data_points])
 
         n_prev_months += 1
 
@@ -126,7 +133,7 @@ def _create_data_set(_prices, month_index):
     example = tf.train.Example(features=tf.train.Features(feature=feature))
 
     return example
-
+    
 
 def _parse_str_date(date):
     date += "00"
@@ -153,6 +160,7 @@ def main(_):
     _create_tfrecord("training.tfrecord", files[training_index:validation_index - 1])
     _create_tfrecord("validation.tfrecord", files[validation_index:testing_index - 1])
     _create_tfrecord("testing.tfrecord", files[testing_index:])
+
 
 if __name__ == '__main__':
     tf.app.run()
