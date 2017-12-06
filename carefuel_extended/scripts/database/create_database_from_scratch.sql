@@ -253,43 +253,99 @@ CREATE INDEX index_on_id_2
 
 -- DROP FUNCTION public.calculate_distances();
 
-CREATE FUNCTION public.calculate_distances()
-    RETURNS trigger
-    LANGUAGE 'plpgsql'
-    COST 100
-    VOLATILE NOT LEAKPROOF
-AS $BODY$
-DECLARE
-  dest record;
+--CREATE FUNCTION public.calculate_distances()
+--    RETURNS trigger
+--    LANGUAGE 'plpgsql'
+--    COST 100
+--    VOLATILE NOT LEAKPROOF
+--AS $BODY$
+--DECLARE
+--  dest record;
 
-BEGIN
-  FOR dest IN (SELECT * FROM gas_station) LOOP
-    IF NEW.id <> dest.id THEN
-      IF (TG_OP = 'INSERT') THEN
-        INSERT INTO distances SELECT NEW.id, dest.id, 6378.388* acos(sin(NEW.lat) * sin(dest.lat) + cos(NEW.lat)
-						* cos(dest.lat) * cos(dest.lng - NEW.lng));
-      END IF;
-      IF (TG_OP = 'UPDATE') THEN
-        UPDATE distances SET distance = 6378.388* acos(sin(NEW.lat) * sin(dest.lat) + cos(NEW.lat)
-						* cos(dest.lat) * cos(dest.lng - NEW.lng)) WHERE (id_1 = NEW.id AND id_2 = dest.id) OR (id_1 = dest.id AND id_2 = NEW.id);
-      END IF;
-    END IF;
-  END LOOP;
-  RETURN NULL;
-END
-$BODY$;
+--BEGIN
+--  FOR dest IN (SELECT * FROM gas_station) LOOP
+--    IF NEW.id <> dest.id THEN
+--      IF (TG_OP = 'INSERT') THEN
+--        INSERT INTO distances SELECT NEW.id, dest.id, 6378.388* acos(sin(NEW.lat) * sin(dest.lat) + cos(NEW.lat)
+--						* cos(dest.lat) * cos(dest.lng - NEW.lng));
+--      END IF;
+--      IF (TG_OP = 'UPDATE') THEN
+--        UPDATE distances SET distance = 6378.388* acos(sin(NEW.lat) * sin(dest.lat) + cos(NEW.lat)
+--						* cos(dest.lat) * cos(dest.lng - NEW.lng)) WHERE (id_1 = NEW.id AND id_2 = dest.id) OR (id_1 = dest.id AND id_2 = NEW.id);
+--      END IF;
+--    END IF;
+--  END LOOP;
+--  RETURN NULL;
+--END
+--$BODY$;
 
-ALTER FUNCTION public.calculate_distances()
-    OWNER TO postgres;
+--ALTER FUNCTION public.calculate_distances()
+--    OWNER TO postgres;
 	
 
 -- Trigger: update_distances
 
 -- DROP TRIGGER update_distances ON public.gas_station;
 
-CREATE TRIGGER update_distances
-    AFTER INSERT OR UPDATE 
-    ON public.gas_station
-    FOR EACH ROW
-    EXECUTE PROCEDURE public.calculate_distances();
+--CREATE TRIGGER update_distances
+--    AFTER INSERT OR UPDATE 
+--    ON public.gas_station
+--    FOR EACH ROW
+--    EXECUTE PROCEDURE public.calculate_distances();
 	
+	
+	
+	
+	
+	
+	
+-- FUNCTION: public.set_distances()
+
+-- DROP FUNCTION public.set_distances();
+
+CREATE OR REPLACE FUNCTION public.set_distances(
+	)
+    RETURNS boolean
+    LANGUAGE 'plpgsql'
+
+    COST 100
+    VOLATILE
+AS $BODY$
+DECLARE
+	g1 RECORD;
+    g2 RECORD;
+BEGIN
+    FOR g1 IN SELECT * FROM gas_station
+    LOOP
+    	FOR g2 IN SELECT * FROM gas_station
+        LOOP
+        	IF g1 <> g2 THEN
+            	INSERT INTO distances
+                	(id_1, id_2, distance)
+                VALUES
+                	(g1.id, g2.id, 
+                    	6378.388* acos(
+                          sin(
+                            radians(g1.lat)
+                          ) * sin(
+                            radians(g2.lat)
+                          ) + cos(
+                            radians(g1.lat)
+                          ) * cos(
+                            radians(g2.lat)
+                          ) * cos(
+                            radians(g2.lng) - radians(g1.lng)
+                          ))
+                    );
+            END IF;
+        END LOOP;
+    END LOOP;
+    RETURN TRUE;
+END;
+
+$BODY$;
+
+ALTER FUNCTION public.set_distances()
+    OWNER TO postgres;
+
+
