@@ -1,5 +1,5 @@
 *.tfrecord
-/.idea/
+.idea/
 
 rnn_training/.idea/
 rnn_training/model

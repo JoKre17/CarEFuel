@@ -1,26 +1,26 @@
 package carefuel.path;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+/**
+ * Generic Vertex class for the Graph class
+ * 
+ * @author josef
+ *
+ * @param <E>
+ */
 public class Vertex<E> implements Comparable<Vertex<E>> {
 
-	private static final Logger log = LogManager.getLogger(Vertex.class);
+	// private static final Logger log = LogManager.getLogger(Vertex.class);
 
-	Graph<E> graph;
 	private E value;
-	private Double hCost;
-	private Double gCost;
-	
-	public List<Double> gCostHistory = new ArrayList<>();
 
-	// This is the maximal range where connections will be considered
-	protected static double range;
+	// these values need to be outsourced if multiple paths should be calculated
+	// cost from specific start vertex to this vertex
+	private Double gCost;
+	// estimated cost from this vertex to end vertex
+	private Double hCost;
 
 	private PriorityQueue<Edge<E>> neighbours;
 
@@ -32,8 +32,7 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 	public Vertex(E value) {
 		this.value = value;
 
-		neighbours = new PriorityQueue<>(new EdgeComparator<E>() {
-		});
+		neighbours = new PriorityQueue<>(new EdgeComparator<E>());
 	}
 
 	public E getValue() {
@@ -53,8 +52,7 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 	}
 
 	public PriorityQueue<Edge<E>> getNeighbours() {
-		return new PriorityQueue<Edge<E>>(
-				neighbours.stream().filter(e -> e.getDistance() <= range).collect(Collectors.toList()));
+		return neighbours;
 	}
 
 	public void setHCost(double hCost) {
@@ -64,12 +62,11 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 	public Double getHCost() {
 		return this.hCost;
 	}
-	
+
 	public void setGCost(double gCost) {
 		this.gCost = gCost;
-		gCostHistory.add(this.gCost);
 	}
-	
+
 	public Double getGCost() {
 		return this.gCost;
 	}
@@ -78,12 +75,18 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 	public String toString() {
 		return gCost.toString();
 	}
-	
+
+	/**
+	 * Used by VertexComparator (PriorityQueue in PathFinder)
+	 */
 	@Override
 	public int compareTo(Vertex<E> other) {
 		return hCost.compareTo(other.getHCost());
 	}
 
+	/**
+	 * Used for HashMap to find equal elements
+	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -92,6 +95,10 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 		return result;
 	}
 
+	/**
+	 * Also used for HashMap to find equal elements (.equals is only called if 2
+	 * objects have the same hashCode)
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
