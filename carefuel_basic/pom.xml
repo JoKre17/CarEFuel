@@ -64,6 +64,14 @@
 			<resource>
 				<directory>src/main/resources</directory>
 			</resource>
+			<resource>
+				<directory>resource</directory>
+				<targetPath>../resource</targetPath>
+			</resource>
+			<resource>
+				<directory>rnn_model</directory>
+				<targetPath>../rnn_model</targetPath>
+			</resource>
 		</resources>
 
 		<plugins>
