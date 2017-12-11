@@ -36,7 +36,7 @@ public class Evaluator {
 	public void evaluate() {
 		boolean outputEnabled = false;
 		if (true) {
-			System.out.println("\n-------------------- Evaluation ---------------------");
+			System.out.println("\n----------------- Evaluation -------------------");
 		}
 		double sum = 0;
 
@@ -55,6 +55,7 @@ public class Evaluator {
 		}
 
 		double meanDiff = sum / gasStations.size();
+
 		System.out.println("\nMean difference: " + meanDiff);
 	}
 

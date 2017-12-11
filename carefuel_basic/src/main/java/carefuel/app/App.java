@@ -58,15 +58,18 @@ public class App {
 	}
 
 	private static File getOperation() {
-		System.out.println("\n\nSelect the route: ");
+		System.out.println("\n\n************ WELCOME TO CAREFUEL *******************");
+		System.out.println("\nSelect the route: ");
 		File routeFolder = new File(System.getProperty("user.dir") + "/resource/routes/");
 		int i = 1;
 		for (; (i - 1) < routeFolder.listFiles().length; i++) {
 			File f = routeFolder.listFiles()[i - 1];
 			System.out.println("[" + i + "] " + f.getName());
 		}
+		System.out.println("------------------ More options ----------------------");
 		System.out.println("[" + i + "] Predict gasoline prices");
 		System.out.println("[" + (i + 1) + "] Exit");
+		// System.out.println("******************************************************");
 
 		String in = "";
 		try {

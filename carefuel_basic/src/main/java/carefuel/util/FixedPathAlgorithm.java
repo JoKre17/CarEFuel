@@ -23,6 +23,7 @@ public class FixedPathAlgorithm {
 	private List<Node> breakPoints;
 	private LinkedList<Node> slidingWindow;
 	private MyPriorityQueue priorityQueue;
+	private DecimalFormat df = new DecimalFormat("#0.00");
 
 	/**
 	 * Constructor of FixedPathAlgorithm
@@ -119,13 +120,19 @@ public class FixedPathAlgorithm {
 			driveToNext(breakPoints.get(i), breakPoints.get(i + 1));
 		}
 
-		DecimalFormat df = new DecimalFormat("#.00");
+		DecimalFormat df = new DecimalFormat("#0.00");
 
 		// double sum = 0;
 		System.out.println("------------------ Gasstations -----------------");
 		for (int i = 0; i < gasStations.size() - 1; i++) {
-			System.out.println(gasStations.get(i).getGasStation().getID() + " gas price: "
-					+ gasStations.get(i).getGasStation().getPredictedPrice());
+			if (gasStations.get(i).getFuelToBuy() > 0) {
+				System.out.println(gasStations.get(i).getGasStation().getID() + " gas price: "
+						+ gasStations.get(i).getGasStation().getPredictedPrice() + ", fill up "
+						+ df.format(gasStations.get(i).getFuelToBuy()) + " liter");
+			} else {
+				System.out.println(gasStations.get(i).getGasStation().getID() + " gas price: "
+						+ gasStations.get(i).getGasStation().getPredictedPrice());
+			}
 			System.out.println("\t" + df.format(distance(gasStations.get(i), gasStations.get(i + 1))));
 			// sum += distance(gasStations.get(i), gasStations.get(i + 1));
 		}
@@ -140,6 +147,8 @@ public class FixedPathAlgorithm {
 
 		System.out.println("Distance between start and end: "
 				+ df.format(indirectDistance(gasStations.get(0), gasStations.get(gasStations.size() - 1))));
+
+		printRoutePrice(gasStations);
 
 		/*
 		 * System.out.println("\nSolution: "); for (Node n = breakPoints.get(0);
@@ -235,6 +244,14 @@ public class FixedPathAlgorithm {
 			distance += distance(gasStations.get(i), gasStations.get(i + 1));
 		}
 		return distance;
+	}
+
+	private void printRoutePrice(List<Node> route) {
+		double price = 0;
+		for (Node n : route) {
+			price += n.getFuelToBuy() * (n.getGasStation().getPredictedPrice() / 10.0);
+		}
+		System.out.println("\nPrice of the route is: " + df.format(price / 100) + " Eur");
 	}
 
 	/**
