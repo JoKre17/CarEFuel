@@ -10,13 +10,33 @@ var directionsDisplay;
  */
 function initMap() {
 	directionsService = new google.maps.DirectionsService;
-	directionsDisplay = new google.maps.DirectionsRenderer
+	directionsDisplay = new google.maps.DirectionsRenderer;
 	
 	map = new google.maps.Map(document.getElementById('map'), {
 		zoom : 8,
 		disableDefaultUI : true
 	});
 	directionsDisplay.setMap(map);
+	
+	var from_input = document.getElementById('from');
+	var to_input = document.getElementById('to');
+	
+	
+	var from_autocomplete = new google.maps.places.Autocomplete(from_input);
+    from_autocomplete.bindTo('bounds', map);
+    
+    var to_autocomplete = new google.maps.places.Autocomplete(to_input);
+    to_autocomplete.bindTo('bounds', map);
+    
+    from_autocomplete.addListener('place_changed', function() {
+    	console.log("changed!");
+    	console.log(from_autocomplete.getPlace());
+    });
+    
+    to_autocomplete.addListener('place_changed', function() {
+    	console.log("changed!");
+    	console.log(to_autocomplete.getPlace());
+    });
 	
 	positions = [{
 				lng: 9.5167,
