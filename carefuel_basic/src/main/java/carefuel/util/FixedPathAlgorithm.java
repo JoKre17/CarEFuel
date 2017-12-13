@@ -34,7 +34,6 @@ public class FixedPathAlgorithm {
 	 *            gas consumption per 100km
 	 */
 	public FixedPathAlgorithm(List<GasStation> gasStations, int capacity, double gasConsumption) {
-		// this.setGasStations(gasStations);
 		this.capacity = capacity;
 		this.setGasConsumption(gasConsumption);
 		this.nodes = new LinkedList<Node>();
@@ -44,6 +43,7 @@ public class FixedPathAlgorithm {
 
 		this.literGasPerKilometer = gasConsumption / 100;
 		this.range = capacity * (1 / literGasPerKilometer);
+		// TODO output => log?
 		System.out.println("Reichweite: " + range);
 
 		this.gasStations = new ArrayList<Node>();
@@ -55,9 +55,9 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * 2-parted algorithm. First part: find break points, which are the cheapest
-	 * gas stations that can be reached with one tank fill. Second part: Find
-	 * best tanking behavior on the fixed path.
+	 * 2-parted algorithm. First part: find break points, which are the cheapest gas
+	 * stations that can be reached with one tank fill. Second part: Find best
+	 * tanking behavior on the fixed path.
 	 *
 	 * @return list of nodes with their assigned amount of gas to fill at a gas
 	 *         station.
@@ -75,6 +75,7 @@ public class FixedPathAlgorithm {
 
 		Node goal = nodes.getLast();
 
+		// TODO output raus oder log!
 		// System.out.println("WindowCapacity: " + windowCapacity);
 
 		while (!slidingWindow.isEmpty()) {
@@ -170,6 +171,7 @@ public class FixedPathAlgorithm {
 			driveToNext(breakPoints.get(i), breakPoints.get(i + 1));
 		}
 
+		// TODO output => log oder raus
 		double sum = 0;
 		System.out.println("------------------ Nodes -----------------");
 		for (int i = 0; i < gasStations.size() - 1; i++) {
@@ -216,6 +218,7 @@ public class FixedPathAlgorithm {
 	 * @param to
 	 */
 	private void driveToNext(Node from, Node to) {
+		// TODO Räum deine Funktionen mal auf, Jonas :P
 		// System.out.println("From: " + from.getGasStation().getID() + ", to: "
 		// + to.getGasStation().getID());
 		// System.out.println("Distance: " + indirectDistance(from, to));
@@ -249,8 +252,7 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Direct distance between two nodes in km computed by the great-circle
-	 * distance
+	 * Direct distance between two nodes in km computed by the great-circle distance
 	 *
 	 * @param n1
 	 * @param n2
@@ -265,8 +267,8 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Computes the indirect distance between two not necessarily directly
-	 * connected gas stations.
+	 * Computes the indirect distance between two not necessarily directly connected
+	 * gas stations.
 	 *
 	 * @param n1
 	 * @param n2

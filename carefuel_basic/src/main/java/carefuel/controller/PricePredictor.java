@@ -46,11 +46,11 @@ public class PricePredictor {
 	// 50 previous months of entries
 
 	/**
-	 * @ToDo add functionality to decide between CSV files and database as data
-	 *       source
-	 *
-	 *       Uses the System property gasPricesDirectory to get the path to the
-	 *       input_files
+	 * TODO add functionality to decide between CSV files and database as data
+	 * source
+	 * 
+	 * Uses the System property gasPricesDirectory to get the path to the
+	 * input_files
 	 */
 	public PricePredictor() {
 		// Set file paths
@@ -87,7 +87,6 @@ public class PricePredictor {
 				throw new Exception();
 			}
 			File[] matches = csvDirectory.listFiles(new FilenameFilter() {
-				@Override
 				public boolean accept(File dir, String name) {
 					return name.equals(Integer.toString(gasStationID) + ".csv");
 				}
@@ -330,7 +329,7 @@ public class PricePredictor {
 		// Feed the input tensors and run the TensorFlow graph
 		float[][] result = new float[1][hoursPerMonth];
 		session.runner().feed("Input/prev_months", prevMonthsTensor).feed("Input/n_prev_months", nPrevMonthsTensor)
-		.fetch(output).run().get(0).copyTo(result);
+				.fetch(output).run().get(0).copyTo(result);
 		return result[0];
 	}
 }
