@@ -41,9 +41,9 @@ public class PricePredictor {
 	private Graph graph;
 	private String modelPath;
 	private String gasPricesDirectory;
-	private final int hoursPerMonth = 744;
-	// All gas stations have a maximum of 50 previous months of entries
-	private final int maxPrevMonths = 50;
+	private final int hoursPerMonth = 372;
+	private final int maxPrevMonths = 50; // All gas stations have a maximum of
+	// 50 previous months of entries
 
 	/**
 	 * TODO add functionality to decide between CSV files and database as data
@@ -148,8 +148,8 @@ public class PricePredictor {
 			Date currentDate = datePriceList.get(i).getLeft();
 			int currentPrice = datePriceList.get(i).getRight();
 			long diff = (lastDate.getTime() - currentDate.getTime()); // difference
-																		// in
-																		// milliseconds;
+			// in
+			// milliseconds;
 
 			// Just in case two dates are added at the same time, slightly move
 			// the point to
@@ -173,10 +173,10 @@ public class PricePredictor {
 
 		// Calculate the number of 'whole' months contained in the data
 		long diff_hours = (maxDate.getTime() - datePriceList.get(0).getLeft().getTime()) / (3600 * 1000); // number
-																											// of
-																											// hours
-																											// contained
-		int nMonths = (int) diff_hours / hoursPerMonth;
+		// of
+		// hours
+		// contained
+		int nMonths = (int) diff_hours / (2 * hoursPerMonth);
 
 		// First interpolation point
 		double current_x = lastDate.getTime() - maxDate.getTime();
@@ -311,7 +311,7 @@ public class PricePredictor {
 		// batches)
 		float[][][] input = { combinedInput };
 
-		// Create the first input tensor of shape (1, 50, 744) containing the
+		// Create the first input tensor of shape (1, 50, hoursPerMonth) containing the
 		// previous
 		// months
 		Tensor<Float> prevMonthsTensor = Tensor.create(input, Float.class);
@@ -327,7 +327,7 @@ public class PricePredictor {
 		Output output = graph.operation("Output/rescaled_output").output(0);
 
 		// Feed the input tensors and run the TensorFlow graph
-		float[][] result = new float[1][744];
+		float[][] result = new float[1][hoursPerMonth];
 		session.runner().feed("Input/prev_months", prevMonthsTensor).feed("Input/n_prev_months", nPrevMonthsTensor)
 				.fetch(output).run().get(0).copyTo(result);
 		return result[0];
