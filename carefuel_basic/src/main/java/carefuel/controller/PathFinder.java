@@ -20,10 +20,12 @@ public class PathFinder {
 	private List<GasStation> gasStations;
 	private List<Node> bestPath;
 	private int capacity;
+
+	// Given by Intellitank
 	private final double gasConsumption = 5.6;
 
 	/**
-	 * Constructor of the Path finder.
+	 * Constructor gets all GasStations and the maximal tank capacity
 	 *
 	 * @param gasStations
 	 * @param capacity
@@ -34,9 +36,9 @@ public class PathFinder {
 	}
 
 	/**
-	 * This function starts the computation of the best path and safe it to a
-	 * .txt file. The algorithms is the fixed path algorithm taken from "To Fill
-	 * or not to Fill: The Gas Station Problem" by Khuller et. al.(available at
+	 * This function starts the computation of the best path and safe it to a .txt
+	 * file. The algorithms is the fixed path algorithm taken from "To Fill or not
+	 * to Fill: The Gas Station Problem" by Khuller et. al.(available at
 	 * https://dl.acm.org/citation.cfm?doid=1978782.1978791)
 	 */
 	public void computeBestPath() {
@@ -46,8 +48,8 @@ public class PathFinder {
 	}
 
 	/**
-	 * Function used to safe the computed path to a plain text file (.txt). The
-	 * file is located at /resource/solution.txt
+	 * Function used to safe the computed path to a plain text file (.txt). The file
+	 * is located at /resource/solution.txt
 	 */
 	private void safePath() {
 		try {
@@ -61,7 +63,6 @@ public class PathFinder {
 			out.close();
 
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -42,15 +42,15 @@ public class PricePredictor {
 	private String modelPath;
 	private String gasPricesDirectory;
 	private final int hoursPerMonth = 744;
-	private final int maxPrevMonths = 50; // All gas stations have a maximum of
-											// 50 previous months of entries
+	// All gas stations have a maximum of 50 previous months of entries
+	private final int maxPrevMonths = 50;
 
 	/**
-	 * @ToDo add functionality to decide between CSV files and database as data
-	 *       source
+	 * TODO add functionality to decide between CSV files and database as data
+	 * source
 	 * 
-	 *       Uses the System property gasPricesDirectory to get the path to the
-	 *       input_files
+	 * Uses the System property gasPricesDirectory to get the path to the
+	 * input_files
 	 */
 	public PricePredictor() {
 		// Set file paths
