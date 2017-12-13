@@ -23,7 +23,7 @@ public class Graph<E> {
 
 	private List<E> values;
 	private List<Vertex<E>> vertices;
-	private Short[][] distances;
+	private Float[][] distances;
 	private int size;
 
 	/**
@@ -33,7 +33,7 @@ public class Graph<E> {
 	 * @param distances
 	 * @throws Exception
 	 */
-	public Graph(List<E> values, Short[][] distances) throws Exception {
+	public Graph(List<E> values, Float[][] distances) throws Exception {
 		if (values.size() != distances.length) {
 			throw new Exception("Dimensions of vertices and distances don't get along!");
 		}
@@ -47,7 +47,7 @@ public class Graph<E> {
 	 * 
 	 * @param distances
 	 */
-	private void setDistances(Short[][] distances) {
+	private void setDistances(Float[][] distances) {
 		if (distances.length > 0 && distances.length == size) {
 			if (distances.length != distances[0].length) {
 				log.error("Dimension mismatch in distances: Shape (" + distances.length + "," + distances[0].length
@@ -70,7 +70,7 @@ public class Graph<E> {
 		return this.vertices;
 	}
 
-	public Short[][] getDistances() {
+	public Float[][] getDistances() {
 		return distances;
 	}
 
@@ -96,15 +96,19 @@ public class Graph<E> {
 		}
 
 		// distances to all neighbours
-		Short[] neighbourDistances = distances[values.indexOf(node.getValue())];
+		Float[] neighbourDistances = distances[values.indexOf(node.getValue())];
 
 		// for all vertices...
 		for (int i = 0; i < neighbourDistances.length; i++) {
-			Short distance = neighbourDistances[i];
+			Float distance = neighbourDistances[i];
 
 			// only get those in range and not itself
-			if (distance <= maxRange && distance != 0) {
-				Edge<E> edge = new Edge<E>(node, getVertexByValue(values.get(i)));
+			if (distance <= maxRange) {
+				Vertex<E> to = getVertexByValue(values.get(i));
+				if (node.equals(to)) {
+					continue;
+				}
+				Edge<E> edge = new Edge<E>(node, to);
 				edge.setDistance(distance);
 
 				// neighbours was already computed but maxRange was smaller back then, so the

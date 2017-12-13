@@ -5,7 +5,7 @@
 
 	<groupId>carefuel_extended</groupId>
 	<artifactId>carefuel_extended</artifactId>
-	<version>0.1.0</version>
+	<version>0.2</version>
 	<name>CarEFuel_Extended</name>
 
 	<properties>

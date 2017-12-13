@@ -54,11 +54,11 @@ public class RequestController {
 
 	@RequestMapping(value = "path", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public String getGasStationById(@RequestParam(value = "from", required = true) String from,
+	public String getPath(@RequestParam(value = "from", required = true) String from,
 			@RequestParam(value = "to", required = true) String to,
 			@RequestParam(value = "capacity", required = false) Integer capacity,
 			@RequestParam(value = "consumption", required = false) Double consumption) {
-		// return "{station: {id: " + id + "}}";
+
 		log.info("received path request");
 		String response = "{\"from\":\"" + from + "\", \"to\":\"" + to + "\", \"capacity\":" + capacity
 				+ ", \"consumption\":" + consumption + "}";
