@@ -1,5 +1,6 @@
 package carefuel.controller;
 
+import java.util.List;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import carefuel.model.GasStation;
+import carefuel.path.Vertex;
 
 /**
  *
@@ -54,16 +56,41 @@ public class RequestController {
 
 	@RequestMapping(value = "path", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public String getPath(@RequestParam(value = "from", required = true) String from,
-			@RequestParam(value = "to", required = true) String to,
+	public String getPath(@RequestParam(value = "from", required = true) String fromId,
+			@RequestParam(value = "to", required = true) String toId,
 			@RequestParam(value = "capacity", required = false) Integer capacity,
 			@RequestParam(value = "consumption", required = false) Double consumption) {
+		
+		log.info("Path Request received");
+		
+		float range = (float) ((capacity / consumption) * 100.0);
+		
+		// km/h
+		float averageSpeed = 100;
+		
+		if(Main.pathFinder == null) {
+			return new JSONArray().toString();
+		}
+		
+		List<Vertex<GasStation>> route = Main.pathFinder.explorativeAStar(fromId, toId, range, averageSpeed, 0.0F);
 
-		log.info("received path request");
-		String response = "{\"from\":\"" + from + "\", \"to\":\"" + to + "\", \"capacity\":" + capacity
-				+ ", \"consumption\":" + consumption + "}";
-		log.info(response);
-		return response;
+		JSONArray path = new JSONArray();
+		
+		for(Vertex<GasStation> v : route) {
+			GasStation station = v.getValue();
+			JSONObject stop = new JSONObject();
+			
+			JSONObject loc = new JSONObject();
+			loc.put("lat", station.getLatitude());
+			loc.put("lng", station.getLongitude());
+			
+			stop.put("id", station.getId().toString());
+			stop.put("location", loc);
+			
+			path.put(stop);
+		}
+		
+		return path.toString();
 	}
 
 }

@@ -19,8 +19,6 @@ function submitButtonPressed() {
 	var capacity = document.getElementById('capacity').value;
 	var consumption = document.getElementById('consumption').value;
 
-	
-	
 	if (capacity == "") {
 		capacity = 3;
 	}
@@ -50,11 +48,36 @@ function submitButtonPressed() {
 		dataType : "json",
 		url : request['request'],
 		success : function(data) {
-			console.log("receive data:");
-			console.log(data);
+			
+			// now draw the route
+			positions = []
+			start_pos = {
+					lat: from.lat,
+					lng: from.lng
+			}
+			
+			end_pos = {
+					lat: to.lat,
+					lng: to.lng
+			}
+			
+			positions.push(start_pos)
+			
+			for(var i in data) {
+				console.log(data[i]);
+				pos = {
+						lat: data[i]['location']['lat'],
+						lng: data[i]['location']['lng'] 
+				}
+				positions.push(pos)
+			}
+			
+			positions.push(end_pos)
+			
+			calculateAndDisplayRoute(positions)
 		},
 		complete : function(xhr, textStatus) {
-			console.log(xhr.status);
+//			console.log(xhr.status);
 		}
 	});
 

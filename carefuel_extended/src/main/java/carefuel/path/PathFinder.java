@@ -1,26 +1,18 @@
 package carefuel.path;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import carefuel.controller.DatabaseHandler;
+import carefuel.controller.PricePredictor;
 import carefuel.model.GasStation;
 
 /**
@@ -36,16 +28,15 @@ public class PathFinder {
 	private static final Logger log = LogManager.getLogger(PathFinder.class);
 
 	private DatabaseHandler dbHandler;
+	private PricePredictor pricePredictor;
 	private Graph<GasStation> graph;
 
 	private Function<Vertex<GasStation>, Number> heuristic;
 
-	private boolean loadFromFileIsEnabled = false;
-	private File distancesFile = new File("distances.csv");
-
-	public PathFinder(DatabaseHandler dbHandler) {
+	public PathFinder(DatabaseHandler dbHandler, PricePredictor pricePredictor) {
 
 		this.dbHandler = dbHandler;
+		this.pricePredictor = pricePredictor;
 
 		// load the graph in background
 		new Thread() {
@@ -67,97 +58,7 @@ public class PathFinder {
 	 * loads the graph necessary for the pathfinding algorithmus
 	 */
 	private void loadGraph() {
-		// if the distances were once already computed, don't compute them again but
-		// load them from a file
-
-		if (distancesFile.exists() && loadFromFileIsEnabled) {
-			try {
-				this.graph = loadGraphFromFile(distancesFile);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		// if the graph is still not loaded due to an error or if it is not loadable
-		// from file
-		if (this.graph == null) {
-			this.graph = loadGraphFromDatabase();
-		}
-	}
-
-	private void writeGraphToFile(Float[][] distances) {
-		// Write Distances to File
-		PrintWriter writer;
-		try {
-			writer = new PrintWriter(distancesFile, "UTF-8");
-			for (int i = 0; i < distances.length; i++) {
-				String line = Arrays.stream(distances[i]).map(s -> s.toString()).collect(Collectors.joining(";"));
-				writer.println(line);
-			}
-			writer.close();
-		} catch (FileNotFoundException | UnsupportedEncodingException e1) {
-			e1.printStackTrace();
-		}
-	}
-
-	/**
-	 * Loads graph distances from file and the graph values from database
-	 * 
-	 * @param f
-	 * @return
-	 * @throws IOException
-	 */
-	private Graph<GasStation> loadGraphFromFile(File distancesFile) throws IOException {
-
-		log.info("Loading Graph from File and Database.");
-		// still need to fetch the values of/for graph from database
-		List<GasStation> allStations = new ArrayList<>(dbHandler.getAllGasStations());
-
-		Float[][] distances;
-		int perc = 0;
-		try (BufferedReader br = new BufferedReader(new FileReader(distancesFile))) {
-			String[] split = br.readLine().split(";");
-			int size = split.length;
-			// evaluate the graph size by the amount of values in the first line in the file
-			if (size != allStations.size()) {
-				log.info("Size Mismatch. Cannot load Graph from file.");
-				return null;
-			}
-			distances = new Float[size][size];
-			int i = 0;
-			// translate a semicolon separated line of distances to a distance array for
-			// vertex i
-			distances[i++] = Arrays.stream(split).map(s -> Float.valueOf(s)).toArray(Float[]::new);
-
-			// read the rest of the file into distances
-			for (String line; (line = br.readLine()) != null;) {
-				split = line.split(";");
-				if (split.length != size) {
-					return null;
-				}
-				distances[i++] = Arrays.stream(split).map(s -> Float.valueOf(s)).toArray(Float[]::new);
-				if (((int) ((double) (i) / size * 100)) > perc) {
-					log.info("Vertices: " + perc + " %");
-					perc += 10;
-				}
-			}
-			if (((int) ((double) (i + 1) / size * 100)) > perc) {
-				log.info("Vertices: " + perc + " %");
-				perc += 10;
-			}
-
-			if (i != distances.length) {
-				log.error("File has wrong amount of lines. No distance parsing possible!");
-			}
-		}
-
-		try {
-			return new Graph<GasStation>(allStations, distances);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return null;
+		this.graph = loadGraphFromDatabase();
 	}
 
 	/**
@@ -176,7 +77,7 @@ public class PathFinder {
 		}
 		log.info("Fetched " + allStations.size() + " stations.");
 
-		Float[][] distances = new Float[amountStations][amountStations];
+		float[][] distances = new float[amountStations][amountStations];
 
 		log.info("Building all vertices and edges for each station.");
 		double buildStartTime = System.currentTimeMillis();
@@ -188,7 +89,7 @@ public class PathFinder {
 			double lon_a = graphMap[i][1];
 
 			// distances from vertex i to all other vertices
-			Float[] neighbourDistances = new Float[amountStations];
+			float[] neighbourDistances = distances[i];
 
 			// copy symmetrical values
 			for (int j = 0; j < i + 1; j++) {
@@ -216,10 +117,6 @@ public class PathFinder {
 			}
 		}
 		log.info("Vertices: " + perc + " %");
-
-		if (loadFromFileIsEnabled) {
-			writeGraphToFile(distances);
-		}
 
 		// fetch new copy => maybe ram gets cleared ?
 		Graph<GasStation> graph = null;
@@ -271,11 +168,16 @@ public class PathFinder {
 	 * @param x
 	 * @return
 	 */
-	public List<Vertex<GasStation>> explorativeAStar(GasStation start, GasStation end, short maxRange,
-			short averageSpeed, double x) {
+	public List<Vertex<GasStation>> explorativeAStar(String startUUID, String endUUID, float maxRange,
+			float averageSpeed, float x) {
 
+		List<GasStation> allStations = graph.getValues();
+		GasStation start = allStations.stream().filter(s -> s.getId().toString().equals(startUUID)).findFirst().get();
+		GasStation end = allStations.stream().filter(s -> s.getId().toString().equals(endUUID)).findFirst().get();
+		// find start and end GasStations
+		
 		// 0 < x < 1
-		x = Math.max(0.0, Math.min(x, 1.0));
+		x = (float) Math.max(0.0, Math.min(x, 1.0));
 
 		PriorityQueue<Vertex<GasStation>> open = new PriorityQueue<>(new VertexComparator<GasStation>());
 		List<Vertex<GasStation>> closed = new ArrayList<>();
@@ -285,7 +187,7 @@ public class PathFinder {
 		Map<Vertex<GasStation>, Vertex<GasStation>> predecessorMap = new HashMap<>();
 
 		// build heurstic, later fetch it from the database
-		Float[][] distances = graph.getDistances();
+		float[][] distances = graph.getDistances();
 		List<GasStation> stations = graph.getValues();
 		// log.info("Build heuristic values");
 		for (int i = 0; i < stations.size(); i++) {
@@ -327,6 +229,8 @@ public class PathFinder {
 					continue;
 				}
 
+//				pricePredictor.predictPrice(maxDateString, predictionDateString, gasStationID)
+				
 				// cost so far for path start -> successor (depending on x)
 				double g_tentative = currentNode.getGCost() + e.getValue(x);
 
