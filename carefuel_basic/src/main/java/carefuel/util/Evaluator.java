@@ -56,7 +56,7 @@ public class Evaluator {
 
 		double meanDiff = sum / gasStations.size();
 
-		System.out.println("\nMean difference: " + meanDiff);
+		System.out.println("\nMean difference: " + meanDiff / 10);
 	}
 
 	/**

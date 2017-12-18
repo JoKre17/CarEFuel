@@ -118,6 +118,7 @@ public class Parser {
 				entry = line.split(splitBy);
 
 				int gasStationID = Integer.parseInt(entry[2]);
+				System.out.println("0: " + entry[0] + ", 1: " + entry[1] + ", id: " + gasStationID);
 				int predictedPrice = predictor.predictPrice(entry[0], entry[1], gasStationID);
 				gasStationTimePairs.add(new Pair<GasStation, String>(
 						new GasStation(entry[1], gasStationID, 0.0, 0.0, predictedPrice), entry[0]));
