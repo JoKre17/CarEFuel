@@ -207,6 +207,13 @@ public class PricePredictor {
 		Date date = dateFormat.parse(dateString);
 		return date;
 	}
+	
+	public int predictPrice(String maxDateString, String predictionDateString, int gasStationID) throws Exception {
+		Date maxDate = parseDateString(maxDateString);
+		Date predictionDate = parseDateString(predictionDateString);
+		
+		return predictPrice(maxDate, predictionDate, gasStationID);
+	}
 
 	/**
 	 * Convenience function. Calls predictNextMonth and calculates the price at
@@ -214,9 +221,9 @@ public class PricePredictor {
 	 *
 	 * @return the predicted price in cent * 10 at predictionDate.
 	 */
-	public int predictPrice(String maxDateString, String predictionDateString, int gasStationID) throws Exception {
+	public int predictPrice(Date maxDate, Date predictionDate, int gasStationID) throws Exception {
 		// Predict the prices at every hour of the next month since 'maxDate'
-		float[] prices = predictNextMonth(maxDateString, gasStationID);
+		float[] prices = predictNextMonth(maxDate, gasStationID);
 
 		// Check if something went wrong
 		if (prices == null) {
@@ -224,8 +231,7 @@ public class PricePredictor {
 			throw new Exception();
 		}
 
-		Date maxDate = parseDateString(maxDateString);
-		Date predictionDate = parseDateString(predictionDateString);
+		
 
 		// Get the number"2017-08-21 23:03:06+02" of hours from maxDate and
 		// predictionDate
@@ -246,6 +252,16 @@ public class PricePredictor {
 		double price = (m * nHours) + b;
 		return (int) Math.round(price);
 	}
+	public float[] predictNextMonth(String maxDateString, int gasStationID) throws Exception {
+		try {
+			Date maxDate = parseDateString(maxDateString);
+			return predictNextMonth(maxDate, gasStationID);
+		} catch (ParseException e) {
+			log.error("Error while parsing maxDateString");
+			throw new Exception();
+		}
+	}
+	
 
 	/**
 	 * This function uses the neural network in order to predict all prices of a
@@ -262,20 +278,13 @@ public class PricePredictor {
 	 *         maxDateString
 	 * @throws Exception
 	 */
-	public float[] predictNextMonth(String maxDateString, int gasStationID) throws Exception {
+	public float[] predictNextMonth(Date maxDate, int gasStationID) throws Exception {
 		// First load all entries from the gas station and return null if an
 		// error
 		// occured
 		ArrayList<Pair<Date, Integer>> datePriceList = getGasPricesToID(gasStationID);
 
 		// Next, find the first entry that is in the next month
-		Date maxDate;
-		try {
-			maxDate = parseDateString(maxDateString);
-		} catch (ParseException e) {
-			log.error("Error while parsing maxDateString");
-			throw new Exception();
-		}
 		int firstEntryIndex = 0;
 		for (int i = 0; i < datePriceList.size(); ++i) {
 			// Find the first element that is not before maxdate

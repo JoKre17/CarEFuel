@@ -1,5 +1,6 @@
 package carefuel.controller;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -72,7 +73,7 @@ public class RequestController {
 			return new JSONArray().toString();
 		}
 		
-		List<Vertex<GasStation>> route = Main.pathFinder.explorativeAStar(fromId, toId, range, averageSpeed, 0.0F);
+		List<Vertex<GasStation>> route = Main.pathFinder.explorativeAStar(fromId, toId, new Date(), range, averageSpeed, 0.0F);
 
 		JSONArray path = new JSONArray();
 		

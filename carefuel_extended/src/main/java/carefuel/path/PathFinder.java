@@ -1,6 +1,7 @@
 package carefuel.path;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -168,7 +169,7 @@ public class PathFinder {
 	 * @param x
 	 * @return
 	 */
-	public List<Vertex<GasStation>> explorativeAStar(String startUUID, String endUUID, float maxRange,
+	public List<Vertex<GasStation>> explorativeAStar(String startUUID, String endUUID, Date startTime, float maxRange,
 			float averageSpeed, float x) {
 
 		List<GasStation> allStations = graph.getValues();

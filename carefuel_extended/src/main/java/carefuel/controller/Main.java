@@ -83,7 +83,7 @@ public class Main {
 				start.getLongitude(), end.getLatitude(), end.getLongitude()));
 		pathFinder = new PathFinder(databaseHandler, pricePredictor);
 		double startTime = System.currentTimeMillis();
-		List<Vertex<GasStation>> path = pathFinder.explorativeAStar(start.getId().toString(), end.getId().toString(), range, averageSpeed, 0);
+		List<Vertex<GasStation>> path = pathFinder.explorativeAStar(start.getId().toString(), end.getId().toString(), new Date(), range, averageSpeed, 0);
 		log.info((System.currentTimeMillis() - startTime) / 1000.0);
 		for (Vertex<GasStation> v : path) {
 			log.info(v.getValue().getId() + ": GCost = " + v.getGCost() + " HCost = " + v.getHCost());
