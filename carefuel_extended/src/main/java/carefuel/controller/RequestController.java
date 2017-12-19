@@ -34,7 +34,7 @@ public class RequestController {
 
 	private final static Logger log = LogManager.getLogger(RequestMapping.class);
 
-	DateFormatter df = new DateFormatter("DD/MM/YYYY HH:mm");
+	DateFormatter df = new DateFormatter("dd/MM/yyyy HH:mm");
 
 	@RequestMapping(value = "station/", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
