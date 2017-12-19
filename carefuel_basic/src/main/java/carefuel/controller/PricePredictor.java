@@ -48,7 +48,7 @@ public class PricePredictor {
 	/**
 	 * TODO add functionality to decide between CSV files and database as data
 	 * source
-	 * 
+	 *
 	 * Uses the System property gasPricesDirectory to get the path to the
 	 * input_files
 	 */
@@ -87,6 +87,7 @@ public class PricePredictor {
 				throw new Exception();
 			}
 			File[] matches = csvDirectory.listFiles(new FilenameFilter() {
+				@Override
 				public boolean accept(File dir, String name) {
 					return name.equals(Integer.toString(gasStationID) + ".csv");
 				}
@@ -230,7 +231,7 @@ public class PricePredictor {
 
 		// Get the number"2017-08-21 23:03:06+02" of hours from maxDate and
 		// predictionDate
-		double nHours = (predictionDate.getTime() - maxDate.getTime()) / ((double) 3600 * 1000);
+		double nHours = (predictionDate.getTime() - maxDate.getTime()) / ((double) 3600 * 1000 * 2);
 
 		// Interpolate the value using the previous and next hour
 		int prevHour = (int) nHours;
@@ -329,7 +330,7 @@ public class PricePredictor {
 		// Feed the input tensors and run the TensorFlow graph
 		float[][] result = new float[1][hoursPerMonth];
 		session.runner().feed("Input/prev_months", prevMonthsTensor).feed("Input/n_prev_months", nPrevMonthsTensor)
-				.fetch(output).run().get(0).copyTo(result);
+		.fetch(output).run().get(0).copyTo(result);
 		return result[0];
 	}
 }
