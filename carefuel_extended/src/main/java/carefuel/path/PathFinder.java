@@ -93,6 +93,7 @@ public class PathFinder {
 			float[] neighbourDistances = distances[i];
 
 			// copy symmetrical values
+			// needs more RAM but makes faster recalls of neighbours
 			for (int j = 0; j < i + 1; j++) {
 				neighbourDistances[j] = distances[j][i];
 			}
@@ -176,7 +177,7 @@ public class PathFinder {
 		GasStation start = allStations.stream().filter(s -> s.getId().toString().equals(startUUID)).findFirst().get();
 		GasStation end = allStations.stream().filter(s -> s.getId().toString().equals(endUUID)).findFirst().get();
 		// find start and end GasStations
-		
+
 		// 0 < x < 1
 		x = (float) Math.max(0.0, Math.min(x, 1.0));
 
@@ -230,8 +231,9 @@ public class PathFinder {
 					continue;
 				}
 
-//				pricePredictor.predictPrice(maxDateString, predictionDateString, gasStationID)
-				
+				// pricePredictor.predictPrice(maxDateString, predictionDateString,
+				// gasStationID)
+
 				// cost so far for path start -> successor (depending on x)
 				double g_tentative = currentNode.getGCost() + e.getValue(x);
 

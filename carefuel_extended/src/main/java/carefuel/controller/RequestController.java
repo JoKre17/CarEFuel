@@ -1,13 +1,16 @@
 package carefuel.controller;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.format.datetime.DateFormatter;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,6 +33,8 @@ import carefuel.path.Vertex;
 public class RequestController {
 
 	private final static Logger log = LogManager.getLogger(RequestMapping.class);
+
+	DateFormatter df = new DateFormatter("DD/MM/YYYY HH:mm");
 
 	@RequestMapping(value = "station/", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
@@ -59,38 +64,52 @@ public class RequestController {
 	@ResponseBody
 	public String getPath(@RequestParam(value = "from", required = true) String fromId,
 			@RequestParam(value = "to", required = true) String toId,
+			@RequestParam(value = "startTime", required = true) String startTime,
 			@RequestParam(value = "capacity", required = false) Integer capacity,
 			@RequestParam(value = "consumption", required = false) Double consumption) {
-		
+
 		log.info("Path Request received");
-		
+		log.info("from: " + fromId);
+		log.info("to: " + toId);
+		log.info("startTime: " + startTime);
+		log.info("capacity: " + capacity);
+		log.info("consumption: " + consumption);
+
+		Date startTimeDate = new Date();
+		try {
+			startTimeDate = df.parse(startTime, Locale.GERMAN);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+
 		float range = (float) ((capacity / consumption) * 100.0);
-		
+
 		// km/h
 		float averageSpeed = 100;
-		
-		if(Main.pathFinder == null) {
+
+		if (Main.pathFinder == null) {
 			return new JSONArray().toString();
 		}
-		
-		List<Vertex<GasStation>> route = Main.pathFinder.explorativeAStar(fromId, toId, new Date(), range, averageSpeed, 0.0F);
+
+		List<Vertex<GasStation>> route = Main.pathFinder.explorativeAStar(fromId, toId, startTimeDate, range,
+				averageSpeed, 0.0F);
 
 		JSONArray path = new JSONArray();
-		
-		for(Vertex<GasStation> v : route) {
+
+		for (Vertex<GasStation> v : route) {
 			GasStation station = v.getValue();
 			JSONObject stop = new JSONObject();
-			
+
 			JSONObject loc = new JSONObject();
 			loc.put("lat", station.getLatitude());
 			loc.put("lng", station.getLongitude());
-			
+
 			stop.put("id", station.getId().toString());
 			stop.put("location", loc);
-			
+
 			path.put(stop);
 		}
-		
+
 		return path.toString();
 	}
 
