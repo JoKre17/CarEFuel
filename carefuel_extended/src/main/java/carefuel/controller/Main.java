@@ -31,7 +31,7 @@ public class Main {
 
 	private static final Logger log = LogManager.getLogger(Main.class);
 
-	private static PathFinder pathFinder;
+	public static PathFinder pathFinder;
 
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Extended at " + new Date().toString());
@@ -39,11 +39,11 @@ public class Main {
 
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
+		
+		PricePredictor pricePredictor = new PricePredictor();
 
-		List<GasStation> allStations = databaseHandler.getAllGasStations().stream().collect(Collectors.toList());
-		log.info(allStations.stream().findFirst().get().toJSON().toString());
-
-		testPathFinder(databaseHandler);
+		pathFinder = new PathFinder(databaseHandler, pricePredictor);
+//		testPathFinder(databaseHandler);
 
 		// databaseHandler.getNeighbors(UUID.fromString("550e8400-e29b-11d4-a717-446655440000"),
 		// 100000);
@@ -61,7 +61,7 @@ public class Main {
 	 * 
 	 * @param databaseHandler
 	 */
-	private static void testPathFinder(DatabaseHandler databaseHandler) {
+	private static void testPathFinder(DatabaseHandler databaseHandler, PricePredictor pricePredictor) {
 
 		List<GasStation> allStations = databaseHandler.getAllGasStations().stream().collect(Collectors.toList());
 		int randomStart = (int) (Math.random() * (allStations.size() - 1));
@@ -81,9 +81,9 @@ public class Main {
 		log.info("Assumed max U:" + range);
 		log.info("Heuristical distance: " + GasStation.computeDistanceToGasStation(start.getLatitude(),
 				start.getLongitude(), end.getLatitude(), end.getLongitude()));
-		pathFinder = new PathFinder(databaseHandler);
+		pathFinder = new PathFinder(databaseHandler, pricePredictor);
 		double startTime = System.currentTimeMillis();
-		List<Vertex<GasStation>> path = pathFinder.explorativeAStar(start, end, range, averageSpeed, 0);
+		List<Vertex<GasStation>> path = pathFinder.explorativeAStar(start.getId().toString(), end.getId().toString(), new Date(), range, averageSpeed, 0);
 		log.info((System.currentTimeMillis() - startTime) / 1000.0);
 		for (Vertex<GasStation> v : path) {
 			log.info(v.getValue().getId() + ": GCost = " + v.getGCost() + " HCost = " + v.getHCost());

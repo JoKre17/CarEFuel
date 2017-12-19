@@ -2,7 +2,8 @@ var apiKey = "AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0";
 var map;
 var directionsService;
 var directionsDisplay;
-
+var from_autocomplete;
+var to_autocomplete;
 /**
  * initialization method for the map
  * loads the api
@@ -22,15 +23,15 @@ function initMap() {
 	var to_input = document.getElementById('to');
 	
 	
-	var from_autocomplete = new google.maps.places.Autocomplete(from_input);
+	from_autocomplete = new google.maps.places.Autocomplete(from_input);
     from_autocomplete.bindTo('bounds', map);
     
-    var to_autocomplete = new google.maps.places.Autocomplete(to_input);
+    to_autocomplete = new google.maps.places.Autocomplete(to_input);
     to_autocomplete.bindTo('bounds', map);
     
     from_autocomplete.addListener('place_changed', function() {
     	console.log("changed!");
-    	console.log(from_autocomplete.getPlace());
+    	console.log(from_autocomplete.getPlace().geometry.location.lat());
     });
     
     to_autocomplete.addListener('place_changed', function() {
