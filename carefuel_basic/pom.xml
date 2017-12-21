@@ -9,10 +9,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -34,26 +31,26 @@
 			<artifactId>log4j-core</artifactId>
 			<version>2.9.1</version>
 		</dependency>
-
+		
 		<!-- TensorFlow -->
 		<dependency>
-			<groupId>org.tensorflow</groupId>
-			<artifactId>tensorflow</artifactId>
-			<version>1.4.0</version>
+  			<groupId>org.tensorflow</groupId>
+  			<artifactId>tensorflow</artifactId>
+  			<version>1.4.0</version>
 		</dependency>
-
+		
 		<!-- For the Pair class -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.7</version>
 		</dependency>
-
+		
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-math3</artifactId>
-			<version>3.0</version>
+    		<groupId>org.apache.commons</groupId>
+    		<artifactId>commons-math3</artifactId>
+    		<version>3.0</version>
 		</dependency>
 	</dependencies>
 
@@ -64,14 +61,6 @@
 			<resource>
 				<directory>src/main/resources</directory>
 			</resource>
-			<resource>
-				<directory>resource</directory>
-				<targetPath>../resource</targetPath>
-			</resource>
-			<resource>
-				<directory>rnn_model</directory>
-				<targetPath>../rnn_model</targetPath>
-			</resource>
 		</resources>
 
 		<plugins>
@@ -80,10 +69,6 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
 				<version>3.1.0</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-				</configuration>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -94,7 +79,7 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>carefuel.app.App</mainClass>
+									<mainClass>com.carefuel.app.App</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
