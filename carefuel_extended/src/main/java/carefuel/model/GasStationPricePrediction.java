@@ -8,6 +8,8 @@ import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -27,15 +29,13 @@ public class GasStationPricePrediction {
 
 	public static final String tableName = "gas_station_information_prediction";
 	@ManyToOne
-	@JoinColumn(name = "stid", insertable = false, updatable = false)
+	@JoinColumn(name = "stid", insertable = true, updatable = false)
 	private GasStation gasStation;
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private long id;
-	@Column(name = "stid")
-	@Type(type = "pg-uuid")
-	private UUID stid;
-	@Temporal(TemporalType.DATE)
+	@Temporal(TemporalType.TIMESTAMP)
 	private Date date;
 	@Column(name = "e5")
 	private int e5;
@@ -50,15 +50,14 @@ public class GasStationPricePrediction {
 	}
 
 	/**
-	 * @param stid
 	 * @param date
 	 * @param e5
 	 * @param e10
 	 * @param diesel
 	 */
-	public GasStationPricePrediction(UUID stid, Date date, int e5, int e10, int diesel) {
+	public GasStationPricePrediction(GasStation gasStation, Date date, int e5, int e10, int diesel) {
 		super();
-		this.stid = stid;
+		this.gasStation = gasStation;
 		this.date = date;
 		this.e5 = e5;
 		this.e10 = e10;
@@ -105,13 +104,6 @@ public class GasStationPricePrediction {
 	 */
 	public long getId() {
 		return this.id;
-	}
-
-	/**
-	 * @return the stid
-	 */
-	public UUID getStid() {
-		return this.stid;
 	}
 
 	/**
@@ -162,14 +154,6 @@ public class GasStationPricePrediction {
 		this.id = id;
 	}
 
-	/**
-	 * @param stid
-	 *            the stid to set
-	 */
-	public void setStid(UUID stid) {
-		this.stid = stid;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 *
@@ -177,7 +161,7 @@ public class GasStationPricePrediction {
 	 */
 	@Override
 	public String toString() {
-		return "GasStationPricePrediction [gasStation=" + this.gasStation + ", id=" + this.id + ", date=" + this.date
+		return "GasStationPricePrediction [id=" + this.id + ", date=" + this.date
 				+ ", e5=" + this.e5 + ", e10=" + this.e10 + ", diesel=" + this.diesel + "]";
 	}
 }
