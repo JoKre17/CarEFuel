@@ -57,6 +57,12 @@ public class App {
 		}
 	}
 
+	/**
+	 * Function that allows the user to choose a file via console interaction and
+	 * returns the choosen route file.
+	 * 
+	 * @return file to parse
+	 */
 	private static File getOperation() {
 		log.info("\n\n************ WELCOME TO CAREFUEL *******************");
 		log.info("\nSelect the route: ");
@@ -97,6 +103,12 @@ public class App {
 		return routeFolder.listFiles()[n - 1];
 	}
 
+	/**
+	 * Function that allows the user to choose a file via console interaction and
+	 * returns the choosen gasoline price file.
+	 * 
+	 * @return file to parse
+	 */
 	private static File getFileToPredictPrices() {
 		log.info("\n\nSelect the file to predict prices for: ");
 		File folder = new File(System.getProperty("user.dir") + "/resource/pricePrediction/");
@@ -124,6 +136,7 @@ public class App {
 			getFileToPredictPrices();
 		}
 
+		// exit
 		if (n == i) {
 			System.exit(-1);
 		}
