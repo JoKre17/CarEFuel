@@ -108,6 +108,7 @@ public class App {
 		log.info("[" + i + "] Exit");
 
 		String in = "";
+
 		try {
 			in = System.console().readLine();
 		} catch (Exception e) {
