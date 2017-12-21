@@ -50,3 +50,7 @@ Erstellung eines Google Account carefuel.luh
 Mail:	carefuel.luh@gmail.com
 Password: NJuJh1A!Wln..
 API-Key: AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0
+
+
+# Added script for updating the historic price predictions: /carefuel/update_prices.sh
+# Also added cronjob under user postgres that starts every night at midnight, running that script

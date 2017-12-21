@@ -40,20 +40,8 @@ public class Main {
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
 		
-		PricePredictor pricePredictor = new PricePredictor();
-
-		pathFinder = new PathFinder(databaseHandler, pricePredictor);
-//		testPathFinder(databaseHandler);
-
-		// databaseHandler.getNeighbors(UUID.fromString("550e8400-e29b-11d4-a717-446655440000"),
-		// 100000);
-
-		// databaseHandler.test();
-		// log.info(databaseHandler.getAllGasStations().stream().findFirst().get().toJSON().toString());
-
-		// Sollte ggf raus, da die Spring Applikation ja noch läuft und die DB benötigt
-		// wird
-		// databaseHandler.exit();
+		PredictionUpdater p = new PredictionUpdater(databaseHandler);
+		p.start();
 	}
 
 	/**

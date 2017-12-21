@@ -6,14 +6,7 @@ package carefuel.model;
 import java.util.Date;
 import java.util.UUID;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Type;
 
@@ -30,12 +23,13 @@ public class GasStationPricePrediction {
 	@JoinColumn(name = "stid", insertable = false, updatable = false)
 	private GasStation gasStation;
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private long id;
 	@Column(name = "stid")
 	@Type(type = "pg-uuid")
 	private UUID stid;
-	@Temporal(TemporalType.DATE)
+	@Temporal(TemporalType.TIMESTAMP)
 	private Date date;
 	@Column(name = "e5")
 	private int e5;
