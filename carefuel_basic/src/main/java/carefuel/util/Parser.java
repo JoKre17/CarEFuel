@@ -7,6 +7,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import carefuel.app.App;
 import carefuel.controller.PricePredictor;
 import carefuel.model.GasStation;
 import javafx.util.Pair;
@@ -20,6 +24,8 @@ import javafx.util.Pair;
  */
 public class Parser {
 
+	private static final Logger log = LogManager.getLogger(App.class);
+	
 	private File file;
 	private int capacity;
 	private List<GasStation> gasStations;
@@ -54,7 +60,7 @@ public class Parser {
 			predictionTimeStamp = "";
 			int n = 0;
 
-			System.out.println("************** Parser starts ***********************");
+			log.info("************** Parser starts ***********************");
 
 			while ((line = reader.readLine()) != null) {
 
@@ -77,13 +83,13 @@ public class Parser {
 						predictedPrice);
 				gasStations.add(station);
 
-				System.out.println("*");
+				log.info("*");
 			}
 
 			reader.close();
-			System.out.println("************** Parser ends ***********************");
+			log.info("************** Parser ends ***********************");
 			// safePredictedData();
-			System.out.println("\n##### Predicted prices safed to resource/predictedPrices.txt #####");
+			log.info("\n##### Predicted prices safed to out/pricePrediction/predictedPrices.txt #####");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -111,24 +117,24 @@ public class Parser {
 
 			PricePredictor predictor = new PricePredictor();
 
-			System.out.println("************** Parser starts ***********************");
+			log.info("************** Parser starts ***********************");
 
 			while ((line = reader.readLine()) != null) {
 
 				entry = line.split(splitBy);
 
 				int gasStationID = Integer.parseInt(entry[2]);
-				System.out.println("0: " + entry[0] + ", 1: " + entry[1] + ", id: " + gasStationID);
+				log.info("0: " + entry[0] + ", 1: " + entry[1] + ", id: " + gasStationID);
 				int predictedPrice = predictor.predictPrice(entry[0], entry[1], gasStationID);
 				gasStationTimePairs.add(new Pair<GasStation, String>(
 						new GasStation(entry[1], gasStationID, 0.0, 0.0, predictedPrice), entry[0]));
 
-				System.out.println(line + ";" + predictedPrice);
+				log.info(line + ";" + predictedPrice);
 			}
 
 			reader.close();
 			safePredictedData(gasStationTimePairs);
-			System.out.println("\n##### Predicted prices safed to resource/predictedPrices.txt #####");
+			log.info("\n##### Predicted prices safed to resource/predictedPrices.txt #####");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

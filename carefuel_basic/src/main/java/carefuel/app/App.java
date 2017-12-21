@@ -58,32 +58,31 @@ public class App {
 	}
 
 	private static File getOperation() {
-		System.out.println("\n\n************ WELCOME TO CAREFUEL *******************");
-		System.out.println("\nSelect the route: ");
+		log.info("\n\n************ WELCOME TO CAREFUEL *******************");
+		log.info("\nSelect the route: ");
 		File routeFolder = new File(System.getProperty("user.dir") + "/resource/routes/");
 		int i = 1;
 		for (; (i - 1) < routeFolder.listFiles().length; i++) {
 			File f = routeFolder.listFiles()[i - 1];
-			System.out.println("[" + i + "] " + f.getName());
+			log.info("[" + i + "] " + f.getName());
 		}
-		System.out.println("------------------ More options ----------------------");
-		System.out.println("[" + i + "] Predict gasoline prices");
-		System.out.println("[" + (i + 1) + "] Exit");
-		// System.out.println("******************************************************");
+		log.info("------------------ More options ----------------------");
+		log.info("[" + i + "] Predict gasoline prices");
+		log.info("[" + (i + 1) + "] Exit");
 
 		String in = "";
 		try {
 			in = System.console().readLine();
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("!!!   Please run the .jar in the target folder   !!!");
+			log.info("!!!   Please run the .jar in the target folder   !!!");
 			System.exit(-1);
 
 		}
 
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
 		if (n == -1) {
-			System.out.println("*** Please enter a valid nummber ***");
+			log.info("*** Please enter a valid nummber ***");
 			getOperation();
 		}
 
@@ -99,28 +98,28 @@ public class App {
 	}
 
 	private static File getFileToPredictPrices() {
-		System.out.println("\n\nSelect the file to predict prices for: ");
+		log.info("\n\nSelect the file to predict prices for: ");
 		File folder = new File(System.getProperty("user.dir") + "/resource/pricePrediction/");
 		int i = 1;
 		for (; (i - 1) < folder.listFiles().length; i++) {
 			File f = folder.listFiles()[i - 1];
-			System.out.println("[" + i + "] " + f.getName());
+			log.info("[" + i + "] " + f.getName());
 		}
-		System.out.println("[" + i + "] Exit");
+		log.info("[" + i + "] Exit");
 
 		String in = "";
 		try {
 			in = System.console().readLine();
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("!!!   Please run the .jar in the target folder   !!!");
+			log.info("!!!   Please run the .jar in the target folder   !!!");
 			System.exit(-1);
 
 		}
 
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
 		if (n == -1) {
-			System.out.println("*** Please enter a valid nummber ***");
+			log.info("*** Please enter a valid nummber ***");
 			getFileToPredictPrices();
 		}
 
@@ -130,12 +129,4 @@ public class App {
 
 		return folder.listFiles()[n - 1];
 	}
-
-	/*
-	 * private static void testLog() { // notice that log.debug also gets
-	 * printed even though the root logger // is set to level info // this is
-	 * due to the application logger configuration see @log4j2.xml
-	 * log.info("Hello World!"); log.debug("Hello World!");
-	 * log.error("Hello World!"); log.fatal("Hello World!"); }
-	 */
 }

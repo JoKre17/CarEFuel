@@ -8,6 +8,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import carefuel.app.App;
 import carefuel.model.GasStation;
 
 /**
@@ -19,6 +23,8 @@ import carefuel.model.GasStation;
  */
 public class Evaluator {
 
+	private static final Logger log = LogManager.getLogger(App.class);
+	
 	private List<GasStation> gasStations;
 
 	/**
@@ -36,20 +42,20 @@ public class Evaluator {
 	public void evaluate() {
 		boolean outputEnabled = false;
 		if (true) {
-			System.out.println("\n----------------- Evaluation -------------------");
+			log.info("\n----------------- Evaluation -------------------");
 		}
 		double sum = 0;
 
 		if (outputEnabled) {
-			System.out.println("Gas Station Analysis: ");
+			log.info("Gas Station Analysis: ");
 		}
 		for (GasStation g : gasStations) {
 
 			double diff = Math.abs(g.getPredictedPrice() - getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
 			if (outputEnabled) {
-				System.out.println("Predicted: " + g.getPredictedPrice());
-				System.out.println("Actual: " + getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
-				System.out.println("Difference: " + diff + "\n");
+				log.info("Predicted: " + g.getPredictedPrice());
+				log.info("Actual: " + getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
+				log.info("Difference: " + diff + "\n");
 			}
 			sum += diff;
 		}
@@ -86,12 +92,6 @@ public class Evaluator {
 				priceString = entry[1];
 				if (lastDate.before(arrivalTime) && timeStringDate.after(arrivalTime)) {
 					price = Integer.parseInt(priceString);
-					/*
-					 * System.out.println("----------------------");
-					 * System.out.println("Before: " + lastDate);
-					 * System.out.println("Arrival: " + arrivalTime);
-					 * System.out.println("After: " + timeStringDate);
-					 */
 					break;
 				}
 				lastDate = timeStringDate;
