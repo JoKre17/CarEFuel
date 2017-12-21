@@ -1,15 +1,14 @@
 package carefuel.model;
 
-import java.util.Set;
+import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Type;
+import org.json.JSONObject;
 
 /**
  * Entity class to represent the table GASSTATION in the database
@@ -19,7 +18,9 @@ import org.hibernate.annotations.Type;
  */
 @Entity
 @Table(name = "gas_station")
-public class GasStation {
+public class GasStation implements Serializable {
+	// private static final Logger log = LogManager.getLogger(Main.class);
+
 	@Id // tells hibernate that this is the primary key
 	@Type(type = "pg-uuid")
 	@Column(name = "id", unique = true, updatable = false)
@@ -35,12 +36,12 @@ public class GasStation {
 	private String streetName;
 
 	@Column(name = "house_number")
-	private int houseNumber;
+	private String houseNumber;
 
 	@Column(name = "post_code")
 	private String postalCode;
 
-	@Column(name = "city")
+	@Column(name = "place")
 	private String city;
 
 	@Column(name = "lat")
@@ -49,13 +50,13 @@ public class GasStation {
 	@Column(name = "lng")
 	private double longitude;
 
-	@OneToMany
-	@JoinColumn(name = "stid")
-	private Set<GasStationPrice> gasStationPrices;
-
-	@OneToMany
-	@JoinColumn(name = "stid")
-	private Set<GasStationPricePrediction> gasStationPricePredictions;
+	// @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	// @JoinColumn(name = "stid")
+	// private Set<GasStationPrice> gasStationPrices;
+	//
+	// @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	// @JoinColumn(name = "stid")
+	// private Set<GasStationPricePrediction> gasStationPricePredictions;
 
 	/**
 	 * the default constructor is necessary for hibernate to get all gas stations
@@ -79,24 +80,24 @@ public class GasStation {
 		return this.city;
 	}
 
-	/**
-	 * @return the gasStationPricePredictions
-	 */
-	public Set<GasStationPricePrediction> getGasStationPricePredictions() {
-		return this.gasStationPricePredictions;
-	}
-
-	/**
-	 * @return the gasStationPrices
-	 */
-	public Set<GasStationPrice> getGasStationPrices() {
-		return this.gasStationPrices;
-	}
+	// /**
+	// * @return the gasStationPricePredictions
+	// */
+	// public Set<GasStationPricePrediction> getGasStationPricePredictions() {
+	// return this.gasStationPricePredictions;
+	// }
+	//
+	// /**
+	// * @return the gasStationPrices
+	// */
+	// public Set<GasStationPrice> getGasStationPrices() {
+	// return this.gasStationPrices;
+	// }
 
 	/**
 	 * @return the houseNumber
 	 */
-	public int getHouseNumber() {
+	public String getHouseNumber() {
 		return this.houseNumber;
 	}
 
@@ -158,27 +159,28 @@ public class GasStation {
 		this.city = city;
 	}
 
-	/**
-	 * @param gasStationPricePredictions
-	 *            the gasStationPricePredictions to set
-	 */
-	public void setGasStationPricePredictions(Set<GasStationPricePrediction> gasStationPricePredictions) {
-		this.gasStationPricePredictions = gasStationPricePredictions;
-	}
-
-	/**
-	 * @param gasStationPrices
-	 *            the gasStationPrices to set
-	 */
-	public void setGasStationPrices(Set<GasStationPrice> gasStationPrices) {
-		this.gasStationPrices = gasStationPrices;
-	}
+	// /**
+	// * @param gasStationPricePredictions
+	// * the gasStationPricePredictions to set
+	// */
+	// public void setGasStationPricePredictions(Set<GasStationPricePrediction>
+	// gasStationPricePredictions) {
+	// this.gasStationPricePredictions = gasStationPricePredictions;
+	// }
+	//
+	// /**
+	// * @param gasStationPrices
+	// * the gasStationPrices to set
+	// */
+	// public void setGasStationPrices(Set<GasStationPrice> gasStationPrices) {
+	// this.gasStationPrices = gasStationPrices;
+	// }
 
 	/**
 	 * @param houseNumber
 	 *            the houseNumber to set
 	 */
-	public void setHouseNumber(int houseNumber) {
+	public void setHouseNumber(String houseNumber) {
 		this.houseNumber = houseNumber;
 	}
 
@@ -230,6 +232,43 @@ public class GasStation {
 		this.streetName = streetName;
 	}
 
+	/**
+	 * Computes distance in kilometers
+	 * 
+	 * @param other
+	 * @return
+	 */
+	public static double computeDistanceToGasStation(double lat_a, double lon_a, double lat_b, double lon_b) {
+		lat_a = Math.toRadians(lat_a);
+		lat_b = Math.toRadians(lat_b);
+		lon_a = Math.toRadians(lon_a);
+		lon_b = Math.toRadians(lon_b);
+
+		return 6378.388 * Math
+				.acos(Math.sin(lat_a) * Math.sin(lat_b) + Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a));
+	}
+
+	/**
+	 * returns the gas station in json format
+	 * 
+	 * @return
+	 */
+	public JSONObject toJSON() {
+		JSONObject json = new JSONObject();
+
+		json.put("id", getId());
+		json.put("name", getName());
+		json.put("brand", getBrand());
+		json.put("street", getStreetName());
+		json.put("houseNumer", getHouseNumber());
+		json.put("postalCode", getPostalCode());
+		json.put("city", getCity());
+		json.put("lat", getLatitude());
+		json.put("lng", getLongitude());
+
+		return json;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 *
@@ -239,8 +278,37 @@ public class GasStation {
 	public String toString() {
 		return "GasStation [id=" + this.id + ", name=" + this.name + ", brand=" + this.brand + ", streetName="
 				+ this.streetName + ", houseNumber=" + this.houseNumber + ", postalCode=" + this.postalCode + ", city="
-				+ this.city + ", latitude=" + this.latitude + ", longitude=" + this.longitude + ", gasStationPrices="
-				+ this.gasStationPrices + "]";
+				+ this.city + ", latitude=" + this.latitude + ", longitude=" + this.longitude + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof GasStation)) {
+			return false;
+		}
+		GasStation other = (GasStation) obj;
+		if (id == null) {
+			if (other.id != null) {
+				return false;
+			}
+		} else if (!id.equals(other.id)) {
+			return false;
+		}
+		return true;
 	}
 
 }

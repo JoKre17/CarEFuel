@@ -6,86 +6,168 @@
 
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../css/style.css">
-<link rel="stylesheet"
-	href="https://fonts.googleapis.com/css?family=Roboto">
-<link rel="stylesheet"
-	href="https://fonts.googleapis.com/css?family=Montserrat">
-<link rel="stylesheet"
-	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-<script type="text/javascript" src="../js/map.js "></script>
-<script type="text/javascript" src="../js/gui.js "></script>
+<!-- Local CSS -->
+<!-- <link rel="stylesheet" href="css/style.css"> -->
+<link rel="stylesheet" href="css/style.css">
+
+<!-- Local JavaScript -->
+<script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="js/map.js"></script>
+<script type="text/javascript" src="js/gui.js"></script>
+<script type="text/javascript" src="js/control.js"></script>
+<script type="text/javascript" src="js/route.js"></script>
+
+<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.css">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.css">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+
 </head>
 
-<body class="w3-content" style="max-width: 1200px">
+<body>
+	<div id="controlContainer" class="control-container ui transparent">
+		<div>
+			<img class="ui image hide-button" id="hide"
+				src="images/arrow_left_grey_100_100.png"
+				onclick="hideButtonPressed()"></img>
+		</div>
+		<div class="section">
+			<img class="image" src="images/carefuel_icon_wide.png" />
+		</div>
+<!-- 		<div class="section" style="padding: 5px"> -->
+<!-- 			<a href="impressum.html">Impressum</a> -->
+<!-- 		</div> -->
+		<div class="section">
+			<div class="form-group">
+				<div class='input-group date' id='dateTimePicker'>
+					<input type='text' class="form-control" />
+					<span class="input-group-addon">
+						<span class="glyphicon glyphicon-calendar"></span>
+					</span>
+				</div>
+			</div>
+			<script type="text/javascript">
+				$(function () {
+					date = new Date()
+					dateNow = date.getDay() + "/" + date.getMonth() + "/" + date.getFullYear()
+					dateNow += " " + date.getHours() + ":" + date.getMinutes()
+					
+					$('#dateTimePicker').datetimepicker({
+						 format: 'DD/MM/YYYY HH:mm',
+						 defaultDate: dateNow
+					});
+				});
+			</script>
+		</div>
+		<div class="section">
+			<div class="form-block">
+				<form id="route-form" name="route-form">
+					<div class="form-entry">
+						<label class="form label" for="from">Start</label> <input
+							class="form input" type="text" name="from" id="from"
+							placeholder="From" required />
+					</div>
 
-	<!-- Sidebar/menu -->
-	<nav class="w3-sidebar w3-bar-block w3-white w3-collapse w3-top"
-		style="z-index: 3; width: 250px" id="mySidebar">
-		<div class="w3-container w3-display-container w3-padding-16">
-			<i onclick="w3_close()"
-				class="fa fa-remove w3-hide-large w3-button w3-display-topright"></i>
-			<h3 class="w3-wide">
-				<img id="logo" src="../carefuel_logo.jpg"></img>
-			</h3>
-			Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
-			nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
+					<div class="form-entry">
+						<label class="form label" for="to">Destination</label> <input
+							class="form input" type="text" name="to" id="to" placeholder="To"
+							required />
+					</div>
+
+					<div class="form-entry">
+						<label class="form label" for="capacity">Tank capacity [ l
+							]</label> <input class="form input" type="number" name="capacity"
+							id="capacity" placeholder="3" />
+					</div>
+
+					<div class="form-entry">
+						<label class="form label" for="field-2">Fuel consumpton [
+							l / 100 km ]</label> <input class="form input" type="number" step="0.1"
+							name="consumption" id="consumption" placeholder="5.6" />
+					</div>
+
+					<input class="form submit-button" type="button" value="Route"
+						onclick="submitButtonPressed()" />
+
+				</form>
+
+			</div>
+		</div>
+		<div class="section">Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor
+			sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+			invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+			At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+			kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+			amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+			diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
 			erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
 			et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
 			Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
 			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
 			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
 			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
-			takimata sanctus est Lorem ipsum dolor sit amet.
-		</div>
-		<div class="w3-padding-64 w3-large w3-text-grey"
-			style="font-weight: bold"></div>
-	</nav>
-
-	<!-- Top menu on small screens -->
-	<header class="w3-bar w3-top w3-hide-large w3-black w3-xlarge">
-		<div class="w3-bar-item w3-padding-24 w3-wide">
-			<img id="logo" src="../carefuel_logo.jpg">
-		</div>
-		<a href="javascript:void(0)"
-			class="w3-bar-item w3-button w3-padding-24 w3-right"
-			onclick="w3_open()"><i class="fa fa-bars"></i></a>
-	</header>
-
-	<!-- Overlay effect when opening sidebar on small screens -->
-	<div class="w3-overlay w3-hide-large" onclick="w3_close()"
-		style="cursor: pointer" title="close side menu" id="myOverlay"></div>
-
-	<!-- !PAGE CONTENT! -->
-	<div class="w3-main" style="margin-left: 250px">
-
-		<!-- Push down content on small screens -->
-		<div class="w3-hide-large" style="margin-top: 83px"></div>
-
-		<div class="w3-display-container w3-container">
-			<div id="map">
-				<script
-					src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB-CnojIMKDAWmZ6NjnPvrrXncOMKk3NXc&callback=initMap"
-					async defer></script>
-			</div>
-		</div>
-
-
-		<!-- End page content -->
+			takimata sanctus est Lorem ipsum dolor sit amet.</div>
 	</div>
 
-	<!-- Impressum Modal -->
-	<div id="impressum" class="w3-modal">
-		<div class="w3-modal-content w3-animate-zoom" style="padding: 32px">
-			<div class="w3-container w3-white w3-center">
-				<i
-					onclick="document.getElementById('impressum').style.display='none'"
-					class="fa fa-remove w3-right w3-button w3-transparent w3-xxlarge"></i>
-				<h2 class="w3-wide">Impressum</h2>
-				<p>Visit our impressum.</p>
-			</div>
+	<div id="mapContainer" class="map-container">
+		<div class="google-map" id="map">
+			<script
+				src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0&libraries=places&callback=initMap"
+				async defer></script>
 		</div>
 	</div>
+
+	<div id="routeContainer" class="route-container ui transparent" onclick="routeContainerPressed()">
+		<div class="section">Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor
+			sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+			invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+			At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+			kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+			amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+			diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
+			erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
+			et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+			Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet.</div>
+		<div class="section">Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor
+			sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+			invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+			At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+			kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+			amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+			diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
+			erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
+			et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+			Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+			sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+			dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+			et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+			takimata sanctus est Lorem ipsum dolor sit amet.</div>
+	</div>
+	<footer class="footer">
+		<div class="section" style="padding: 5px">
+			<a href="impressum.html">Impressum</a>
+		</div>
+	</footer>
 </body>
+
 </html>

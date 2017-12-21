@@ -1,14 +1,21 @@
 package carefuel.controller;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
@@ -16,6 +23,7 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.springframework.data.util.Pair;
 
+import carefuel.model.Distance;
 import carefuel.model.GasStation;
 import carefuel.model.GasStationPricePrediction;
 
@@ -55,6 +63,21 @@ public class DatabaseHandler {
 		this.sessionFactory.close();
 	}
 
+	@SuppressWarnings("unchecked")
+	public Set<GasStation> getAllGasStations() {
+		Set<GasStation> gasStations = new HashSet<>();
+
+		Session session = this.sessionFactory.openSession();
+		session.beginTransaction();
+
+		Query query = session.createQuery("from " + GasStation.class.getSimpleName());
+		gasStations = (Set<GasStation>) query.list().stream().collect(Collectors.toSet());
+
+		session.getTransaction().commit();
+
+		return gasStations;
+	}
+
 	/**
 	 * return a gas station by id
 	 *
@@ -66,12 +89,52 @@ public class DatabaseHandler {
 
 		Session session = this.sessionFactory.getCurrentSession();
 		session.beginTransaction();
-		org.hibernate.Query query = session
-				.createQuery("from " + GasStation.class.getName() + " where id='" + uuid + "'");
+		Query query = session.createQuery("from " + GasStation.class.getSimpleName() + " where id='" + uuid + "'");
 		gasStation = (GasStation) query.uniqueResult();
 
 		session.getTransaction().commit();
 		return gasStation;
+	}
+
+	/**
+	 * get neighbors of a specified gas station
+	 *
+	 * @param from
+	 *            UUID of the gas station of which neighbors shall be found
+	 * @param range
+	 *            range around the gas station, choose 0 to define unlimited range
+	 * @return resultMap a map with the UUID of the neighbor and the distance to it
+	 */
+	public Map<UUID, Double> getNeighbors(UUID from, int range) {
+		Map<UUID, Double> resultMap = new HashMap<>();
+
+		Session session = this.sessionFactory.getCurrentSession();
+		session.beginTransaction();
+
+		String hqlQuery = "from " + Distance.class.getSimpleName() + " WHERE (id_1='" + from.toString() + "' OR id_2='"
+				+ from.toString() + "')";
+
+		if (range > 0) {
+			hqlQuery += ("AND distance<" + range);
+		}
+
+		Query query = session.createQuery(hqlQuery);
+
+		for (Distance distance : (List<Distance>) query.list()) {
+			UUID id_1 = distance.getId_1();
+			UUID id_2 = distance.getId_2();
+			double dis = distance.getDistance();
+
+			if (id_1.equals(from)) {
+				resultMap.put(id_2, dis);
+			} else {
+				resultMap.put(id_1, dis);
+			}
+		}
+
+		session.getTransaction().commit();
+
+		return resultMap;
 	}
 
 	/**
@@ -89,6 +152,7 @@ public class DatabaseHandler {
 		org.hibernate.Query query = session
 				.createQuery("from " + GasStationPricePrediction.class.getSimpleName() + " where stid='" + id + "'");
 
+		@SuppressWarnings("unchecked")
 		List<GasStationPricePrediction> temp = query.list();
 
 		session.getTransaction().commit();
@@ -113,24 +177,30 @@ public class DatabaseHandler {
 		return toReturn;
 	}
 
-	// public TreeMap<Date, Double> getPricePrediction2(String id, Enum<Fuel> fuel)
-	// {
-	// TreeMap<Date, Double> prices = new TreeMap<>();
-	//
-	// GasStation gasStation = getGasStation(id);
-	//
-	// for (GasStationPricePrediction gspp :
-	// gasStation.getGasStationPricePredictions()) {
-	// prices.put(key, value)
-	// }
-	//
-	// return prices;
-	// }
+	/**
+	 * truncates the whole prediction table and inserts all predictions of the set
+	 * of predictions
+	 *
+	 * @param predictedPrices
+	 *            all predicted prices of all gas stations
+	 */
+	public void insertPricePredictions(Set<GasStationPricePrediction> predictedPrices) {
 
-	public void insertPricePredictions(List<GasStationPricePrediction> predictedPrices) {
-		// TODO
-		// truncate table
-		// insert new objects
+		try {
+			truncateTable(GasStationPricePrediction.tableName);
+
+			// insert new predictions
+			Session session = this.sessionFactory.getCurrentSession();
+			session.beginTransaction();
+			for (GasStationPricePrediction predicted : predictedPrices) {
+				session.save(predicted);
+			}
+			session.getTransaction().commit();
+		} catch (NullPointerException e) {
+			log.error("NullPointerException");
+			log.error("No predicted Prices to insert, refusing!");
+		}
+
 	}
 
 	/**
@@ -138,17 +208,96 @@ public class DatabaseHandler {
 	 */
 	public void setup() {
 		// code to load Hibernate Session factory
-		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure() // configures
-																									// settings
-																									// from
-																									// hibernate.cfg.xml
-				.build();
+		final StandardServiceRegistry registry = new StandardServiceRegistryBuilder().configure().build();
 		try {
 			this.sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
 			this.sessionFactory.openSession();
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			log.error("Error setting up the database connection!");
+			log.error(ex);
 			StandardServiceRegistryBuilder.destroy(registry);
 		}
+	}
+
+	public void test() {
+		List<String> testIDs = Arrays.asList("001975cc-d534-4819-ab35-8e88848c3096",
+				"005056ba-7cb6-1ed2-bceb-60191af70d1b", "005056ba-7cb6-1ed2-bceb-7a1cf1468d26",
+				"005056ba-7cb6-1ed2-bceb-7ddfa374cd2a", "005056ba-7cb6-1ed2-bceb-97d3e2bc8d3b",
+				"005056ba-7cb6-1ed2-bceb-b776305dcd4a", "005056ba-7cb6-1ed2-bceb-bc577a5e6d4e",
+				"005056ba-7cb6-1ed5-a6a1-930ae49a5411", "0055bbb5-2c30-4cb9-89f4-d937cf121770",
+				"0173fd22-174a-41f2-9e0d-004b7da5b74f", "01a2529b-da12-40db-9e07-8a6646b54ddb",
+				"0263adda-28e0-415c-97f7-dac62ebbf179", "026e1252-db5d-459f-944a-15081d9d2c60",
+				"0271f0fc-65ed-4725-a922-57eec615195b", "028687da-704e-5500-8a63-3223f4a589f8",
+				"03697a19-4dec-4562-9264-bb8cd4d19fb2", "057827cd-6583-4a3a-a461-f8546073fd02",
+				"066f69fb-c215-418b-9177-89e6ea5e1654", "072c35bc-349b-4ffa-852e-5ac20d98c211",
+				"0a5f98bf-3dd4-4bf3-bd09-57c1cfa9b397", "0b7b03b2-feb8-4c6d-9e65-053003a7e450",
+				"0f269d49-b196-49c4-b21d-df11a40cd3ff", "0fb89c36-de83-46c7-9526-fbfef75bea3a");
+
+		List<UUID> testUUIDs = testIDs.stream().map(idString -> UUID.fromString(idString)).collect(Collectors.toList());
+		log.info(testUUIDs);
+
+		// Methode 1 - alles in einem
+		double startTime = System.currentTimeMillis();
+		Session session = this.sessionFactory.openSession();
+		session.beginTransaction();
+
+		Query spSQLQuery = session.createQuery("FROM GasStation G WHERE G.id IN (:param1)");
+		spSQLQuery.setParameterList("param1", testUUIDs);
+
+		@SuppressWarnings("unchecked")
+		Set<GasStation> gasStations = ((Set<GasStation>) spSQLQuery.list()).stream().collect(Collectors.toSet());
+
+		session.getTransaction().commit();
+
+		double runTime = System.currentTimeMillis() - startTime;
+		log.info("#1: RunTime: " + (runTime / 1000.0));
+
+		// Methode 2 - für alles ne Session etc...
+		final double startTime2 = System.currentTimeMillis();
+		Session session2 = this.sessionFactory.openSession();
+		List<Boolean> finished = new ArrayList<>();
+		for (UUID id : testUUIDs) {
+			new Thread() {
+				@Override
+				public void run() {
+
+					Query spSQLQuery2 = session2.createQuery("FROM GasStation G WHERE G.id = :param1");
+					spSQLQuery2.setParameter("param1", id);
+
+					@SuppressWarnings("unchecked")
+					Set<GasStation> gasStation = ((Set<GasStation>) spSQLQuery2.list()).stream()
+							.collect(Collectors.toSet());
+
+					finished.add(Boolean.TRUE);
+					if (finished.size() == testUUIDs.size()) {
+						double runTime = System.currentTimeMillis() - startTime2;
+						log.info("#2: RunTime: " + (runTime / 1000.0));
+					}
+				}
+			}.start();
+
+		}
+
+		// wait until the threads are about to be run
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * Truncates a database table
+	 *
+	 * @param tableName
+	 *            table to truncate
+	 */
+	private void truncateTable(String tableName) {
+		Session session = this.sessionFactory.getCurrentSession();
+		session.beginTransaction();
+		Query query = session.createSQLQuery("truncate " + tableName);
+		query.executeUpdate();
+		session.getTransaction().commit();
 	}
 }
