@@ -108,7 +108,7 @@ CREATE INDEX idx_updated
 
 CREATE TABLE public.gas_station_information_history
 (
-    id integer NOT NULL,
+    id SERIAL PRIMARY KEY,
     stid uuid NOT NULL,
     e5 smallint,
     e10 smallint,
