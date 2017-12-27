@@ -2,4 +2,5 @@
 /logs/
 /resource/predictedPrices.txt
 /resource/solution.txt
-/out/
+/out/routes/*
+/out/precitedPrices/*
