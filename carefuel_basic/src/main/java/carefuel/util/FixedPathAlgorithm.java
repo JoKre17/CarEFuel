@@ -62,9 +62,9 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * 2-parted algorithm. First part: find break points, which are the cheapest gas
-	 * stations that can be reached with one tank fill. Second part: Find best
-	 * tanking behavior on the fixed path.
+	 * 2-parted algorithm. First part: find break points, which are the cheapest
+	 * gas stations that can be reached with one tank fill. Second part: Find
+	 * best tanking behavior on the fixed path.
 	 *
 	 * @return list of nodes with their assigned amount of gas to fill at a gas
 	 *         station.
@@ -82,6 +82,7 @@ public class FixedPathAlgorithm {
 
 		Node goal = nodes.getLast();
 
+		// find breaking points according to algorithms
 		while (!slidingWindow.isEmpty()) {
 			if (!nodes.isEmpty()) {
 				if (distance(slidingWindow.getFirst(), nodes.getFirst()) > windowCapacity - currentFill) {
@@ -193,7 +194,8 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Direct distance between two nodes in km computed by the great-circle distance
+	 * Direct distance between two nodes in km computed by the great-circle
+	 * distance
 	 *
 	 * @param n1
 	 * @param n2
@@ -207,8 +209,8 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Computes the indirect distance between two not necessarily directly connected
-	 * gas stations.
+	 * Computes the indirect distance between two not necessarily directly
+	 * connected gas stations.
 	 *
 	 * @param n1
 	 * @param n2

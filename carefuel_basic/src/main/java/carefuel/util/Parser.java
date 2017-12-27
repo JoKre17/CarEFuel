@@ -25,7 +25,7 @@ import javafx.util.Pair;
 public class Parser {
 
 	private static final Logger log = LogManager.getLogger(App.class);
-	
+
 	private File file;
 	private int capacity;
 	private List<GasStation> gasStations;
@@ -71,14 +71,8 @@ public class Parser {
 					n++;
 				}
 
-				// for (int i = 0; i < entry.length; i++) {
-				// System.out.println("Entry " + i + ": " + entry[i]);
-				// }
-
 				Double[] tmp = getLonLat(Integer.parseInt(entry[1]));
 				int predictedPrice = predictor.predictPrice(predictionTimeStamp, entry[0], Integer.parseInt(entry[1]));
-				// int predictedPrice = 0;
-				// System.out.println(predictedPrice);
 				GasStation station = new GasStation(entry[0], Integer.parseInt(entry[1]), tmp[0], tmp[1],
 						predictedPrice);
 				gasStations.add(station);
@@ -88,7 +82,6 @@ public class Parser {
 
 			reader.close();
 			log.info("************** Parser ends ***********************");
-			// safePredictedData();
 			log.info("\n##### Predicted prices safed to out/pricePrediction/predictedPrices.txt #####");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -134,7 +127,7 @@ public class Parser {
 
 			reader.close();
 			safePredictedData(gasStationTimePairs);
-			log.info("\n##### Predicted prices safed to resource/predictedPrices.txt #####");
+			log.info("\n##### Predicted prices safed to out/predictedPrices/" + file.getName() + ".txt #####");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

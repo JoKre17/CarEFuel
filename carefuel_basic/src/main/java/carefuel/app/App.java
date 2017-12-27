@@ -31,11 +31,6 @@ public class App {
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Basic at " + new Date().toString());
 
-		// testLog();
-
-		// File file = new File(System.getProperty("user.dir") +
-		// "/resource/routes/Bertha Benz Memorial Route.csv");
-
 		while (true) {
 			File file = getOperation();
 
@@ -58,9 +53,9 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction and
-	 * returns the choosen route file.
-	 * 
+	 * Function that allows the user to choose a file via console interaction
+	 * and returns the choosen route file.
+	 *
 	 * @return file to parse
 	 */
 	private static File getOperation() {
@@ -104,9 +99,9 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction and
-	 * returns the choosen gasoline price file.
-	 * 
+	 * Function that allows the user to choose a file via console interaction
+	 * and returns the choosen gasoline price file.
+	 *
 	 * @return file to parse
 	 */
 	private static File getFileToPredictPrices() {

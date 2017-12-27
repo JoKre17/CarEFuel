@@ -24,7 +24,7 @@ import carefuel.model.GasStation;
 public class Evaluator {
 
 	private static final Logger log = LogManager.getLogger(App.class);
-	
+
 	private List<GasStation> gasStations;
 
 	/**
@@ -40,23 +40,21 @@ public class Evaluator {
 	 * predicted and the actual gasoline price.
 	 */
 	public void evaluate() {
-		boolean outputEnabled = false;
 		if (true) {
 			log.info("\n----------------- Evaluation -------------------");
 		}
 		double sum = 0;
 
-		if (outputEnabled) {
-			log.info("Gas Station Analysis: ");
-		}
+		log.debug("Gas Station Analysis: ");
+
 		for (GasStation g : gasStations) {
 
 			double diff = Math.abs(g.getPredictedPrice() - getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
-			if (outputEnabled) {
-				log.info("Predicted: " + g.getPredictedPrice());
-				log.info("Actual: " + getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
-				log.info("Difference: " + diff + "\n");
-			}
+
+			log.debug("Predicted: " + g.getPredictedPrice());
+			log.debug("Actual: " + getRealPriceOfGasStation(g.getID(), g.getArrivalDate()));
+			log.debug("Difference: " + diff + "\n");
+
 			sum += diff;
 		}
 
@@ -114,7 +112,7 @@ public class Evaluator {
 	 * @throws ParseException
 	 */
 	private Date parseDateString(String dateString) throws ParseException {
-		// Append neccessary zeros at the end of the String
+		// Append necessary zeros at the end of the String
 		dateString += "00";
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssz");
 		Date date = dateFormat.parse(dateString);
