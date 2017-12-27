@@ -5,7 +5,16 @@ package carefuel.model;
 
 import java.util.Date;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 /**
  * @author Wolfgang
@@ -132,7 +141,7 @@ public class GasStationPrice {
 	 */
 	@Override
 	public String toString() {
-		return "GasStationPrice [gasStation=" + this.gasStation + ", id=" + this.id + ", date=" + this.date + ", e5="
+		return "GasStationPrice [id=" + this.id + ", date=" + this.date + ", e5="
 				+ this.e5 + ", e10=" + this.e10 + ", diesel=" + this.diesel + "]";
 	}
 

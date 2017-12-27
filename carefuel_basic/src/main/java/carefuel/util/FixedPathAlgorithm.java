@@ -1,9 +1,14 @@
 package carefuel.util;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import carefuel.app.App;
 import carefuel.model.GasStation;
 
 /**
@@ -12,6 +17,8 @@ import carefuel.model.GasStation;
  * https://dl.acm.org/citation.cfm?doid=1978782.1978791)
  */
 public class FixedPathAlgorithm {
+
+	private static final Logger log = LogManager.getLogger(App.class);
 
 	private List<Node> gasStations;
 	private int capacity;
@@ -22,6 +29,7 @@ public class FixedPathAlgorithm {
 	private List<Node> breakPoints;
 	private LinkedList<Node> slidingWindow;
 	private MyPriorityQueue priorityQueue;
+	private DecimalFormat df = new DecimalFormat("#0.00");
 
 	/**
 	 * Constructor of FixedPathAlgorithm
@@ -43,8 +51,7 @@ public class FixedPathAlgorithm {
 
 		this.literGasPerKilometer = gasConsumption / 100;
 		this.range = capacity * (1 / literGasPerKilometer);
-		// TODO output => log?
-		System.out.println("Reichweite: " + range);
+		System.out.println("Range (km): " + range);
 
 		this.gasStations = new ArrayList<Node>();
 		for (GasStation g : gasStations) {
@@ -55,9 +62,9 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * 2-parted algorithm. First part: find break points, which are the cheapest gas
-	 * stations that can be reached with one tank fill. Second part: Find best
-	 * tanking behavior on the fixed path.
+	 * 2-parted algorithm. First part: find break points, which are the cheapest
+	 * gas stations that can be reached with one tank fill. Second part: Find
+	 * best tanking behavior on the fixed path.
 	 *
 	 * @return list of nodes with their assigned amount of gas to fill at a gas
 	 *         station.
@@ -75,41 +82,15 @@ public class FixedPathAlgorithm {
 
 		Node goal = nodes.getLast();
 
-		// TODO output raus oder log!
-		// System.out.println("WindowCapacity: " + windowCapacity);
-
+		// find breaking points according to algorithms
 		while (!slidingWindow.isEmpty()) {
 			if (!nodes.isEmpty()) {
-
-				// System.out.println("*********** Iteration ****************");
-				// System.out.println("Nodes left: " + nodes.size());
-				// System.out.println("Capacity: " + currentFill + "/" +
-				// windowCapacity);
-				// System.out.println("The priorityQueue contains: ");
-				// for (Node n : priorityQueue) {
-				// System.out.println(n.getGasStation().getID() + "(" +
-				// n.getGasStation().getPredictedPrice() + ")");
-				// }
-
-				// System.out.println("\n Distance to next: " +
-				// distance(slidingWindow.getFirst(), nodes.getFirst()));
-
-				// System.out.println("Distance two first: " +
-				// distance(slidingWindow.getFirst(), nodes.getFirst()));
-
 				if (distance(slidingWindow.getFirst(), nodes.getFirst()) > windowCapacity - currentFill) {
 					first = slidingWindow.getFirst();
 					slidingWindow.remove(first);
 					priorityQueue.remove(first);
-					// System.out.println("***\n");
-					// System.out.print("Removed " +
-					// first.getGasStation().getID() + ", oldCapacity: " +
-					// currentFill);
 					currentFill -= distance(first, slidingWindow.getFirst());
 					first.setNext(priorityQueue.getFirst());
-					// System.out.print(", newCapacity: " + currentFill + "\n");
-					// System.out.println("next of the removed is set to: " +
-					// first.getNext().getGasStation().getID());
 				} else {
 					Node last = slidingWindow.getLast();
 					Node newNode = nodes.poll();
@@ -120,48 +101,20 @@ public class FixedPathAlgorithm {
 					if (newNode.equals(newNode.getPrev())) {
 						breakPoints.add(newNode);
 					}
-					// System.out.println("Added " +
-					// newNode.getGasStation().getID() + "("
-					// + newNode.getGasStation().getPredictedPrice() + ")");
-					// System.out.println("Prev of " +
-					// newNode.getGasStation().getID() + ": "
-					// + newNode.getPrev().getGasStation().getID());
 				}
 			} else {
-
-				// System.out.println("*********** Iteration ****************");
-				// System.out.println("Nodes left: " + nodes.size());
-				// System.out.println("Capacity: " + currentFill + "/" +
-				// windowCapacity);
-				// System.out.println("The priorityQueue contains: ");
-				// for (Node n : priorityQueue) {
-				// System.out.println(n.getGasStation().getID() + "(" +
-				// n.getGasStation().getPredictedPrice() + ")");
-				// }
 				if (slidingWindow.size() > 1) {
 					first = slidingWindow.getFirst();
 					slidingWindow.remove(first);
 					priorityQueue.remove(first);
-					// currentFill -= distance(slidingWindow.getFirst(), first);
 					first.setNext(priorityQueue.getFirst());
-					// System.out.println("Dequeue: " +
-					// first.getGasStation().getID() + "("
-					// + first.getGasStation().getPredictedPrice() + ") ");
-					// System.out.println("Next of " +
-					// first.getGasStation().getID() + "("
-					// + first.getGasStation().getPredictedPrice() + ") " + ": "
-					// + first.getNext());
 				} else {
 					first = slidingWindow.getFirst();
 					slidingWindow.remove(first);
 					priorityQueue.remove(first);
-					// System.out.println("Dequeue: " +
-					// first.getGasStation().getID() + "("
-					// + first.getGasStation().getPredictedPrice() + ") ");
 				}
 			}
 		}
-		// breakPoints.add(gasStations.get(gasStations.size() - 1));
 		if (!breakPoints.contains(goal)) {
 			breakPoints.add(goal);
 		}
@@ -171,41 +124,36 @@ public class FixedPathAlgorithm {
 			driveToNext(breakPoints.get(i), breakPoints.get(i + 1));
 		}
 
-		// TODO output => log oder raus
+		DecimalFormat df = new DecimalFormat("#0.00");
 		double sum = 0;
-		System.out.println("------------------ Nodes -----------------");
+
+		log.info("------------------ Gasstations -----------------");
 		for (int i = 0; i < gasStations.size() - 1; i++) {
-			if (breakPoints.contains(gasStations.get(i))) {
-				System.out.println(gasStations.get(i).getGasStation().getID() + "("
-						+ gasStations.get(i).getGasStation().getPredictedPrice() + ")" + " ******");
+			if (gasStations.get(i).getFuelToBuy() > 0) {
+				log.info(gasStations.get(i).getGasStation().getID() + " gas price: "
+						+ gasStations.get(i).getGasStation().getPredictedPrice() + ", fill up "
+						+ df.format(gasStations.get(i).getFuelToBuy()) + " liter");
 			} else {
-				System.out.println(gasStations.get(i).getGasStation().getID() + "("
-						+ gasStations.get(i).getGasStation().getPredictedPrice() + ")");
+				log.info(gasStations.get(i).getGasStation().getID() + " gas price: "
+						+ gasStations.get(i).getGasStation().getPredictedPrice());
 			}
-			System.out.println(distance(gasStations.get(i), gasStations.get(i + 1)));
+			log.info("\t" + df.format(distance(gasStations.get(i), gasStations.get(i + 1))));
 			sum += distance(gasStations.get(i), gasStations.get(i + 1));
 		}
-		System.out.println(gasStations.get(gasStations.size() - 1).getGasStation().getID());
-		System.out.println("------------------------------------------");
-		System.out.println("Sum: " + sum);
+		log.info(gasStations.get(gasStations.size() - 1).getGasStation().getID());
+		log.info("------------------------------------------------");
 
-		System.out.println("\nBreakPoints: ");
+		log.debug("Sum: " + df.format(sum));
+
+		log.debug("\nBreakPoints: ");
 		for (Node n : breakPoints) {
-			System.out.println(n.getGasStation().getID());
+			log.debug(n.getGasStation().getID());
 		}
 
-		System.out.println("Distanz zwischen start und ende: "
-				+ indirectDistance(gasStations.get(0), gasStations.get(gasStations.size() - 1)));
+		log.info("Distance between start and end: "
+				+ df.format(indirectDistance(gasStations.get(0), gasStations.get(gasStations.size() - 1))));
 
-		System.out.println("\nSolution: ");
-		for (Node n = breakPoints.get(0); n.getNextOnBestPath() != null; n = n.getNextOnBestPath()) {
-			System.out.println(n.getGasStation().getID() + "(" + n.getGasStation().getPredictedPrice() + ")");
-			System.out.println("Tank: " + n.getGasInTank() + ", Fill: " + n.getFuelToBuy() + ", d: "
-					+ indirectDistance(n, n.getNextOnBestPath()) + ", liter necessary: "
-					+ indirectDistance(n, n.getNextOnBestPath()) * literGasPerKilometer);
-		}
-		System.out.println(breakPoints.get(breakPoints.size() - 1).getGasStation().getID() + "("
-				+ breakPoints.get(breakPoints.size() - 1).getGasStation().getPredictedPrice() + ")");
+		printRoutePrice(gasStations);
 
 		return gasStations;
 	}
@@ -218,10 +166,8 @@ public class FixedPathAlgorithm {
 	 * @param to
 	 */
 	private void driveToNext(Node from, Node to) {
-		// TODO Räum deine Funktionen mal auf, Jonas :P
-		// System.out.println("From: " + from.getGasStation().getID() + ", to: "
-		// + to.getGasStation().getID());
-		// System.out.println("Distance: " + indirectDistance(from, to));
+		log.debug("From: " + from.getGasStation().getID() + ", to: " + to.getGasStation().getID());
+		log.debug("Distance: " + indirectDistance(from, to));
 		if (indirectDistance(from, to) <= range) {
 			// just fill enough to get to "to"
 			double gasToBuy = 0.0;
@@ -229,21 +175,17 @@ public class FixedPathAlgorithm {
 				gasToBuy = literGasPerKilometer * indirectDistance(from, to) - from.getGasInTank();
 			}
 			from.setFuelToBuy(gasToBuy);
-			// System.out.println("Before - Gas In Tank: " +
-			// from.getGasInTank());
+			log.debug("Before - Gas In Tank: " + from.getGasInTank());
 			from.setGasInTank(from.getGasInTank() + from.getFuelToBuy());
 			from.setNextOnBestPath(to);
-			// System.out.println("After - Gas In Tank: " +
-			// from.getGasInTank());
+			log.debug("After - Gas In Tank: " + from.getGasInTank());
 			to.setGasInTank(from.getGasInTank() - literGasPerKilometer * indirectDistance(from, to));
 		} else {
 			// fill the tank and drive to from.next
 			from.setFuelToBuy(capacity - from.getGasInTank());
-			// System.out.println("Before - Gas In Tank: " +
-			// from.getGasInTank());
+			log.debug("Before - Gas In Tank: " + from.getGasInTank());
 			from.setGasInTank(from.getGasInTank() + from.getFuelToBuy());
-			// System.out.println("After - Gas In Tank: " +
-			// from.getGasInTank());
+			log.debug("After - Gas In Tank: " + from.getGasInTank());
 			from.setNextOnBestPath(from.getNext());
 			from.getNextOnBestPath().setGasInTank(
 					from.getGasInTank() - literGasPerKilometer * indirectDistance(from, from.getNextOnBestPath()));
@@ -252,14 +194,14 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Direct distance between two nodes in km computed by the great-circle distance
+	 * Direct distance between two nodes in km computed by the great-circle
+	 * distance
 	 *
 	 * @param n1
 	 * @param n2
 	 * @return
 	 */
 	private double distance(Node n1, Node n2) {
-		// berechne Distanz
 		return (6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat())
 				+ Math.cos(n1.getGasStation().getLat() * Math.cos(n2.getGasStation().getLat()))
 						* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon()))))
@@ -267,8 +209,8 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Computes the indirect distance between two not necessarily directly connected
-	 * gas stations.
+	 * Computes the indirect distance between two not necessarily directly
+	 * connected gas stations.
 	 *
 	 * @param n1
 	 * @param n2
@@ -287,6 +229,14 @@ public class FixedPathAlgorithm {
 			distance += distance(gasStations.get(i), gasStations.get(i + 1));
 		}
 		return distance;
+	}
+
+	private void printRoutePrice(List<Node> route) {
+		double price = 0;
+		for (Node n : route) {
+			price += n.getFuelToBuy() * (n.getGasStation().getPredictedPrice() / 10.0);
+		}
+		log.info("\nPrice of the route is: " + df.format(price / 100) + " Eur");
 	}
 
 	/**

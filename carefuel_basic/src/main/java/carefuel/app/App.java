@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import carefuel.controller.PathFinder;
+import carefuel.util.Evaluator;
 import carefuel.util.Parser;
 
 /**
@@ -30,20 +31,111 @@ public class App {
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Basic at " + new Date().toString());
 
-		if (args.length >= 2) {
-			if (args[0].equals("-gasPricesDir")) {
-				System.setProperty("gasPricesDir", args[1]);
+		while (true) {
+			File file = getOperation();
+
+			if (file == null) {
+				// Predict gasoline prices
+				Parser parser = new Parser(null);
+				parser.parseGasStationsToPredict(getFileToPredictPrices());
+			} else {
+				// calculate beste filling strategy
+				Parser parser = new Parser(file);
+				parser.parseRoute();
+
+				PathFinder pf = new PathFinder(parser.getGasStations(), parser.getCapacity(), file.getName());
+				pf.computeBestPath();
+
+				Evaluator ev = new Evaluator(parser.getGasStations());
+				ev.evaluate();
 			}
 		}
-
-		// Assume that the user runs the tool from the directory the resource dir is in
-		File file = new File(System.getProperty("user.dir") + "/resource/Bertha Benz Memorial Route.csv");
-
-		Parser parser = new Parser(file);
-		parser.parse();
-
-		PathFinder pf = new PathFinder(parser.getGasStations(), parser.getCapacity());
-		pf.computeBestPath();
 	}
 
+	/**
+	 * Function that allows the user to choose a file via console interaction
+	 * and returns the choosen route file.
+	 *
+	 * @return file to parse
+	 */
+	private static File getOperation() {
+		log.info("\n\n************ WELCOME TO CAREFUEL *******************");
+		log.info("\nSelect the route: ");
+		File routeFolder = new File(System.getProperty("user.dir") + "/resource/routes/");
+		int i = 1;
+		for (; (i - 1) < routeFolder.listFiles().length; i++) {
+			File f = routeFolder.listFiles()[i - 1];
+			log.info("[" + i + "] " + f.getName());
+		}
+		log.info("------------------ More options ----------------------");
+		log.info("[" + i + "] Predict gasoline prices");
+		log.info("[" + (i + 1) + "] Exit");
+
+		String in = "";
+		try {
+			in = System.console().readLine();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.info("!!!   Please run the .jar in the target folder   !!!");
+			System.exit(-1);
+
+		}
+
+		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
+		if (n == -1) {
+			log.info("*** Please enter a valid nummber ***");
+			getOperation();
+		}
+
+		// evaluation
+		if (n == i) {
+			return null;
+			// Exit
+		} else if (n == i + 1) {
+			System.exit(-1);
+		}
+
+		return routeFolder.listFiles()[n - 1];
+	}
+
+	/**
+	 * Function that allows the user to choose a file via console interaction
+	 * and returns the choosen gasoline price file.
+	 *
+	 * @return file to parse
+	 */
+	private static File getFileToPredictPrices() {
+		log.info("\n\nSelect the file to predict prices for: ");
+		File folder = new File(System.getProperty("user.dir") + "/resource/pricePrediction/");
+		int i = 1;
+		for (; (i - 1) < folder.listFiles().length; i++) {
+			File f = folder.listFiles()[i - 1];
+			log.info("[" + i + "] " + f.getName());
+		}
+		log.info("[" + i + "] Exit");
+
+		String in = "";
+
+		try {
+			in = System.console().readLine();
+		} catch (Exception e) {
+			e.printStackTrace();
+			log.info("!!!   Please run the .jar in the target folder   !!!");
+			System.exit(-1);
+
+		}
+
+		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
+		if (n == -1) {
+			log.info("*** Please enter a valid nummber ***");
+			getFileToPredictPrices();
+		}
+
+		// exit
+		if (n == i) {
+			System.exit(-1);
+		}
+
+		return folder.listFiles()[n - 1];
+	}
 }

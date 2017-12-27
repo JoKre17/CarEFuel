@@ -20,25 +20,25 @@ public class PathFinder {
 	private List<GasStation> gasStations;
 	private List<Node> bestPath;
 	private int capacity;
-
-	// Given by Intellitank
 	private final double gasConsumption = 5.6;
+	private String fileName;
 
 	/**
-	 * Constructor gets all GasStations and the maximal tank capacity
+	 * Constructor of the Path finder.
 	 *
 	 * @param gasStations
 	 * @param capacity
 	 */
-	public PathFinder(List<GasStation> gasStations, int capacity) {
+	public PathFinder(List<GasStation> gasStations, int capacity, String fileName) {
 		this.gasStations = gasStations;
 		this.capacity = capacity;
+		this.fileName = fileName;
 	}
 
 	/**
-	 * This function starts the computation of the best path and safe it to a .txt
-	 * file. The algorithms is the fixed path algorithm taken from "To Fill or not
-	 * to Fill: The Gas Station Problem" by Khuller et. al.(available at
+	 * This function starts the computation of the best path and safe it to a
+	 * .txt file. The algorithms is the fixed path algorithm taken from "To Fill
+	 * or not to Fill: The Gas Station Problem" by Khuller et. al.(available at
 	 * https://dl.acm.org/citation.cfm?doid=1978782.1978791)
 	 */
 	public void computeBestPath() {
@@ -48,12 +48,13 @@ public class PathFinder {
 	}
 
 	/**
-	 * Function used to safe the computed path to a plain text file (.txt). The file
-	 * is located at /resource/solution.txt
+	 * Function used to safe the computed path to a plain text file (.txt). The
+	 * file is located at /resource/solution.txt
 	 */
 	private void safePath() {
 		try {
-			PrintWriter out = new PrintWriter(System.getProperty("user.dir") + "/resource/solution.txt");
+			PrintWriter out = new PrintWriter(
+					System.getProperty("user.dir") + "/out/routes/" + fileName + "-solution.txt");
 
 			for (Node n : bestPath) {
 				out.println(n.getGasStation().getArrivalDate() + ";" + n.getGasStation().getID() + ";"

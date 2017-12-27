@@ -7,6 +7,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import carefuel.app.App;
 import carefuel.controller.PricePredictor;
 import carefuel.model.GasStation;
 import javafx.util.Pair;
@@ -19,6 +23,8 @@ import javafx.util.Pair;
  *
  */
 public class Parser {
+
+	private static final Logger log = LogManager.getLogger(App.class);
 
 	private File file;
 	private int capacity;
@@ -38,9 +44,7 @@ public class Parser {
 	/**
 	 * Actual parsing of the route-file. Extracting the gas station information.
 	 */
-	public void parse() {
-		System.out.println("************** Parser starts ***********************");
-
+	public void parseRoute() {
 		String line = "";
 		String[] entry;
 		String splitBy = ";";
@@ -56,6 +60,8 @@ public class Parser {
 			predictionTimeStamp = "";
 			int n = 0;
 
+			log.info("************** Parser starts ***********************");
+
 			while ((line = reader.readLine()) != null) {
 
 				entry = line.split(splitBy);
@@ -65,23 +71,63 @@ public class Parser {
 					n++;
 				}
 
-				// for (int i = 0; i < entry.length; i++) {
-				// System.out.println("Entry " + i + ": " + entry[i]);
-				// }
-
 				Double[] tmp = getLonLat(Integer.parseInt(entry[1]));
 				int predictedPrice = predictor.predictPrice(predictionTimeStamp, entry[0], Integer.parseInt(entry[1]));
-				// int predictedPrice = 0;
-				// System.out.println(predictedPrice);
 				GasStation station = new GasStation(entry[0], Integer.parseInt(entry[1]), tmp[0], tmp[1],
 						predictedPrice);
 				gasStations.add(station);
+
+				log.info("*");
 			}
 
 			reader.close();
-			System.out.println("************** Parser ends ***********************");
-			safePredictedData();
-			System.out.println("************** Predicted prices safed to resource/predictedPrices.txt");
+			log.info("************** Parser ends ***********************");
+			log.info("\n##### Predicted prices safed to out/pricePrediction/predictedPrices.txt #####");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Parses the gasStations File with the gas stations to predict prices for.
+	 *
+	 * @param file
+	 *            File containing the gas stations, which priced shall be
+	 *            predicted
+	 */
+	public void parseGasStationsToPredict(File file) {
+		this.file = file;
+		String line = "";
+		String[] entry;
+		String splitBy = ";";
+
+		gasStations = new ArrayList<GasStation>();
+
+		List<Pair<GasStation, String>> gasStationTimePairs = new ArrayList<Pair<GasStation, String>>();
+
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+
+			PricePredictor predictor = new PricePredictor();
+
+			log.info("************** Parser starts ***********************");
+
+			while ((line = reader.readLine()) != null) {
+
+				entry = line.split(splitBy);
+
+				int gasStationID = Integer.parseInt(entry[2]);
+				log.info("0: " + entry[0] + ", 1: " + entry[1] + ", id: " + gasStationID);
+				int predictedPrice = predictor.predictPrice(entry[0], entry[1], gasStationID);
+				gasStationTimePairs.add(new Pair<GasStation, String>(
+						new GasStation(entry[1], gasStationID, 0.0, 0.0, predictedPrice), entry[0]));
+
+				log.info(line + ";" + predictedPrice);
+			}
+
+			reader.close();
+			safePredictedData(gasStationTimePairs);
+			log.info("\n##### Predicted prices safed to out/predictedPrices/" + file.getName() + ".txt #####");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -124,20 +170,21 @@ public class Parser {
 
 	/**
 	 * Safe data predicted by the PricePredictor as .txt file to
-	 * /resource/predictedPrices.txt
+	 * /out/pricePrediction/predictedPrices.txt
 	 */
-	private void safePredictedData() {
+	private void safePredictedData(List<Pair<GasStation, String>> gasStationTimePairs) {
 		try {
-			PrintWriter out = new PrintWriter(System.getProperty("user.dir") + "/resource/predictedPrices.txt");
+			PrintWriter out = new PrintWriter(
+					System.getProperty("user.dir") + "/out/pricePrediction/" + file.getName() + "-predictedPrices.txt");
 
-			for (GasStation g : gasStations) {
-				out.println(
-						predictionTimeStamp + ";" + g.getArrivalDate() + ";" + g.getID() + ";" + g.getPredictedPrice());
+			for (Pair<?, ?> p : gasStationTimePairs) {
+				out.println(p.getValue() + ";" + ((GasStation) p.getKey()).getArrivalDate() + ";"
+						+ ((GasStation) p.getKey()).getID() + ";" + ((GasStation) p.getKey()).getPredictedPrice());
 			}
 			out.flush();
 			out.close();
 		} catch (Exception e) {
-
+			e.printStackTrace();
 		}
 	}
 

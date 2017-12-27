@@ -3,7 +3,15 @@ package carefuel.model;
 import java.io.Serializable;
 import java.util.Set;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.transaction.Transactional;
 
 import org.hibernate.annotations.Type;
 import org.json.JSONObject;
@@ -48,11 +56,11 @@ public class GasStation implements Serializable {
 	@Column(name = "lng")
 	private double longitude;
 
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@JoinColumn(name = "stid")
 	private Set<GasStationPrice> gasStationPrices;
 
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
 	@JoinColumn(name = "stid")
 	private Set<GasStationPricePrediction> gasStationPricePredictions;
 
@@ -78,21 +86,21 @@ public class GasStation implements Serializable {
 		return this.city;
 	}
 
-
 	/**
-	* @return the gasStationPricePredictions
-	*/
+	 * @return the gasStationPricePredictions
+	 */
+	@Transactional
 	public Set<GasStationPricePrediction> getGasStationPricePredictions() {
 		return this.gasStationPricePredictions;
 	}
 
 	/**
-	* @return the gasStationPrices
-	*/
+	 * @return the gasStationPrices
+	 */
+	@Transactional
 	public Set<GasStationPrice> getGasStationPrices() {
-	return this.gasStationPrices;
+		return this.gasStationPrices;
 	}
-
 
 	/**
 	 * @return the houseNumber
@@ -159,24 +167,21 @@ public class GasStation implements Serializable {
 		this.city = city;
 	}
 
-
 	/**
-	* @param gasStationPricePredictions
-	* the gasStationPricePredictions to set
-	*/
-	public void setGasStationPricePredictions(Set<GasStationPricePrediction>
-	gasStationPricePredictions) {
+	 * @param gasStationPricePredictions
+	 *            the gasStationPricePredictions to set
+	 */
+	public void setGasStationPricePredictions(Set<GasStationPricePrediction> gasStationPricePredictions) {
 		this.gasStationPricePredictions = gasStationPricePredictions;
 	}
 
 	/**
-	* @param gasStationPrices
-	* the gasStationPrices to set
-	*/
+	 * @param gasStationPrices
+	 *            the gasStationPrices to set
+	 */
 	public void setGasStationPrices(Set<GasStationPrice> gasStationPrices) {
 		this.gasStationPrices = gasStationPrices;
 	}
-
 
 	/**
 	 * @param houseNumber
