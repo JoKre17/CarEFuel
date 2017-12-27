@@ -3,4 +3,6 @@
 /resource/predictedPrices.txt
 /resource/solution.txt
 /out/routes/*
+!/out/routes/README.txt
 /out/precitedPrices/*
+!/out/precitedPrices/README.txt
