@@ -19,6 +19,7 @@ function submitButtonPressed() {
 	var startTime = $('#dateTimePicker').data('DateTimePicker').date()._i;
 	var capacity = document.getElementById('capacity').value;
 	var consumption = document.getElementById('consumption').value;
+	var metric = document.getElementById('metric').value;
 	
 	if (capacity == "") {
 		capacity = 3;
@@ -33,7 +34,8 @@ function submitButtonPressed() {
 		'to' : getClosestGasStation(to),
 		'startTime' : startTime,
 		'capacity' : capacity,
-		'consumption' : consumption
+		'consumption' : consumption,
+		'metric' : metric
 	};
 	
 	var GET_Request_url = "rest/path?"
