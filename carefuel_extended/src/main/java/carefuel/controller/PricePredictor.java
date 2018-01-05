@@ -1,18 +1,12 @@
 package carefuel.controller;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.nio.charset.Charset;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import carefuel.model.GasStation;
-import carefuel.model.GasStationPrice;
-import carefuel.model.GasStationPricePrediction;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
@@ -24,6 +18,10 @@ import org.tensorflow.Output;
 import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Session;
 import org.tensorflow.Tensor;
+
+import carefuel.model.GasStation;
+import carefuel.model.GasStationPrice;
+import carefuel.model.GasStationPricePrediction;
 
 /**
  * The PricePredictor class enables the user to predict the prices of a gas
@@ -45,7 +43,7 @@ public class PricePredictor {
 	/**
 	 * TODO add functionality to decide between CSV files and database as data
 	 * source
-	 * 
+	 *
 	 * Uses the System property gasPricesDirectory to get the path to the
 	 * input_files
 	 */
@@ -97,8 +95,9 @@ public class PricePredictor {
 		// Wrap all price predictions into objects of the GasStationPricePrediction class
 		Set<GasStationPricePrediction> predictions = new HashSet<>();
 		for(int i = 0; i < predictionE5.length; ++i){
-			GasStationPricePrediction prediction = new GasStationPricePrediction(gasStation.getId(), currentDate,
+			GasStationPricePrediction prediction = new GasStationPricePrediction(gasStation, currentDate,
 					(int) predictionE5[i], (int) predictionE10[i], (int) predictionDiesel[i]);
+
 			prediction.setGasStation(gasStation);
 			predictions.add(prediction);
 		}
@@ -162,10 +161,10 @@ public class PricePredictor {
 
 			long diff = (lastDate.getTime() - currentDate.getTime()); // difference in milliseconds;
 
-			// Just in case two dates are added at the same time, slightly move the point to the right for one ms
+			// Just in case two dates are added at the same time, slightly move the point to the right for 5 ms
 			if (i < (datePriceList.size() - 1)) {
 				if (diff == x[datePriceList.size() - i - 2]) {
-					diff += 1;
+					diff = (long) x[datePriceList.size() - i - 2] + 3;
 				}
 			}
 			x[datePriceList.size() - i - 1] = diff;
@@ -230,8 +229,8 @@ public class PricePredictor {
 		// Feed the input tensors and run the TensorFlow graph
 		float[][] result = new float[1][hoursPerMonth];
 		session.runner().feed("Input/prev_months", prevMonthsTensor)
-				.feed("Input/n_prev_months", nPrevMonthsTensor)
-				.fetch(output).run().get(0).copyTo(result);
+		.feed("Input/n_prev_months", nPrevMonthsTensor)
+		.fetch(output).run().get(0).copyTo(result);
 		return result[0];
 	}
 }

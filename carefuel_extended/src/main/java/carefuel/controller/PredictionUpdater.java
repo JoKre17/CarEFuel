@@ -1,17 +1,15 @@
 package carefuel.controller;
 
-import carefuel.model.GasStation;
-import carefuel.model.GasStationPrice;
-import carefuel.model.GasStationPricePrediction;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import carefuel.model.GasStation;
+import carefuel.model.GasStationPricePrediction;
 
 
 /**
@@ -24,39 +22,49 @@ import java.util.Set;
  * @author nils
  */
 public class PredictionUpdater extends Thread{
-    private static final Logger log = LogManager.getLogger(Main.class);
-    private static final int portNumber = 50001;
+	private static final Logger log = LogManager.getLogger(Main.class);
+	private static final int portNumber = 50001;
 
-    private DatabaseHandler dbHandler;
-    private PricePredictor pricePredictor;
+	private DatabaseHandler dbHandler;
+	private PricePredictor pricePredictor;
 
-    public PredictionUpdater(DatabaseHandler dbHandler){
-        this.dbHandler = dbHandler;
-        this.pricePredictor = new PricePredictor();
-    }
+	public PredictionUpdater(DatabaseHandler dbHandler){
+		this.dbHandler = dbHandler;
+		pricePredictor = new PricePredictor();
+	}
 
-    @Override
-    public void run() {
-        // Run this thread indefinitely
-        while(true){
-            try {
-                ServerSocket serverSocket = new ServerSocket(portNumber);
-                Socket serviceSocket = serverSocket.accept();
+	@Override
+	public void run() {
+		// Run this thread indefinitely
+		while(true){
+			try {
+				ServerSocket serverSocket = new ServerSocket(portNumber);
 
-                // Fetch all gas stations from the database and update one after another
-                Set<GasStation> gasStations = dbHandler.getAllGasStations();
-                for(GasStation gasStation : gasStations){
-                    Set<GasStationPricePrediction> predictions = pricePredictor.predictNextMonth(gasStation);
-                    dbHandler.insertPricePredictions(predictions);
-                    break;
-                }
+				// Wait for incoming connection
+				Socket serviceSocket = serverSocket.accept();
 
-                serviceSocket.close();
-                serverSocket.close();
-            }
-            catch (IOException e) {
-                log.error(e);
-            }
-        }
-    }
+				// Fetch all gas stations from the database and update one after another
+				Set<GasStation> gasStations = dbHandler.getAllGasStations();
+
+				int counter = 0;
+				for(GasStation gasStation : gasStations){
+					// For now: ignore gas stations that have not enough entries
+					if(gasStation.getGasStationPrices().size() < 372) {
+						continue;
+					}
+					Set<GasStationPricePrediction> predictions = pricePredictor.predictNextMonth(gasStation);
+
+					dbHandler.insertPricePredictions(predictions);
+
+					System.out.println(counter++);
+				}
+
+				serviceSocket.close();
+				serverSocket.close();
+			}
+			catch (IOException e) {
+				log.error(e);
+			}
+		}
+	}
 }

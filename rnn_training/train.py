@@ -155,7 +155,6 @@ def model_fn(features, labels, mode):
 
             hidden_layers = tf.contrib.rnn.MultiRNNCell(layers, state_is_tuple=True)
 
-
             ''' ------------MAGIC! Unrolling of the RNN network-------------'''
             # Input is now a list of length max_past_months of tensors with shape (batch_size, n_hours_per_month)
             input = tf.unstack(inputs, num=params['max_past_months'], axis=1)
@@ -188,7 +187,6 @@ def model_fn(features, labels, mode):
 
             # Combine output in a densely connected layer
             output = tf.layers.dense(inputs=output, units=size, activation=tf.nn.relu)
-
 
     # Rescale and give name for later usage
     with tf.name_scope("Output"):
