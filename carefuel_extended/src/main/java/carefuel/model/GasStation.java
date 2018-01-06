@@ -1,6 +1,9 @@
 package carefuel.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -13,6 +16,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.transaction.Transactional;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.annotations.Type;
 import org.json.JSONObject;
 
@@ -95,11 +99,35 @@ public class GasStation implements Serializable {
 	}
 
 	/**
-	 * @return the gasStationPrices
+	 * This function extracts the historic prices of all fuel types from this GasStation object.
+	 *
+	 * @return An array list of array lists containing all prices with corresponding dates, sorted by date. The array
+	 * has a length of three, where array[0] is the entry for E5, array[1] for E10 and array[2] for diesel
 	 */
 	@Transactional
-	public Set<GasStationPrice> getGasStationPrices() {
-		return gasStationPrices;
+	public ArrayList<ArrayList<Pair<Date, Integer>>> getGasStationPrices() {
+		//Fetch all historic price data and sort by date and fuel type
+		Set<GasStationPrice> prices = gasStationPrices;
+		ArrayList<Pair<Date, Integer>> historicE5 = new ArrayList<>();
+		ArrayList<Pair<Date, Integer>> historicE10 = new ArrayList<>();
+		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
+		for(GasStationPrice price : prices){
+			historicE5.add(Pair.of(price.getDate(), price.getE5()));
+			historicE10.add(Pair.of(price.getDate(), price.getE10()));
+			historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
+		}
+
+		Comparator<Pair<Date, Integer>> comp = Comparator.comparing(Pair::getLeft);
+		historicE5.sort(comp);
+		historicE10.sort(comp);
+		historicDiesel.sort(comp);
+
+		ArrayList<ArrayList<Pair<Date, Integer>>> result = new ArrayList<>();
+		result.add(historicE5);
+		result.add(historicE10);
+		result.add(historicDiesel);
+
+		return result;
 	}
 
 	/**

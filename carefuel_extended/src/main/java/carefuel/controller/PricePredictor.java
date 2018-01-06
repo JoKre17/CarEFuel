@@ -1,7 +1,6 @@
 package carefuel.controller;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -20,9 +19,7 @@ import org.tensorflow.Session;
 import org.tensorflow.Tensor;
 
 import carefuel.model.GasStation;
-import carefuel.model.GasStationPrice;
 import carefuel.model.GasStationPricePrediction;
-import org.thymeleaf.util.DateUtils;
 
 /**
  * The PricePredictor class enables the user to predict the prices of a gas
@@ -84,7 +81,7 @@ public class PricePredictor {
 	 */
 	public Set<GasStationPricePrediction> predictNextMonth(GasStation gasStation){
 		// First get a sorted list of historic prices for all fuel types with corresponding date
-		ArrayList<ArrayList<Pair<Date, Integer>>> datePriceList = getHistoricPrices(gasStation);
+		ArrayList<ArrayList<Pair<Date, Integer>>> datePriceList = gasStation.getGasStationPrices();
 
 		/*
 		 * Interpolate the data from the first to the entry at lastEntryIndex at every
@@ -117,40 +114,10 @@ public class PricePredictor {
 			predictions.add(prediction);
 
 			// update date
-			currentDate = DateUtils.addHours(currentDate, 2);
+			currentDate = new Date(currentDate.getTime() + (2 * 3600 * 1000));
 		}
 
 		return predictions;
-	}
-
-	/**
-	 * This function extracts the historic prices of all fuel types from the given GasStation objects.
-	 *
-	 * @return An array of array lists containing all prices with corresponding dates, sorted by date. The array
-	 * has a length of three, where array[0] is the entry for E5, array[1] for E10 and array[2] for Diesel
-	 */
-	private ArrayList<ArrayList<Pair<Date, Integer>>> getHistoricPrices(GasStation gasStation){
-		//Fetch all historic price data and sort by date and fuel type
-		Set<GasStationPrice> prices = gasStation.getGasStationPrices();
-		ArrayList<Pair<Date, Integer>> historicE5 = new ArrayList<>();
-		ArrayList<Pair<Date, Integer>> historicE10 = new ArrayList<>();
-		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
-		for(GasStationPrice price : prices){
-			historicE5.add(Pair.of(price.getDate(), price.getE5()));
-			historicE10.add(Pair.of(price.getDate(), price.getE10()));
-			historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
-		}
-
-		Comparator<Pair<Date, Integer>> comp = Comparator.comparing(Pair::getLeft);
-		historicE5.sort(comp);
-		historicE10.sort(comp);
-		historicDiesel.sort(comp);
-
-		ArrayList<ArrayList<Pair<Date, Integer>>> result = new ArrayList<>();
-		result.add(historicE5);
-		result.add(historicE10);
-		result.add(historicDiesel);
-		return result;
 	}
 
 	/**
@@ -181,7 +148,7 @@ public class PricePredictor {
 
 			// Just in case two dates are added at the same time, slightly move the point to the right for 0.5s
 			if (i < (datePriceList.size() - 1)) {
-				if (diff == x[datePriceList.size() - i - 2] || diff < 0) {
+				if ((diff == x[datePriceList.size() - i - 2]) || (diff < 0)) {
 					diff = (long) x[datePriceList.size() - i - 2] + 500;
 				}
 			}
@@ -244,18 +211,18 @@ public class PricePredictor {
 		Session session = null;
 		Graph graph = null;
 		switch (fuelType){
-			case "e5":
-				session = this.e5_session;
-				graph = this.e5_graph;
-				break;
+		case "e5":
+			session = e5_session;
+			graph = e5_graph;
+			break;
 
-			case "e10":
-				session = this.e10_session;
-				graph = this.e10_graph;
-				break;
-			case "diesel":
-				session = this.diesel_session;
-				graph = this.diesel_graph;
+		case "e10":
+			session = e10_session;
+			graph = e10_graph;
+			break;
+		case "diesel":
+			session = diesel_session;
+			graph = diesel_graph;
 		}
 
 		// Fetch the output tensor of the network
