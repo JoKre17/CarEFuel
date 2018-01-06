@@ -181,7 +181,7 @@ public class PricePredictor {
 		for (int month = 0; month < nMonths; ++month) {
 			for (int hour = 0; hour < hoursPerMonth; ++hour) {
 				result[month][hour] = (float) func.value(current_x);
-				current_x += (1000 * 3600);
+				current_x += (1000 * 3600 * 2);
 			}
 		}
 		return result;

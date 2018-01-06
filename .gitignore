@@ -3,4 +3,8 @@
 
 rnn_training/.idea/
 rnn_training/model
+rnn_training/data
 /bin/
+*.iml
+*history.dump*
+ToDo

@@ -43,6 +43,9 @@ public class Main {
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
 
+		PredictionUpdater p = new PredictionUpdater(databaseHandler);
+		p.start();
+
 		pathFinder = new PathFinder(databaseHandler);
 	}
 }

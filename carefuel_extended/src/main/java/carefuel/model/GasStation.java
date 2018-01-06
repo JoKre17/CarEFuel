@@ -1,6 +1,9 @@
 package carefuel.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -13,6 +16,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.transaction.Transactional;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.annotations.Type;
 import org.json.JSONObject;
 
@@ -61,11 +65,11 @@ public class GasStation implements Serializable {
 	@Column(name = "lng")
 	private double longitude;
 
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "stid")
 	private Set<GasStationPrice> gasStationPrices;
 
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "stid")
 	private Set<GasStationPricePrediction> gasStationPricePredictions;
 
@@ -81,14 +85,14 @@ public class GasStation implements Serializable {
 	 * @return the brand
 	 */
 	public String getBrand() {
-		return this.brand;
+		return brand;
 	}
 
 	/**
 	 * @return the city
 	 */
 	public String getCity() {
-		return this.city;
+		return city;
 	}
 
 	/**
@@ -96,64 +100,88 @@ public class GasStation implements Serializable {
 	 */
 	@Transactional
 	public Set<GasStationPricePrediction> getGasStationPricePredictions() {
-		return this.gasStationPricePredictions;
+		return gasStationPricePredictions;
 	}
 
 	/**
-	 * @return the gasStationPrices
+	 * This function extracts the historic prices of all fuel types from this GasStation object.
+	 *
+	 * @return An array list of array lists containing all prices with corresponding dates, sorted by date. The array
+	 * has a length of three, where array[0] is the entry for E5, array[1] for E10 and array[2] for diesel
 	 */
 	@Transactional
-	public Set<GasStationPrice> getGasStationPrices() {
-		return this.gasStationPrices;
+	public ArrayList<ArrayList<Pair<Date, Integer>>> getGasStationPrices() {
+		//Fetch all historic price data and sort by date and fuel type
+		Set<GasStationPrice> prices = gasStationPrices;
+		ArrayList<Pair<Date, Integer>> historicE5 = new ArrayList<>();
+		ArrayList<Pair<Date, Integer>> historicE10 = new ArrayList<>();
+		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
+		for(GasStationPrice price : prices){
+			historicE5.add(Pair.of(price.getDate(), price.getE5()));
+			historicE10.add(Pair.of(price.getDate(), price.getE10()));
+			historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
+		}
+
+		Comparator<Pair<Date, Integer>> comp = Comparator.comparing(Pair::getLeft);
+		historicE5.sort(comp);
+		historicE10.sort(comp);
+		historicDiesel.sort(comp);
+
+		ArrayList<ArrayList<Pair<Date, Integer>>> result = new ArrayList<>();
+		result.add(historicE5);
+		result.add(historicE10);
+		result.add(historicDiesel);
+
+		return result;
 	}
 
 	/**
 	 * @return the houseNumber
 	 */
 	public String getHouseNumber() {
-		return this.houseNumber;
+		return houseNumber;
 	}
 
 	/**
 	 * @return the id
 	 */
 	public java.util.UUID getId() {
-		return this.id;
+		return id;
 	}
 
 	/**
 	 * @return the latitude
 	 */
 	public double getLatitude() {
-		return this.latitude;
+		return latitude;
 	}
 
 	/**
 	 * @return the longitude
 	 */
 	public double getLongitude() {
-		return this.longitude;
+		return longitude;
 	}
 
 	/**
 	 * @return the name
 	 */
 	public String getName() {
-		return this.name;
+		return name;
 	}
 
 	/**
 	 * @return the postalCode
 	 */
 	public String getPostalCode() {
-		return this.postalCode;
+		return postalCode;
 	}
 
 	/**
 	 * @return the streetName
 	 */
 	public String getStreetName() {
-		return this.streetName;
+		return streetName;
 	}
 
 	/**
@@ -246,7 +274,7 @@ public class GasStation implements Serializable {
 
 	/**
 	 * Computes distance in kilometers
-	 * 
+	 *
 	 * @param other
 	 * @return
 	 */
@@ -257,12 +285,12 @@ public class GasStation implements Serializable {
 		lon_b = Math.toRadians(lon_b);
 
 		return 6378.388 * Math
-				.acos(Math.sin(lat_a) * Math.sin(lat_b) + Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a));
+				.acos((Math.sin(lat_a) * Math.sin(lat_b)) + (Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a)));
 	}
 
 	/**
 	 * returns the gas station in json format
-	 * 
+	 *
 	 * @return
 	 */
 	public JSONObject toJSON() {
@@ -288,16 +316,16 @@ public class GasStation implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		return "GasStation [id=" + this.id + ", name=" + this.name + ", brand=" + this.brand + ", streetName="
-				+ this.streetName + ", houseNumber=" + this.houseNumber + ", postalCode=" + this.postalCode + ", city="
-				+ this.city + ", latitude=" + this.latitude + ", longitude=" + this.longitude + "]";
+		return "GasStation [id=" + id + ", name=" + name + ", brand=" + brand + ", streetName="
+				+ streetName + ", houseNumber=" + houseNumber + ", postalCode=" + postalCode + ", city="
+				+ city + ", latitude=" + latitude + ", longitude=" + longitude + "]";
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = (prime * result) + ((id == null) ? 0 : id.hashCode());
 		return result;
 	}
 

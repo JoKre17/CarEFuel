@@ -16,7 +16,6 @@
     <mapping class="carefuel.model.GasStation" />
     <mapping class="carefuel.model.GasStationPrice" />
     <mapping class="carefuel.model.GasStationPricePrediction" />
-    <mapping class="carefuel.model.Distance" />
      
   </session-factory>
 </hibernate-configuration>

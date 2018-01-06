@@ -1,14 +1,11 @@
 import math
-import csv
 import random
 import progressbar
+import psycopg2
 
 import tensorflow as tf
 import numpy as np
 
-from os import listdir
-from os.path import isfile, join
-from datetime import datetime
 from scipy import interpolate
 
 '''
@@ -20,7 +17,7 @@ from scipy import interpolate
 
 # Parse user input
 flags = tf.flags
-flags.DEFINE_string("data_path", None, "Path of the folder containing prices of gas stations")
+flags.DEFINE_string("data_path", 'data', "Path of the folder containing prices of gas stations")
 FLAGS = flags.FLAGS
 
 # Ratios in which to split the data (training, validation, test)
@@ -36,75 +33,49 @@ hours_per_month = 31 * 24
 n_data_points = int(hours_per_month / 2)
 
 
-def _create_tfrecord(name, files):
-    """Create the tfrecord file from all entries in 'files'"""
-    print("Creating ", name)
-    # Create a new tfrecord file 'name' from files
-    writer = tf.python_io.TFRecordWriter(name)
+def append_to_tfrecord(writer, dates, price_data):
+    """Append the data to the current writer"""
 
-    # Show progress of the loop
-    with progressbar.ProgressBar(max_value=len(files)) as bar:
-        # Iterate over files
-        for index, file in enumerate(files):
-            # Open file and parse input
-            entries = []
-            with open(file, "r") as csvfile:
-                reader = csv.reader(csvfile, delimiter=';')
-                for row in reader:
-                    entries.append(row)
+    # Parse entries to a new format: The first entry is seen as hour zero. All following entries are relative
+    # to the first one.
+    hours = []
+    prices = []
+    reference_date = dates[0]
 
-            # Abort if file empty
-            if len(entries) < 2:
-                print("Aborted, ", file, " contains not enough entries")
-                continue
+    # Iterate over all entries
+    for index, date in enumerate(dates):
+        time_diff = date - reference_date
+        hours.append(time_diff.total_seconds() / 3600.0)
+        prices.append(int(price_data[index]))
 
-            # Parse entries to a new format: The first entry is seen as hour zero. All following entries are relative
-            # to the first one.
-            hours = []
-            prices = []
-            reference_date = _parse_str_date(entries[0][0])
+    # Interpolate the data at every two hours
+    f = interpolate.interp1d(hours, prices, kind='linear')
+    hours = np.linspace(0, hours[-1], (hours[-1] + 1) / 2)
+    prices = f(hours)
 
-            # Iterate over all entries
-            for entry in entries:
-                time_diff = _parse_str_date(entry[0]) - reference_date
-                hours.append(time_diff.total_seconds() / 3600.0)
-                prices.append(int(entry[1]))
+    # On top of just the last month of the data, generate n_samples_per_file random hours in the second half of
+    # the dataset that are each the last known prices for another new data set
+    current_index = len(prices) - n_data_points
+    for _ in range(n_samples_per_file):
+        # Generate data set
+        example = create_data_set(prices, current_index)
 
-            # Interpolate the data at every two hours
-            f = interpolate.interp1d(hours, prices, kind='linear')
-            hours = np.linspace(0, hours[-1], (hours[-1] + 1) / 2)
-            prices = f(hours)
+        if example is None:
+            break
 
-            # On top of just the last month of the data, generate n_samples_per_file random hours in the second half of
-            # the dataset that are each the last known prices for another new data set
-            current_index = len(prices) - n_data_points
-            for _ in range(n_samples_per_file):
-                # Generate data set
-                example = _create_data_set(prices, current_index)
+        # Serialize to string and write to the file
+        writer.write(example.SerializeToString())
 
-                if example is None:
-                    break
+        # Generate random new index in the second half of the data set
+        current_index = random.randint(math.floor(len(prices) / 2), len(prices) - n_data_points)
 
-                # Serialize to string and write to the file
-                writer.write(example.SerializeToString())
-
-                # Generate random new index in the second half of the data set
-                current_index = random.randint(math.floor(len(prices) / 2), len(prices) - n_data_points)
-
-                # Abort if not enough previous months
-                if current_index - n_data_points < 0:
-                    print("Aborted, not enough entries for current index")
-                    break
-
-            # Update progress bar
-            bar.update(index)
+        # Abort if not enough previous months
+        if current_index - n_data_points < 0:
+            print("Aborted, not enough entries for current index")
+            break
 
 
-    # Cleanup
-    writer.close()
-
-
-def _create_data_set(_prices, month_index):
+def create_data_set(_prices, month_index):
     """Creates a new data set from all data in _prices. Month index represents the first entry of the month that
     is going to be predicted"""
     next_month = _prices[month_index:month_index + n_data_points]
@@ -133,33 +104,100 @@ def _create_data_set(_prices, month_index):
     example = tf.train.Example(features=tf.train.Features(feature=feature))
 
     return example
-    
 
-def _parse_str_date(date):
-    date += "00"
-    return datetime.strptime(date, "%Y-%m-%d %H:%M:%S%z")
+
+def load_data_from_database():
+    """This generator function returns the data of each gas station one after another"""
+
+    # Connect to an existing database
+    conn_string = "host='localhost' dbname='carefuel' user='postgres' password='NJuJh1A!Wln..'"
+    conn = psycopg2.connect(conn_string)
+
+    # Open a cursor to perform database operations
+    cur = conn.cursor()
+
+    # Get all gas station IDs
+    cur.execute("SELECT ID FROM gas_station;")
+    gas_station_IDs = cur.fetchall()
+
+    # Will later contain the data of all gas stations
+    data = {'dates': [],
+            'e5': [],
+            'e10': [],
+            'diesel': []}
+
+    # Iterate over all gas stations
+    with progressbar.ProgressBar(max_value=len(gas_station_IDs)) as bar:
+        for index, ID in enumerate(gas_station_IDs):
+            bar.update(index)
+            try:
+                # Get all prices of this database
+                cur.execute("SELECT date, e5, e10, diesel FROM gas_station_information_history WHERE stid='" + ID[0] +
+                            "' ORDER BY date ASC;")
+                results = cur.fetchall()
+
+                # Extract into new data structure
+                dates = []
+                e5 = []
+                e10 = []
+                diesel = []
+                for entry in results:
+                    dates.append(entry[0])
+                    e5.append(entry[1])
+                    e10.append(entry[2])
+                    diesel.append(entry[3])
+
+                yield dates, {'e5': e5, 'e10': e10, 'diesel': diesel}
+
+            except:
+                print("Error at index", index)
+
+    # Close communication with the database
+    cur.close()
+    conn.close()
+
+    return data
 
 
 def main(_):
-    if not FLAGS.data_path:
-        raise ValueError("You need to specify data_path!")
-
-    # Get all input file names sorted by name
-    files = [f for f in listdir(FLAGS.data_path) if isfile(join(FLAGS.data_path, f))]
-    files.sort()
-
-    # Add full path to files
-    files = [join(FLAGS.data_path, file) for file in files]
+    # Number of gas stations in database
+    n_gas_stations = 15110
 
     # Split all data into three parts (training, validation, testing) depending on the ratios defined in config
     training_index = 0
-    validation_index = math.floor(dataset_ratios[0] * len(files))
-    testing_index = math.floor(len(files) - dataset_ratios[2] * len(files))
+    validation_index = math.floor(dataset_ratios[0] * n_gas_stations)
+    testing_index = math.floor(n_gas_stations - dataset_ratios[2] * n_gas_stations)
 
-    # Create a new tfrecords file for each data set
-    _create_tfrecord("training.tfrecord", files[training_index:validation_index - 1])
-    _create_tfrecord("validation.tfrecord", files[validation_index:testing_index - 1])
-    _create_tfrecord("testing.tfrecord", files[testing_index:])
+    # Create a tf_record writer for each file
+    writers = {}
+    for data_set in ['training', 'validation', 'testing']:
+        for fuel_type in ['e5', 'e10', 'diesel']:
+            path = FLAGS.data_path + "/" + fuel_type + '_' + data_set
+            writers[fuel_type + '_' + data_set] = tf.python_io.TFRecordWriter(path)
+
+    # Iterate over all gas stations using a generator function
+    gas_station_gen_func = load_data_from_database()
+    for index, data in enumerate(gas_station_gen_func):
+        # Unpack data
+        dates = data[0]
+        fuel_prices = data[1]
+
+        # Assign correct data set
+        if index < validation_index:
+            data_set = 'training'
+        elif index < testing_index:
+            data_set = 'validation'
+        else:
+            data_set = 'testing'
+
+        # Append new data to file
+        for fuel_type in ['e5', 'e10', 'diesel']:
+            append_to_tfrecord(writers[fuel_type + '_' + data_set], dates, fuel_prices[fuel_type])
+
+    # Close all writers
+    for data_set in ['training', 'validation', 'testing']:
+        for fuel_type in ['e5', 'e10', 'diesel']:
+            writers[fuel_type + '_' + data_set].close()
 
 
 if __name__ == '__main__':
