@@ -66,7 +66,8 @@ public class RequestController {
 			@RequestParam(value = "to", required = true) String toId,
 			@RequestParam(value = "startTime", required = true) String startTime,
 			@RequestParam(value = "capacity", required = false) Integer capacity,
-			@RequestParam(value = "consumption", required = false) Double consumption) {
+			@RequestParam(value = "consumption", required = false) Double consumption,
+			@RequestParam(value = "metric", required = true) Float metric) {
 
 		log.info("Path Request received");
 		log.info("from: " + fromId);
@@ -74,6 +75,7 @@ public class RequestController {
 		log.info("startTime: " + startTime);
 		log.info("capacity: " + capacity);
 		log.info("consumption: " + consumption);
+		log.info("metric factor: " + metric);
 
 		Date startTimeDate = new Date();
 		try {
