@@ -20,103 +20,131 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3mobile.css">
-<link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.css">
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.min.css">
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.css">
-<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+<link rel="stylesheet"
+	href="https://www.w3schools.com/w3css/4/w3mobile.css">
+<link rel="stylesheet" type="text/css"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css"
+	href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.css">
+<link rel="stylesheet" type="text/css"
+	href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker-standalone.min.css">
+<link rel="stylesheet" type="text/css"
+	href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.css">
+<link rel="stylesheet" type="text/css"
+	href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
 
 </head>
 
 <body>
-	<div id="controlContainer" class="control-container ui transparent">
-		<div>
-			<img class="ui image hide-button" id="hide"
-				src="images/arrow_left_grey_100_100.png"
-				onclick="hideButtonPressed()"></img>
-		</div>
-		<div class="section">
-			<img class="image" src="images/carefuel_icon_wide.png" />
-		</div>
-<!-- 		<div class="section" style="padding: 5px"> -->
-<!-- 			<a href="impressum.html">Impressum</a> -->
-<!-- 		</div> -->
-		<div class="section">
-			<div class="form-group">
-				<div class='input-group date' id='dateTimePicker'>
-					<input type='text' class="form-control" />
-					<span class="input-group-addon">
-						<span class="glyphicon glyphicon-calendar"></span>
-					</span>
+	<div class="image hide-search-button"
+		onclick="hideSearchButtonPressed()">
+		<div class="bar1"></div>
+		<div class="bar2"></div>
+		<div class="bar3"></div>
+	</div>
+
+	<div class="image hide-route-button" onclick="hideRouteButtonPressed()">zeige
+		Route</div>
+
+	<div id="loadingScreen">
+		<div class="loader"></div>
+	</div>
+
+	<div id="row" class="row">
+
+		<div id="controlContainer" class="column control-container">
+
+			<div class="section">
+				<img class="image" src="images/carefuel_icon_wide.png" />
+			</div>
+			<div class="section">
+				<div class="form-block">
+					<form id="route-form" name="route-form">
+
+						<div class="form-group">
+						<label class="form label" for="from">Abfahrt</label>
+							<div class='input-group date' id='dateTimePicker'>
+							
+								<input type='text' class="form-control" /> <div
+									class="input-group-addon"> <div
+									class="glyphicon glyphicon-calendar"></div>
+								</div>
+							</div>
+						</div>
+						<script type="text/javascript">
+							$(function() {
+								date = new Date();
+// 								dateNow = date.getDay() + "/" + date.getMonth()
+// 										+ "/" + date.getFullYear()
+// 								dateNow += " " + date.getHours() + ":"
+// 										+ date.getMinutes()
+
+								$('#dateTimePicker').datetimepicker({
+									format : 'DD.MM.YYYY HH:mm',
+									defaultDate : date
+								});
+							});
+						</script>
+
+
+						<div class="form-entry">
+							<label class="form label" for="from">Startpunkt</label> <input
+								class="form input" type="text" name="from" id="from"
+								placeholder="Startpunkt wählen" required />
+						</div>
+
+						<div class="form-entry">
+							<label class="form label" for="to">Zielort</label> <input
+								class="form input" type="text" name="to" id="to"
+								placeholder="Zielort nehmen" required />
+						</div>
+
+						<div class="form-entry">
+							<label class="form label" for="capacity">Tankkapazität [
+								l ]</label> <input class="form input" type="number" name="capacity"
+								id="capacity" placeholder="3" />
+						</div>
+
+						<div class="form-entry">
+							<label class="form label" for="field-2">Kraftstoffverbrauch
+								[ l / 100 km ]</label> <input class="form input" type="number"
+								step="0.1" name="consumption" id="consumption" placeholder="5.6" />
+						</div>
+						<div class="form-entry">
+							<label class="form label" for="field-2"
+								style="width: -moz-min-content;">schnell</label> <label
+								class="form label" for="field-2"
+								style="width: -moz-min-content; float: right;">ökologisch</label>
+							<input id="metric" class="form input slider" min="0" max="1"
+								value="0" step="0.1" style="" type="range">
+						</div>
+
+						<input class="form submit-button" type="button" value="Route"
+							onclick="submitButtonPressed()" />
+
+					</form>
+
 				</div>
 			</div>
-			<script type="text/javascript">
-				$(function () {
-					date = new Date()
-					dateNow = date.getDay() + "/" + date.getMonth() + "/" + date.getFullYear()
-					dateNow += " " + date.getHours() + ":" + date.getMinutes()
-					
-					$('#dateTimePicker').datetimepicker({
-						 format: 'DD/MM/YYYY HH:mm',
-						 defaultDate: dateNow
-					});
-				});
-			</script>
 		</div>
-		<div class="section">
-			<div class="form-block">
-				<form id="route-form" name="route-form">
-					<div class="form-entry">
-						<label class="form label" for="from">Startpunkt</label> <input
-							class="form input" type="text" name="from" id="from"
-							placeholder="Startpunkt wählen" required />
-					</div>
 
-					<div class="form-entry">
-						<label class="form label" for="to">Zielort</label> <input
-							class="form input" type="text" name="to" id="to" placeholder="Zielort nehmen"
-							required />
-					</div>
-
-					<div class="form-entry">
-						<label class="form label" for="capacity">Tankkapazität [ l
-							]</label> <input class="form input" type="number" name="capacity"
-							id="capacity" placeholder="3" />
-					</div>
-
-					<div class="form-entry">
-						<label class="form label" for="field-2">Kraftstoffverbrauch [
-							l / 100 km ]</label> <input class="form input" type="number" step="0.1"
-							name="consumption" id="consumption" placeholder="5.6" />
-					</div>
-					<div class="form-entry">
-						<label class="form label" for="field-2" style="width: -moz-min-content;">schnell</label>
-						<label class="form label" for="field-2" style="width: -moz-min-content;float:  right;">ökologisch</label>
-						<input id="metric" class="form input slider" min="0" max="1" value="0" step="0.1" style="/*! width: calc; */" type="range">
-					</div>
-
-					<input class="form submit-button" type="button" value="Route"
-						onclick="submitButtonPressed()" />
-
-				</form>
-
+		<div id="mapContainer" class="column map-container">
+			<div class="google-map" id="map">
+				<script
+					src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0&libraries=places&callback=initMap"
+					async defer></script>
+				map is being initialized...
 			</div>
 		</div>
-	</div>
 
-	<div id="mapContainer" class="map-container">
-		<div class="google-map" id="map">
-			<script
-				src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAvS9-jUE8zO6234VVC5_O2GvkDLtN27K0&libraries=places&callback=initMap"
-				async defer></script>
+		<div id="routeContainer" class="column route-container"
+			onclick="routeContainerPressed()">
+			<!-- route information is displayed here -->
 		</div>
-	</div>
-
-	<div id="routeContainer" class="route-container ui transparent" onclick="routeContainerPressed()">
-		<!-- route information is displayed here -->
 	</div>
 	<footer class="footer">
 		<div class="section" style="padding: 5px">

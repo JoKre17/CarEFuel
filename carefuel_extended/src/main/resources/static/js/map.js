@@ -28,16 +28,6 @@ function initMap() {
 	to_autocomplete = new google.maps.places.Autocomplete(to_input);
 	to_autocomplete.bindTo('bounds', map);
 
-	from_autocomplete.addListener('place_changed', function() {
-		console.log("changed!");
-		console.log(from_autocomplete.getPlace().geometry.location.lat());
-	});
-
-	to_autocomplete.addListener('place_changed', function() {
-		console.log("changed!");
-		console.log(to_autocomplete.getPlace());
-	});
-
 	positions = [ {
 		lng : 9.5167,
 		lat : 52.5167
@@ -92,7 +82,6 @@ function displayMarkers(positions) {
 	for (pos in positions) {
 
 		position = positions[pos];
-		console.log(position);
 
 		var marker = new google.maps.Marker({
 			position : position,
@@ -122,6 +111,7 @@ function calculateAndDisplayRoute(positions) {
 	directionsService.route({
 		origin : positions[0],
 		destination : positions[positions.length - 1],
+		travelMode: google.maps.DirectionsTravelMode.DRIVING,
 		waypoints : waypoints,
 		optimizeWaypoints : true,
 		travelMode : 'DRIVING'
@@ -133,21 +123,20 @@ function calculateAndDisplayRoute(positions) {
 			var routeInformation = "";
 
 			// For each route, display summary information.
-			routeInformation += '<h4>Start</h4>';
-			routeInformation += '<div class="address">' + route.legs[0].start_address + '</div>';
+			routeInformation += '<h4 class="route">Start</h4>';
+			routeInformation += '<div class="route address">' + route.legs[0].start_address + '</div>';
 			
 			for (var i = 0; i < route.legs.length; i++) {
-				routeInformation += '<div class="rtable"><div class="rrow">';
-				routeInformation += '<div class="distance">' + route.legs[i].distance.text + '</div>' + '<div class="arrow">&#8675;</div>';
+				routeInformation += '<div class="route rtable"><div class="rrow">';
+				routeInformation += '<div class="route distance">' + route.legs[i].distance.text + '</div>' + '<div class="arrow">&#8675;</div>';
 				routeInformation += '</div></div>';
 				
-				console.log(routeInformation);
 				if (i == (route.legs.length - 1)) {
-					routeInformation += '<h4>Ziel</h4>';
+					routeInformation += '<h4 class="route">Ziel</h4>';
 				} else {
-					routeInformation += '<h5>Stop: ' + (i+1) + '</h5>';
+					routeInformation += '<h5 class="route">Stop: ' + (i+1) + '</h5>';
 				}
-				routeInformation += '<div class="address">' + route.legs[0].end_address + '</div>';
+				routeInformation += '<div class="route address">' + route.legs[0].end_address + '</div>';
 			}
 			
 			document.getElementById('routeContainer').innerHTML = routeInformation;

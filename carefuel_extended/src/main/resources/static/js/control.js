@@ -5,6 +5,16 @@ const TANKERKOENIG_URL = "https://test2.tankerkoenig.de/json/list.php?";
 
 function submitButtonPressed() {
 	
+	$("#loadingScreen").fadeIn("slow");
+	
+	from_autocomplete.onerror = function(){
+		$("#loadingScreen").fadeOut("slow");
+	};
+	
+	to_autocomplete.onerror = function(){
+		$("#loadingScreen").fadeOut("slow");
+	};
+	
 	var from_temp = from_autocomplete.getPlace().geometry.location;
 	var from = {
 		lat: from_temp.lat(),
@@ -17,6 +27,7 @@ function submitButtonPressed() {
 	};
 
 	var startTime = $('#dateTimePicker').data('DateTimePicker').date()._i;
+	
 	var capacity = document.getElementById('capacity').value;
 	var consumption = document.getElementById('consumption').value;
 	var metric = document.getElementById('metric').value;
@@ -79,9 +90,12 @@ function submitButtonPressed() {
 			positions.push(end_pos)
 			
 			calculateAndDisplayRoute(positions)
+			
+			
 		},
 		complete : function(xhr, textStatus) {
 //			console.log(xhr.status);
+			$("#loadingScreen").fadeOut("slow");
 		}
 	});
 
@@ -155,71 +169,12 @@ function getGasStationsByRadius(rad, coords){
 	
 }
 
-function hideButtonPressed() {
-	var container = document.getElementById("controlContainer");
-	var style = window.getComputedStyle(container);
+function hideSearchButtonPressed() {
+	$("#controlContainer").slideToggle("fast");
+}
 
-	var width = style.getPropertyValue('width');
-
-	console.log();
-	if (container.style.left == 0 || container.style.left == "0px"
-			|| container.style.left == "0%") {
-		$(container).animate({
-			left : "-" + width
-		}, {
-			complete : function() {
-				container.style.maxWidth = 'none';
-				container.style.left = -CONTROL_MAX_REL_WIDTH * 100 + "%";
-			}
-		});
-
-		var $elem = $('#hide');
-		// we use a pseudo object for the animation
-		// (starts from `0` to `angle`), you can name it as you want
-		$({
-			deg : 0
-		}).animate({
-			deg : 180
-		}, {
-			duration : 350,
-			step : function(now) {
-				$elem.css({
-					transform : 'rotate(' + now + 'deg)'
-				});
-			}
-		});
-
-	} else {
-		container.style.maxWidth = CONTROL_MAX_WIDTH + 'px';
-		container.style.left = "-" + width;
-
-		$(container).animate({
-			left : "0%"
-		});
-
-		var $elem = $('#hide');
-		// we use a pseudo object for the animation
-		// (starts from `0` to `angle`), you can name it as you want
-		$({
-			deg : 180
-		}).animate({
-			deg : 360
-		}, {
-			duration : 350,
-			step : function(now) {
-				$elem.css({
-					transform : 'rotate(' + now + 'deg)'
-				});
-			}
-		}, {
-			complete : function() {
-				$elem.css({
-					transform : 'rotate(0deg)'
-				});
-			}
-		});
-	}
-
+function hideRouteButtonPressed() {
+	$("#routeContainer").slideToggle("fast");
 }
 
 var window_width = $(window).width();
@@ -237,3 +192,8 @@ window.onresize = function(event) {
 
 	window_width = new_window_width;
 };
+
+$(document).ready(function(){
+	var datetimepicker = $('#dateTimePicker').datetimepicker();
+});
+

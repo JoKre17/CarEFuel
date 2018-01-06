@@ -2,52 +2,46 @@
 /* General */
 /***********/
 *, *:before, *:after {
+	box-sizing: inherit
+}
+
+body, html {
+	font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+	color: #000000;
+	font-size: 14px;
+	line-height: 20px;
 	box-sizing: border-box;
-}
-
-html, body {
-	height: 100vh;
-}
-
-.column {
-	float: left;
-	height: 100vh !important;
-	background: #fdfdfd;
-}
-
-#row {
-	margin: 0px;
-}
-
-.row:after {
-    content: "";
-    display: table;
-    clear: both;
 }
 
 .section {
 	padding: 10px 2.5%;
 	border-width: 1px;
 	border-color: #757575;
-	border-top-style: dashed;
+	border-bottom-style: solid;
+}
+
+.ui {
+	top: 0px;
+	bottom: 0px;
+	z-index: 1;
+	background-color: #fafafa;
 }
 
 .image {
 	display: block;
-	text-align: center;
 	margin-right: auto;
 	margin-left: auto;
-	max-width: 200px;
+	max-width: 100%;
 	max-height: 100%;
 }
 
 .footer {
 	position: fixed;
-	z-index: 40;
+	z-index: 3;
 	bottom: 0px;
 	right: 0px;
 	min-width: 200px;
-	width: 25%;
+	width: 20%;
 	text-align: right;
 	background: aliceblue; /* For browsers that do not support gradients */
 	background: -webkit-linear-gradient(90deg, rgba(240, 248, 255, 0.3),
@@ -60,6 +54,12 @@ html, body {
 	text-align: right; /* Standard syntax (must be last) */
 }
 
+.transparent {
+	zoom: 1;
+	filter: alpha(opacity = 90);
+	opacity: 0.90;
+}
+
 ::-webkit-scrollbar {
 	display: none;
 	width: 0px;
@@ -69,8 +69,11 @@ html, body {
 /* Left */
 /********/
 .control-container {
-	z-index: 30;
-	width: 25%;
+	position: fixed;
+	left: 0px;
+	z-index: 2;
+	width: 300px;
+	box-shadow: 1px 0 20px 5px rgba(97, 97, 97, .75);
 	font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
 	color: #000000;
 	overflow: auto;
@@ -112,89 +115,38 @@ html, body {
 	margin-left: 70%;
 }
 
-.hide-search-button {
-	position: fixed;
-	z-index: 31;
-	top: 2px;
-	left: 2px;
+.hide-button {
 	display: none;
-	background: #fafafa;
-	border-radius: 2px;
-	cursor: pointer;
-}
-
-.hide-search-button:hover {
-	background: #eeeeee;
-}
-
-.bar1, .bar2, .bar3 {
-    width: 35px;
-    height: 5px;
-    background-color: #333;
-    margin: 6px 0;
-}
-
-.hide-route-button {
-	position: fixed;
-	z-index: 11;
-	top: 2px;
-	right: 2px;
-	display: none;
-	background: #fafafa;
-	border-radius: 2px;
-	cursor: pointer;
-	width: 35px;
-	height: 20px;
-	text-align: center;
-}
-
-.hide-route-button:hover {
-	background: #eeeeee;
-}
-
-.bar4, .bar5 {
-    width: 35px;
-    height: 5px;
-    background-color: #333;
-    margin: 6px 0;
-}
-
-.bar4 {
-	transform: rotate(-45deg) translate(-9px, 6px) ;
-}
-
-.bar5 {
-	transform: rotate(45deg) translate(-8px, -8px) ;
 }
 
 /**********/
 /* Center */
 /**********/
 .map-container {
-	z-index: 20;
-	width: 50%;
-	height: 100vh;
+	position: fixed;
+	left: 0px;
+	top: 0px;
+	right: 0px;
+	bottom: 0px;
 }
 
 .google-map {
 	height: 100%;
-	width: auto;
 }
 
 /*********/
 /* Right */
 /*********/
 .route-container {
-	z-index: 10;
-	width: 25%;
+	position: fixed;
+	width: 20%;
+	min-width: 200px;
+	right: 0px;
+	padding-left: 10px;
 	font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
 	color: #000000;
 	overflow-y: auto;
-}
-
-.route {
-	padding: 5px;
-	border-radius: 15px;
+	box-shadow: 1px 0 20px 5px rgba(97, 97, 97, .75);
 }
 
 .address {
@@ -283,37 +235,6 @@ html, body {
 	cursor: pointer;
 }
 
-
-/***************/
-/*loading screen*/
-/***************/
-#loadingScreen{
-	display: none;
-	position: fixed;
-	background: rgba(180, 180, 180, 0.5);
-	width:100%;
-	height:100%;
-	z-index:60;
-}
-
-.loader {
-    border: 16px solid #f3f3f3; /* Light grey */
-    border-top: 16px solid #9fd0ff; /* Blue */
-    border-radius: 50%;
-    position: fixed;
-    width: 120px;
-    height: 120px;
-    top: calc(50% - 60px);
-    left: calc(50% - 60px);
-    animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-
 /***************/
 /* Mobile View */
 /***************/
@@ -321,19 +242,41 @@ html, body {
 	/********/
 	/* Left */
 	/********/
-	.column {
+	.control-container {
 		width: 100%;
-		position: fixed;
+		left: "0px";
+		top: "0px"
 	}
-	
-	.hide-search-button {
-		display: block;
-		position: fixed;
+	.hide-button {
+		display: inline;
+		position: absolute;
+		top: 50px;
+		right: 50px;
+		height: 50px;
+		width: 50px;
 	}
-	
-	.hide-route-button {
+
+	/**********/
+	/* Center */
+	/**********/
+	/*     .google-map {
+        position: relative;
+        float: none;
+    } */
+
+	/*********/
+	/* Right */
+	/*********/
+	.route-container {
+		width: 100%;
+		top: 85%;
+	}
+	.heading {
 		display: block;
-		position: fixed;
+		margin-right: auto;
+		margin-left: auto;
+		padding-right: 5%;
+		padding-left: 5%;
 	}
 }
 
