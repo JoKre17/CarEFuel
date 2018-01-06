@@ -4,7 +4,6 @@
 package carefuel.model;
 
 import java.util.Date;
-import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -16,8 +15,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-
-import org.hibernate.annotations.Type;
 
 /**
  * @author Wolfgang
@@ -161,7 +158,7 @@ public class GasStationPricePrediction {
 	 */
 	@Override
 	public String toString() {
-		return "GasStationPricePrediction [id=" + this.id + ", date=" + this.date
-				+ ", e5=" + this.e5 + ", e10=" + this.e10 + ", diesel=" + this.diesel + "]";
+		return "GasStationPricePrediction [id=" + this.id + ", date=" + this.date + ", e5=" + this.e5 + ", e10="
+				+ this.e10 + ", diesel=" + this.diesel + "]";
 	}
 }

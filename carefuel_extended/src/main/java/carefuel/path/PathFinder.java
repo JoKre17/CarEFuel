@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import carefuel.controller.DatabaseHandler;
+import carefuel.controller.Fuel;
 import carefuel.model.GasStation;
 
 /**
@@ -164,8 +165,8 @@ public class PathFinder {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<Vertex<GasStation>> explorativeAStar(String startUUID, String endUUID, Date startTime, float maxRange,
-			float averageSpeed, float x) throws Exception {
+	public List<Vertex<GasStation>> explorativeAStar(String startUUID, String endUUID, Date startTime, int tankLevel,
+			Fuel gasType, float maxRange, float averageSpeed, float x) throws Exception {
 
 		List<GasStation> allStations = graph.getValues();
 		GasStation start = allStations.stream().filter(s -> s.getId().toString().equals(startUUID)).findFirst().get();

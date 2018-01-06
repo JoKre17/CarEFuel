@@ -28,8 +28,8 @@ html, body {
 .section {
 	padding: 10px 2.5%;
 	border-width: 1px;
-	border-color: #757575;
-	border-top-style: dashed;
+	border-color: #d5d5d5;
+	border-top-style: solid;
 }
 
 .image {
@@ -75,6 +75,12 @@ html, body {
 	color: #000000;
 	overflow: auto;
 	/* overflow-x: hidden; */
+}
+
+input[type="radio"] {
+	margin-top: -1px;
+	margin-right: 5px;
+	vertical-align: middle;
 }
 
 .form-block {

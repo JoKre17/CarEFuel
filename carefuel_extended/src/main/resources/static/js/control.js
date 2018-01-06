@@ -27,10 +27,11 @@ function submitButtonPressed() {
 	};
 
 	var startTime = $('#dateTimePicker').data('DateTimePicker').date()._i;
-	
+	var tankLevel = document.getElementById('tankLevel').value;
 	var capacity = document.getElementById('capacity').value;
 	var consumption = document.getElementById('consumption').value;
 	var metric = document.getElementById('metric').value;
+	var gasType = document.getElementById("route-form").elements["gasType"].value
 	
 	if (capacity == "") {
 		capacity = 3;
@@ -44,9 +45,11 @@ function submitButtonPressed() {
 		'from' : getClosestGasStation(from),
 		'to' : getClosestGasStation(to),
 		'startTime' : startTime,
+		'tankLevel' : tankLevel,
 		'capacity' : capacity,
 		'consumption' : consumption,
-		'metric' : metric
+		'metric' : metric,
+		'gasType' : gasType
 	};
 	
 	var GET_Request_url = "rest/path?"
@@ -192,8 +195,4 @@ window.onresize = function(event) {
 
 	window_width = new_window_width;
 };
-
-$(document).ready(function(){
-	var datetimepicker = $('#dateTimePicker').datetimepicker();
-});
 

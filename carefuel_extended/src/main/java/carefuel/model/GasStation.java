@@ -27,6 +27,11 @@ import org.json.JSONObject;
 public class GasStation implements Serializable {
 	// private static final Logger log = LogManager.getLogger(Main.class);
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	@Id // tells hibernate that this is the primary key
 	@Type(type = "pg-uuid")
 	@Column(name = "id", unique = true, updatable = false)

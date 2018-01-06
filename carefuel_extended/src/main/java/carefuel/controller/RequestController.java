@@ -34,7 +34,7 @@ public class RequestController {
 
 	private final static Logger log = LogManager.getLogger(RequestMapping.class);
 
-	DateFormatter df = new DateFormatter("dd/MM/yyyy HH:mm");
+	DateFormatter df = new DateFormatter("dd.MM.yyyy HH:mm");
 
 	@RequestMapping(value = "station/", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
@@ -65,17 +65,42 @@ public class RequestController {
 	public String getPath(@RequestParam(value = "from", required = true) String fromId,
 			@RequestParam(value = "to", required = true) String toId,
 			@RequestParam(value = "startTime", required = true) String startTime,
-			@RequestParam(value = "capacity", required = false) Integer capacity,
+			@RequestParam(value = "tankLevel", required = false) Integer tankLevel,
+			@RequestParam(value = "capacity", required = true) Integer capacity,
 			@RequestParam(value = "consumption", required = false) Double consumption,
-			@RequestParam(value = "metric", required = true) Float metric) {
+			@RequestParam(value = "metric", required = false) Float metric,
+			@RequestParam(value = "gasType", required = false) String gasTypeAsString) {
+
+		Fuel gasType;
+
+		if (tankLevel == null) {
+			tankLevel = 0;
+		}
+
+		if (consumption == null) {
+			consumption = 5.6;
+		}
+
+		// if metric is not given, select the shortest path
+		if (metric == null) {
+			metric = 0f;
+		}
+
+		if (gasTypeAsString == null) {
+			gasType = Fuel.DIESEL;
+		} else {
+			gasType = Fuel.valueOf(gasTypeAsString);
+		}
 
 		log.info("Path Request received");
 		log.info("from: " + fromId);
 		log.info("to: " + toId);
 		log.info("startTime: " + startTime);
+		log.info("tankLevel: " + tankLevel);
 		log.info("capacity: " + capacity);
 		log.info("consumption: " + consumption);
 		log.info("metric factor: " + metric);
+		log.info("gasType: " + gasType.toString());
 
 		Date startTimeDate = new Date();
 		try {
@@ -95,7 +120,8 @@ public class RequestController {
 
 		List<Vertex<GasStation>> route;
 		try {
-			route = Main.pathFinder.explorativeAStar(fromId, toId, startTimeDate, range, averageSpeed, 0.0F);
+			route = Main.pathFinder.explorativeAStar(fromId, toId, startTimeDate, tankLevel, gasType, range,
+					averageSpeed, metric);
 		} catch (Exception e) {
 			log.error("Error while calculating route", e);
 			return errorResponse(9001, "Unable to calculate route").toString();
