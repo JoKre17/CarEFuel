@@ -2,6 +2,7 @@ package carefuel.app;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Scanner;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,6 +25,12 @@ public class App {
 
 	private static final Logger log = LogManager.getLogger(App.class);
 
+	private static String routesDirectory;
+
+	private static String pricePredictionDirectory;
+
+	private static Scanner sc = new Scanner(System.in);
+
 	/**
 	 *
 	 * Main-method, the programs entry point.
@@ -32,6 +39,27 @@ public class App {
 	 */
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Basic at " + new Date().toString());
+
+		// Allow setting special paths for in and output folders
+
+		// System.setProperty("gasPricesDir", path);
+		// System.setProperty("gasStationsDir", path);
+		// System.setProperty("routesDir");
+		// System.setProperty("pricesOutDir", path);
+		// System.setProperty("routesOutDir");
+		// System.setProperty("pricePredictionDir", path);
+
+		// Set directory for the pricePrediction input
+		pricePredictionDirectory = System.getProperty("user.dir") + "/resource/pricePrediction/";
+		if (System.getProperty("pricePredictionDir") != null) {
+			pricePredictionDirectory = System.getProperty("pricePredictionDir");
+		}
+
+		// Set directory for the routes input
+		routesDirectory = System.getProperty("user.dir") + "/resource/routes/";
+		if (System.getProperty("routesDir") != null) {
+			pricePredictionDirectory = System.getProperty("routesDir");
+		}
 
 		while (true) {
 			File file = getOperation();
@@ -55,16 +83,16 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction and
-	 * returns the choosen route file or returns null if the user selected to
-	 * predict gasoline prices.
+	 * Function that allows the user to choose a file via console interaction
+	 * and returns the choosen route file or returns null if the user selected
+	 * to predict gasoline prices.
 	 *
 	 * @return file to parse
 	 */
 	private static File getOperation() {
 		log.info("\n\n************ WELCOME TO CAREFUEL *******************");
 		log.info("\nSelect the route: ");
-		File routeFolder = new File(System.getProperty("user.dir") + "/resource/routes/");
+		File routeFolder = new File(routesDirectory);
 		int i = 1;
 		for (; (i - 1) < routeFolder.listFiles().length; i++) {
 			File f = routeFolder.listFiles()[i - 1];
@@ -76,42 +104,25 @@ public class App {
 
 		String in = "";
 		try {
-			// So funktioniert es auch in Eclipse konsole und sollte auch in JAR
-			// funktionieren
-			in = String.valueOf(System.in.read());
+			in = String.valueOf(sc.nextLine());
 		} catch (Exception e) {
 			e.printStackTrace();
-			// TODO Wieso target folder? was muss da drin sein? Zu wenig Information!
-			log.info("!!!   Please run the .jar in the target folder   !!!");
+			log.info("!!!   Please run the .jar in the carefuel_basic/target folder   !!!");
+			log.info("Progam exited");
 			System.exit(-1);
-
 		}
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
 		if (n == -1) {
 			log.info("*** Please enter a valid nummber ***");
-			// TODO Rekursion ist hier nicht sehr schön. Theoretisch sollte das sogar gar
-			// nicht funktionieren!
-			/*
-			 * 1. Durchlauf: Buchstaben eintippen
-			 * 
-			 * 2. Durchlauf: Zahl eintippen (< i) returnt dann routeFolder... ABER wird
-			 * nicht in einer Variable gespeichert
-			 * 
-			 * 3. n wird in der obersten Rekursionsebene weiterhin -1 sein
-			 * 
-			 * 4. Array Zugriff auf -1 -1 = -2 => Exception.
-			 * 
-			 * 
-			 */
 			getOperation();
 		}
 
-		// TODO n > i Was passiert...?
 		// evaluation
 		if (n == i) {
 			return null;
 			// Exit
 		} else if (n == i + 1) {
+			log.info("Progam exited");
 			System.exit(-1);
 		}
 
@@ -119,14 +130,14 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction and
-	 * returns the choosen gasoline price file.
+	 * Function that allows the user to choose a file via console interaction
+	 * and returns the choosen gasoline price file.
 	 *
 	 * @return file to parse
 	 */
 	private static File getFileToPredictPrices() {
 		log.info("\n\nSelect the file to predict prices for: ");
-		File folder = new File(System.getProperty("user.dir") + "/resource/pricePrediction/");
+		File folder = new File(pricePredictionDirectory);
 		int i = 1;
 		for (; (i - 1) < folder.listFiles().length; i++) {
 			File f = folder.listFiles()[i - 1];
@@ -137,27 +148,25 @@ public class App {
 		String in = "";
 
 		try {
-			// TODO Hier das gleiche Spiel wie oben. Bitte abändern!
-			in = System.console().readLine();
+			in = String.valueOf(sc.nextLine());
 		} catch (Exception e) {
 			e.printStackTrace();
-			log.info("!!!   Please run the .jar in the target folder   !!!");
+			log.info("!!!   Please run the .jar in the carefuel_basic/target folder   !!!");
+			log.info("Progam exited");
 			System.exit(-1);
-
 		}
 
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
 		if (n == -1) {
 			log.info("*** Please enter a valid nummber ***");
-			// TODO Gleiches Problem wie oben. Bitte abändern! (Keine Rekursion, wenn
-			// möglich!)
 			getFileToPredictPrices();
 		}
 
-		// TODO n > i? Was passiert....?
 		// exit
 		if (n == i) {
+			log.info("Progam exited");
 			System.exit(-1);
+
 		}
 
 		return folder.listFiles()[n - 1];
