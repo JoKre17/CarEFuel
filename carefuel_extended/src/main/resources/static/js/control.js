@@ -180,19 +180,19 @@ function hideRouteButtonPressed() {
 	$("#routeContainer").slideToggle("fast");
 }
 
+
+/**
+ * On resizing to bigger screen, display all container that were unvisible in mobile view
+ */
 var window_width = $(window).width();
-
-window.onresize = function(event) {
+$(window).resize(function(event) {
 	var new_window_width = $(window).width();
-
+	
 	if (window_width < 800 && new_window_width > 800) {
-		var container = document.getElementById("controlContainer");
-		var style = window.getComputedStyle(container);
-
-		container.style.maxWidth = CONTROL_MAX_WIDTH + 'px';
-		container.style.left = "0%";
+		
+		$('#controlContainer').show();
+		$('#routeContainer').show();
 	}
 
 	window_width = new_window_width;
-};
-
+});

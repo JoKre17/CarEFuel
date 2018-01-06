@@ -5,10 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -23,7 +21,6 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.springframework.data.util.Pair;
 
-import carefuel.model.Distance;
 import carefuel.model.GasStation;
 import carefuel.model.GasStationPricePrediction;
 
@@ -94,47 +91,6 @@ public class DatabaseHandler {
 
 		session.getTransaction().commit();
 		return gasStation;
-	}
-
-	/**
-	 * get neighbors of a specified gas station
-	 *
-	 * @param from
-	 *            UUID of the gas station of which neighbors shall be found
-	 * @param range
-	 *            range around the gas station, choose 0 to define unlimited range
-	 * @return resultMap a map with the UUID of the neighbor and the distance to it
-	 */
-	public Map<UUID, Double> getNeighbors(UUID from, int range) {
-		Map<UUID, Double> resultMap = new HashMap<>();
-
-		Session session = this.sessionFactory.getCurrentSession();
-		session.beginTransaction();
-
-		String hqlQuery = "from " + Distance.class.getSimpleName() + " WHERE (id_1='" + from.toString() + "' OR id_2='"
-				+ from.toString() + "')";
-
-		if (range > 0) {
-			hqlQuery += ("AND distance<" + range);
-		}
-
-		Query query = session.createQuery(hqlQuery);
-
-		for (Distance distance : (List<Distance>) query.list()) {
-			UUID id_1 = distance.getId_1();
-			UUID id_2 = distance.getId_2();
-			double dis = distance.getDistance();
-
-			if (id_1.equals(from)) {
-				resultMap.put(id_2, dis);
-			} else {
-				resultMap.put(id_1, dis);
-			}
-		}
-
-		session.getTransaction().commit();
-
-		return resultMap;
 	}
 
 	/**
