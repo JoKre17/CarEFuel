@@ -25,7 +25,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>com.carefuel.app.App</mainClass>
+                  <mainClass>carefuel.app.App</mainClass>
                 </transformer>
               </transformers>
             </configuration>

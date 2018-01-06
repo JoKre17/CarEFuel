@@ -91,10 +91,12 @@ public class Parser {
 	 * Parses the gasStations File with the gas stations to predict prices for.
 	 *
 	 * @param file
-	 *            File containing the gas stations, which priced shall be predicted
+	 *            File containing the gas stations, which priced shall be
+	 *            predicted
 	 */
 	public void parseGasStationsToPredict(File file) {
 		this.file = file;
+
 		String line = "";
 		String[] entry;
 		String splitBy = ";";
@@ -108,7 +110,7 @@ public class Parser {
 
 			PricePredictor predictor = new PricePredictor();
 
-			log.info("************** Parser starts ***********************");
+			log.info("************ Predicted Prices *****************");
 
 			while ((line = reader.readLine()) != null) {
 
@@ -147,10 +149,13 @@ public class Parser {
 		String splitBy = ";";
 
 		try {
-			// TODO Hard Coded Path ... siehe Price Predictor => System Property wie in
-			// PricePredictor nutzen als Rückfall Option?
-			BufferedReader reader = new BufferedReader(
-					new FileReader(new File(System.getProperty("user.dir") + "/resource/gasstations.csv")));
+			// Default is the directory above
+			String gasStationsDirectory = System.getProperty("user.dir") + "/resource/gasstations.csv/";
+			if (System.getProperty("gasStationsDir") != null) {
+				gasStationsDirectory = System.getProperty("gasStationsDir");
+			}
+
+			BufferedReader reader = new BufferedReader(new FileReader(new File(gasStationsDirectory)));
 
 			while ((line = reader.readLine()) != null) {
 
@@ -174,8 +179,14 @@ public class Parser {
 	 */
 	private void savePredictedData(List<Pair<GasStation, String>> gasStationTimePairs) {
 		try {
-			PrintWriter out = new PrintWriter(
-					System.getProperty("user.dir") + "/out/pricePrediction/" + file.getName() + "-predictedPrices.txt");
+
+			// Default is the directory above
+			String pricesOutDirectory = System.getProperty("user.dir") + "/out/pricePrediction/";
+			if (System.getProperty("pricesOutDir") != null) {
+				pricesOutDirectory = System.getProperty("pricesOutDir");
+			}
+
+			PrintWriter out = new PrintWriter(pricesOutDirectory + file.getName() + "-predictedPrices.txt");
 
 			for (Pair<?, ?> p : gasStationTimePairs) {
 				out.println(p.getValue() + ";" + ((GasStation) p.getKey()).getArrivalDate() + ";"
