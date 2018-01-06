@@ -22,6 +22,7 @@ import org.tensorflow.Tensor;
 import carefuel.model.GasStation;
 import carefuel.model.GasStationPrice;
 import carefuel.model.GasStationPricePrediction;
+import org.thymeleaf.util.DateUtils;
 
 /**
  * The PricePredictor class enables the user to predict the prices of a gas
@@ -34,8 +35,14 @@ import carefuel.model.GasStationPricePrediction;
 public class PricePredictor {
 	private static final Logger log = LogManager.getLogger(PricePredictor.class);
 
-	private Session session;
-	private Graph graph;
+	private Session e5_session;
+	private Session e10_session;
+	private Session diesel_session;
+
+	private Graph e5_graph;
+	private Graph e10_graph;
+	private Graph diesel_graph;
+
 	private String modelPath;
 	private final int hoursPerMonth = 372;
 	private final int maxPrevMonths = 50; // All gas stations have a maximum of 50 previous months of entries
@@ -51,10 +58,18 @@ public class PricePredictor {
 		// Set file path
 		modelPath = System.getProperty("user.dir") + "/rnn_model/";
 
-		// Initialize TensorFlow session and graph with pretrained model
-		SavedModelBundle bundle = SavedModelBundle.load(modelPath, "serve");
-		session = bundle.session();
-		graph = bundle.graph();
+		// Initialize TensorFlow session with pretrained model for each fuel type
+		SavedModelBundle e5_bundle = SavedModelBundle.load(modelPath + "e5/", "serve");
+		e5_session = e5_bundle.session();
+		e5_graph = e5_bundle.graph();
+
+		SavedModelBundle e10_bundle = SavedModelBundle.load(modelPath + "e10/", "serve");
+		e10_session = e10_bundle.session();
+		e10_graph = e10_bundle.graph();
+
+		SavedModelBundle diesel_bundle = SavedModelBundle.load(modelPath + "diesel/", "serve");
+		diesel_session = diesel_bundle.session();
+		diesel_graph = diesel_bundle.graph();
 
 	}
 
@@ -85,9 +100,9 @@ public class PricePredictor {
 		float[][] interpolatedPricesDiesel = interpolatePrices(datePriceList.get(2));
 
 		// Predict prices for all fuel type using the neural network
-		float[] predictionE5 = runNetwork(interpolatedPricesE5);
-		float[] predictionE10 = runNetwork(interpolatedPricesE10);
-		float[] predictionDiesel = runNetwork(interpolatedPricesDiesel);
+		float[] predictionE5 = runNetwork(interpolatedPricesE5, "e5");
+		float[] predictionE10 = runNetwork(interpolatedPricesE10, "e10");
+		float[] predictionDiesel = runNetwork(interpolatedPricesDiesel, "diesel");
 
 		// We need the last date as starting point for the prediction
 		Date currentDate = datePriceList.get(0).get(0).getLeft();
@@ -100,6 +115,9 @@ public class PricePredictor {
 
 			prediction.setGasStation(gasStation);
 			predictions.add(prediction);
+
+			// update date
+			currentDate = DateUtils.addHours(currentDate, 2);
 		}
 
 		return predictions;
@@ -161,10 +179,10 @@ public class PricePredictor {
 
 			long diff = (lastDate.getTime() - currentDate.getTime()); // difference in milliseconds;
 
-			// Just in case two dates are added at the same time, slightly move the point to the right for 5 ms
+			// Just in case two dates are added at the same time, slightly move the point to the right for 0.5s
 			if (i < (datePriceList.size() - 1)) {
-				if (diff == x[datePriceList.size() - i - 2]) {
-					diff = (long) x[datePriceList.size() - i - 2] + 3;
+				if (diff == x[datePriceList.size() - i - 2] || diff < 0) {
+					diff = (long) x[datePriceList.size() - i - 2] + 500;
 				}
 			}
 			x[datePriceList.size() - i - 1] = diff;
@@ -200,7 +218,7 @@ public class PricePredictor {
 	 * by running the neural network.
 	 * @return the prices of the next month every two hours
 	 */
-	private float[] runNetwork(float[][] interpolatedHistoricPrices){
+	private float[] runNetwork(float[][] interpolatedHistoricPrices, String fuelType){
 		/*
 		 * The network expects exactly maxPrevMonths = 50 entries in the first dimension
 		 * of the input tensor (even though not all data from the first months may be
@@ -221,6 +239,24 @@ public class PricePredictor {
 		// -> network avoids using the padded inputs
 		int[] nPrevMonthsArray = { nPrevMonths };
 		Tensor<Integer> nPrevMonthsTensor = Tensor.create(nPrevMonthsArray, Integer.class);
+
+		// Choose the right session and extract graph
+		Session session = null;
+		Graph graph = null;
+		switch (fuelType){
+			case "e5":
+				session = this.e5_session;
+				graph = this.e5_graph;
+				break;
+
+			case "e10":
+				session = this.e10_session;
+				graph = this.e10_graph;
+				break;
+			case "diesel":
+				session = this.diesel_session;
+				graph = this.diesel_graph;
+		}
 
 		// Fetch the output tensor of the network
 		@SuppressWarnings("rawtypes")

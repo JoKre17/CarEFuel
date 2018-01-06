@@ -1,15 +1,16 @@
 import tensorflow as tf
-from os.path import join
+import numpy as np
+
+import os
 
 # Specify input flags
 flags = tf.flags
-flags.DEFINE_string("data_path", None, "Path of the folder containing the .tfrecord files")
-flags.DEFINE_string("save_path", None, "Path to the folder in which the trained models should be saved")
+flags.DEFINE_string("data_path", 'data', "Path of the folder containing the .tfrecord files")
+flags.DEFINE_string("save_path", 'model', "Path to the folder in which the trained models should be saved")
 flags.DEFINE_string("batch_size", None, "Batch Size to use during training")
 flags.DEFINE_string("num_epochs", None, "Number of training steps on the whole data set")
 flags.DEFINE_string("keep_prob", None, "Dropout probability for all layers during training")
 flags.DEFINE_string("learning_rate", None, "Learning Rate for the Adam Optimizer")
-flags.DEFINE_string("network_definition", None, "Textual representation of the network architecture. See train.py")
 
 FLAGS = flags.FLAGS
 
@@ -24,7 +25,6 @@ tf.logging.set_verbosity(tf.logging.INFO)
         every two hours, due to the fact that on average all gas stations have 8 - 10 entries per day.
     batch_size: Training parameter: Batch size for every training step
     num_epochs: Specifies how often the network is trained on the complete dataset
-    n_layer: Number of hidden LSTM layers of the network
     max_price: Maximum gas price in ct * 10. Used to scale all prices to [0,1] -> better for network
     keep_prob: Dropout probability for cells during training
     learning_rate: Learning rate during training. TODO: add learning decay
@@ -36,7 +36,7 @@ params = {
     'num_epochs': 10,
     'max_price': 3000,  # TODO: better normalization
     'keep_prob': 0.5,
-    'learning_rate': 1,
+    'learning_rate': 0.1,
     'prefetched_elements': 50
 }
 
@@ -128,71 +128,49 @@ def model_fn(features, labels, mode):
         # Combine output in a densely connected layer
         return tf.layers.dense(inputs=input, units=size, activation=tf.nn.relu)
 
+    # Create two hidden LSTM layers
+    layers = [lstm_layer(), lstm_layer()]
+    hidden_layers = tf.contrib.rnn.MultiRNNCell(layers, state_is_tuple=True)
+
+    ''' ------------MAGIC! Unrolling of the RNN network-------------'''
+    # Input is now a list of length max_past_months of tensors with shape (batch_size, n_hours_per_month)
+    input = tf.unstack(inputs, num=params['max_past_months'], axis=1)
+
+    # Providing the sequence_length parameter allows for dynamic calculation. Only n_prev_months are calculated,
+    # the last entries of rnn_output contain only zeros!
+    rnn_output, _ = tf.contrib.rnn.static_rnn(hidden_layers, input, sequence_length=n_prev_months,
+                                              dtype=tf.float32)
+
     '''
-        Parse the network architecture string.
-        It has the following format: name [arg1 arg2 ...];name [arg1 arg2 ...];...
-        name can be either of the following, with the corresponding arguments
-        - rnn lstm lstm -> Creates 2 lstm cells of size n_hours_per_month (always should be the first argument) as the
-            recurrent unit of this network
-        - dense output_size -> Creates a fully connected layer from the prev layer with 'output_size' nodes
-        - 
+    Hack to build the indexing and retrieve the right output 
+    (from https://github.com/aymericdamien/TensorFlow-Examples/blob/master/examples/3_NeuralNetworks/dynamic_rnn.py
     '''
-    network_definition = FLAGS.network_definition.split(";")
-    print(network_definition)
+    # 'output' is a list of output at every timestep, we pack them in a Tensor
+    # and change back dimension to [batch_size, n_step, n_input]
+    rnn_output = tf.stack(rnn_output)
+    output = tf.transpose(rnn_output, [1, 0, 2])
 
-    # output continuously contains the tensor to the last layer built in the following loop
-    output = inputs
-    # Iterate over all layers and build them step by step
-    for layer in network_definition:
-        args = layer.split(",")
-        # Build the corresponding layer
-        if args[0] == "rnn":
-            # Create all hidden layer at once
-            layers = []
-            for layer_name in args[1:]:
-                if layer_name == "lstm":
-                    layers.append(lstm_layer())
+    batch_size = tf.shape(output)[0]
+    # Start indices for each sample
+    index = tf.range(0, batch_size) * params['max_past_months'] + (n_prev_months - 1)
+    # Indexing of the last calculated element
+    output = tf.gather(tf.reshape(output, [-1, params['n_hours_per_month']]), index)
 
-            hidden_layers = tf.contrib.rnn.MultiRNNCell(layers, state_is_tuple=True)
+    ''' One Dense Layer at the end '''
+    size = params['n_hours_per_month']
+    # Apply dropout if training
+    if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
+        output = tf.nn.dropout(output, params['keep_prob'])
 
-            ''' ------------MAGIC! Unrolling of the RNN network-------------'''
-            # Input is now a list of length max_past_months of tensors with shape (batch_size, n_hours_per_month)
-            input = tf.unstack(inputs, num=params['max_past_months'], axis=1)
-
-            # Providing the sequence_length parameter allows for dynamic calculation. Only n_prev_months are calculated,
-            # the last entries of rnn_output contain only zeros!
-            rnn_output, _ = tf.contrib.rnn.static_rnn(hidden_layers, input, sequence_length=n_prev_months,
-                                                      dtype=tf.float32)
-
-            '''
-            Hack to build the indexing and retrieve the right output 
-            (from https://github.com/aymericdamien/TensorFlow-Examples/blob/master/examples/3_NeuralNetworks/dynamic_rnn.py
-            '''
-            # 'output' is a list of output at every timestep, we pack them in a Tensor
-            # and change back dimension to [batch_size, n_step, n_input]
-            rnn_output = tf.stack(rnn_output)
-            output = tf.transpose(rnn_output, [1, 0, 2])
-
-            batch_size = tf.shape(output)[0]
-            # Start indices for each sample
-            index = tf.range(0, batch_size) * params['max_past_months'] + (n_prev_months - 1)
-            # Indexing of the last calculated element
-            output = tf.gather(tf.reshape(output, [-1, params['n_hours_per_month']]), index)
-
-        elif args[0] == "dense":
-            size = int(args[1])
-            # Apply dropout if training
-            if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
-                output = tf.nn.dropout(output, params['keep_prob'])
-
-            # Combine output in a densely connected layer
-            output = tf.layers.dense(inputs=output, units=size, activation=tf.nn.relu)
+    output = tf.layers.dense(inputs=output, units=size, activation=tf.nn.relu)
 
     # Rescale and give name for later usage
     with tf.name_scope("Output"):
         rescaled_output = output * params['max_price']
         rescaled_output = tf.identity(rescaled_output, name="rescaled_output")
 
+    loss = None
+    train_op = None
     if mode != tf.estimator.ModeKeys.PREDICT:
         # Loss function
         next_month = labels / params['max_price']
@@ -204,20 +182,46 @@ def model_fn(features, labels, mode):
 
     return tf.estimator.EstimatorSpec(
         mode=mode,
-        loss=loss if mode != tf.estimator.ModeKeys.PREDICT else None,
-        train_op=train_op if mode == tf.estimator.ModeKeys.TRAIN else None,
+        loss=loss,
+        train_op=train_op,
         predictions=rescaled_output if mode == tf.estimator.ModeKeys.PREDICT else None,
         export_outputs={'output': tf.estimator.export.PredictOutput({'output': rescaled_output})})
 
 
-def save_model(estimator):
+def save_model(estimator, name):
     """Takes an estimator and stores the meta graph containing the trained variables to FLAGS.save_path"""
-    estimator.export_savedmodel(FLAGS.save_path, tf.estimator.export.build_raw_serving_input_receiver_fn(
+    path = os.path.join(FLAGS.save_path, name)
+    estimator.export_savedmodel(path, tf.estimator.export.build_raw_serving_input_receiver_fn(
         {
             'prev_months': tf.placeholder(dtype=tf.float32,
                                           shape=[1, params['max_past_months'], params['n_hours_per_month']]),
             'n_prev_months': tf.placeholder(dtype=tf.int32, shape=[1]),
         }))
+
+
+def train_network(fuel_type):
+    """Train a network with all data available of the given fuel type"""
+
+    # Build the estimator based on the model defined above
+    nn = tf.estimator.Estimator(model_fn=model_fn, model_dir=os.path.join(FLAGS.save_path, fuel_type))
+
+    training_file_path = os.path.join(FLAGS.data_path, fuel_type + "_training")
+    validation_file_path = os.path.join(FLAGS.data_path, fuel_type + "_validation")
+    testing_file_path = os.path.join(FLAGS.data_path, fuel_type + "_testing")
+
+    # Run training
+    for i in range(params['num_epochs']):
+        print("Epoch ", i + 1, ":")
+        nn.train(input_fn=lambda: input_fn(training_file_path))
+
+        print("Evaluation:")
+        #nn.evaluate(input_fn=lambda: input_fn(validation_file_path))
+
+    print("Testing:")
+    #nn.evaluate(input_fn=lambda: input_fn(testing_file_path))
+
+    # Export the trained model
+    save_model(nn, fuel_type)
 
 
 def main(_):
@@ -226,8 +230,6 @@ def main(_):
         raise ValueError("You need to specify data_path!")
     if not FLAGS.save_path:
         raise ValueError("You need to specify save_path!")
-    if not FLAGS.network_definition:
-        raise ValueError("Need the network definition!")
     if FLAGS.batch_size:
         params["batch_size"] = int(FLAGS.batch_size)
     if FLAGS.keep_prob:
@@ -237,24 +239,10 @@ def main(_):
     if FLAGS.batch_size:
         params["batch_size"] = int(FLAGS.batch_size)
 
-    print(params)
-
-    # Build the estimator based on the model defined above
-    nn = tf.estimator.Estimator(model_fn=model_fn, model_dir=FLAGS.save_path)
-
-    # Run training
-    for i in range(params['num_epochs']):
-        print("Epoch ", i + 1, ":")
-        nn.train(input_fn=lambda: input_fn(join(FLAGS.data_path, "training.tfrecord")))
-
-        print("Evaluation:")
-        nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "validation.tfrecord")))
-
-        # Export the trained model
-        save_model(nn)
-
-    print("Testing:")
-    nn.evaluate(input_fn=lambda: input_fn(join(FLAGS.data_path, "testing.tfrecord")))
+    # Train a network for each fuel type
+    train_network('e5')
+    train_network('e10')
+    train_network('diesel')
 
 
 if __name__ == '__main__':

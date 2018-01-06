@@ -48,15 +48,18 @@ public class PredictionUpdater extends Thread{
 
 				int counter = 0;
 				for(GasStation gasStation : gasStations){
-					// For now: ignore gas stations that have not enough entries
-					if(gasStation.getGasStationPrices().size() < 372) {
-						continue;
+					System.out.println(counter++);
+
+					Set<GasStationPricePrediction> predictions = null;
+					// Catch prediction errors that are caused by missing or erronous data
+					try{
+						predictions = pricePredictor.predictNextMonth(gasStation);
+					} catch (Exception e){
+						// In case something goes wrong just insert a constant price as prediction
 					}
-					Set<GasStationPricePrediction> predictions = pricePredictor.predictNextMonth(gasStation);
+
 
 					dbHandler.insertPricePredictions(predictions);
-
-					System.out.println(counter++);
 				}
 
 				serviceSocket.close();
