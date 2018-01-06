@@ -91,8 +91,13 @@ public class RequestController {
 			return new JSONArray().toString();
 		}
 
-		List<Vertex<GasStation>> route = Main.pathFinder.explorativeAStar(fromId, toId, startTimeDate, range,
-				averageSpeed, 0.0F);
+		List<Vertex<GasStation>> route;
+		try {
+			route = Main.pathFinder.explorativeAStar(fromId, toId, startTimeDate, range, averageSpeed, 0.0F);
+		} catch (Exception e) {
+			log.error("Error while calculating route", e);
+			return errorResponse(9001, "Unable to calculate route").toString();
+		}
 
 		JSONArray path = new JSONArray();
 
@@ -111,6 +116,14 @@ public class RequestController {
 		}
 
 		return path.toString();
+	}
+
+	private JSONObject errorResponse(int code, String message) {
+		JSONObject json = new JSONObject();
+		json.put("code", code);
+		json.put("message", message);
+
+		return json;
 	}
 
 }

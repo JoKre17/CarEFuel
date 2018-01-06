@@ -8,8 +8,9 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import carefuel.app.App;
 import carefuel.model.GasStation;
+
+// TODO Klasse hat wenig Kommentare. Vielleicht noch etwas erweitern?
 
 /**
  * The algorithms is the fixed path algorithm taken from "To Fill or not to
@@ -18,7 +19,7 @@ import carefuel.model.GasStation;
  */
 public class FixedPathAlgorithm {
 
-	private static final Logger log = LogManager.getLogger(App.class);
+	private static final Logger log = LogManager.getLogger(FixedPathAlgorithm.class);
 
 	private List<Node> gasStations;
 	private int capacity;
@@ -51,6 +52,7 @@ public class FixedPathAlgorithm {
 
 		this.literGasPerKilometer = gasConsumption / 100;
 		this.range = capacity * (1 / literGasPerKilometer);
+		// TODO System Out schon wieder! :D
 		System.out.println("Range (km): " + range);
 
 		this.gasStations = new ArrayList<Node>();
@@ -62,18 +64,18 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * 2-parted algorithm. First part: find break points, which are the cheapest
-	 * gas stations that can be reached with one tank fill. Second part: Find
-	 * best tanking behavior on the fixed path.
+	 * 2-parted algorithm. First part: find break points, which are the cheapest gas
+	 * stations that can be reached with one tank fill. Second part: Find best
+	 * tanking behavior on the fixed path.
 	 *
 	 * @return list of nodes with their assigned amount of gas to fill at a gas
 	 *         station.
 	 */
 	public List<Node> run() {
-		// init lists
 		double windowCapacity = range;
 		double currentFill = 0;
 
+		// init lists
 		Node first = nodes.poll();
 		slidingWindow.add(first);
 		priorityQueue.add(first);
@@ -159,8 +161,8 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Function that is called to examine the best tanking behavior between two
-	 * break points
+	 * Method that is called to examine the best tanking behavior between two break
+	 * points
 	 *
 	 * @param from
 	 * @param to
@@ -194,8 +196,7 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Direct distance between two nodes in km computed by the great-circle
-	 * distance
+	 * Direct distance between two nodes in km computed by the great-circle distance
 	 *
 	 * @param n1
 	 * @param n2
@@ -209,8 +210,8 @@ public class FixedPathAlgorithm {
 	}
 
 	/**
-	 * Computes the indirect distance between two not necessarily directly
-	 * connected gas stations.
+	 * Computes the indirect distance between two not necessarily directly connected
+	 * gas stations.
 	 *
 	 * @param n1
 	 * @param n2

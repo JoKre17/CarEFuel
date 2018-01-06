@@ -1,6 +1,7 @@
 package carefuel.path;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import carefuel.controller.DatabaseHandler;
-import carefuel.controller.PricePredictor;
 import carefuel.model.GasStation;
 
 /**
@@ -29,29 +29,22 @@ public class PathFinder {
 	private static final Logger log = LogManager.getLogger(PathFinder.class);
 
 	private DatabaseHandler dbHandler;
-	private PricePredictor pricePredictor;
+
 	private Graph<GasStation> graph;
 
 	private Function<Vertex<GasStation>, Number> heuristic;
 
-	public PathFinder(DatabaseHandler dbHandler, PricePredictor pricePredictor) {
+	public PathFinder(DatabaseHandler dbHandler) {
 
 		this.dbHandler = dbHandler;
-		this.pricePredictor = pricePredictor;
 
 		// load the graph in background
-		new Thread() {
-			@Override
-			public void run() {
-				double startTime = System.currentTimeMillis();
-				loadGraph();
-				log.info("Loading graph completed in " + (System.currentTimeMillis() - startTime) / 1000.0
-						+ " seconds.");
-				// try to lose allocated RAM (3-4 GB)
-				System.gc();
-				System.runFinalization();
-			}
-		}.run();
+		double startTime = System.currentTimeMillis();
+		loadGraph();
+		log.info("Loading graph completed in " + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds.");
+		// try to lose allocated RAM (3-4 GB)
+		System.gc();
+		System.runFinalization();
 
 	}
 
@@ -169,9 +162,10 @@ public class PathFinder {
 	 * @param averageSpeed
 	 * @param x
 	 * @return
+	 * @throws Exception
 	 */
 	public List<Vertex<GasStation>> explorativeAStar(String startUUID, String endUUID, Date startTime, float maxRange,
-			float averageSpeed, float x) {
+			float averageSpeed, float x) throws Exception {
 
 		List<GasStation> allStations = graph.getValues();
 		GasStation start = allStations.stream().filter(s -> s.getId().toString().equals(startUUID)).findFirst().get();
@@ -186,15 +180,18 @@ public class PathFinder {
 
 		// Build heuristic map without database
 		Map<Vertex<GasStation>, Double> heuristicMap = new HashMap<>();
+		Map<Vertex<GasStation>, Date> arriveTimes = new HashMap<>();
 		Map<Vertex<GasStation>, Vertex<GasStation>> predecessorMap = new HashMap<>();
 
 		// build heurstic, later fetch it from the database
 		float[][] distances = graph.getDistances();
 		List<GasStation> stations = graph.getValues();
 		// log.info("Build heuristic values");
+		double curTime = System.currentTimeMillis();
 		for (int i = 0; i < stations.size(); i++) {
 			heuristicMap.put(graph.getVertexByValue(stations.get(i)), (double) distances[i][stations.indexOf(end)]);
 		}
+		log.info("Built heuristic in " + ((System.currentTimeMillis() - curTime) / 1000.0) + " s");
 
 		// use default heuristic
 		heuristic = buildHeuristic(heuristicMap);
@@ -204,8 +201,11 @@ public class PathFinder {
 		startNode.setGCost(0);
 		startNode.setHCost(heuristicMap.get(startNode));
 		open.add(startNode);
+		arriveTimes.put(startNode, startTime);
 
 		Vertex<GasStation> currentNode = null;
+
+		Calendar calendar = Calendar.getInstance();
 
 		while (!open.isEmpty()) {
 			// log.info("Iteration " + closed.size());
@@ -231,8 +231,20 @@ public class PathFinder {
 					continue;
 				}
 
-				// pricePredictor.predictPrice(maxDateString, predictionDateString,
-				// gasStationID)
+				// calculate arrival time at successor
+				Date currentTime = arriveTimes.get(currentNode);
+				calendar.setTime(currentTime);
+				int timeInMins = (int) ((e.getDistance() / averageSpeed) * 60.0);
+				calendar.add(Calendar.MINUTE, timeInMins);
+				Date arrivalTime = calendar.getTime();
+
+				// double price = pricePredictor.predictPrice(arrivalTime, arrivalTime,
+				// idMapper.getId(successor.getValue().getId()));
+				double price = 0;
+
+				e.setWeight(price);
+
+				// predict price
 
 				// cost so far for path start -> successor (depending on x)
 				double g_tentative = currentNode.getGCost() + e.getValue(x);

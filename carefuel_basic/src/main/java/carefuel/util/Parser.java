@@ -7,13 +7,12 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.math3.util.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import carefuel.app.App;
 import carefuel.controller.PricePredictor;
 import carefuel.model.GasStation;
-import javafx.util.Pair;
 
 /**
  * CSV Parser that reads the given route and the gasStations.csv for the
@@ -24,7 +23,7 @@ import javafx.util.Pair;
  */
 public class Parser {
 
-	private static final Logger log = LogManager.getLogger(App.class);
+	private static final Logger log = LogManager.getLogger(Parser.class);
 
 	private File file;
 	private int capacity;
@@ -92,8 +91,7 @@ public class Parser {
 	 * Parses the gasStations File with the gas stations to predict prices for.
 	 *
 	 * @param file
-	 *            File containing the gas stations, which priced shall be
-	 *            predicted
+	 *            File containing the gas stations, which priced shall be predicted
 	 */
 	public void parseGasStationsToPredict(File file) {
 		this.file = file;
@@ -126,7 +124,7 @@ public class Parser {
 			}
 
 			reader.close();
-			safePredictedData(gasStationTimePairs);
+			savePredictedData(gasStationTimePairs);
 			log.info("\n##### Predicted prices safed to out/predictedPrices/" + file.getName() + ".txt #####");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -149,6 +147,8 @@ public class Parser {
 		String splitBy = ";";
 
 		try {
+			// TODO Hard Coded Path ... siehe Price Predictor => System Property wie in
+			// PricePredictor nutzen als Rückfall Option?
 			BufferedReader reader = new BufferedReader(
 					new FileReader(new File(System.getProperty("user.dir") + "/resource/gasstations.csv")));
 
@@ -169,10 +169,10 @@ public class Parser {
 	}
 
 	/**
-	 * Safe data predicted by the PricePredictor as .txt file to
+	 * Save data predicted by the PricePredictor as .txt file to
 	 * /out/pricePrediction/predictedPrices.txt
 	 */
-	private void safePredictedData(List<Pair<GasStation, String>> gasStationTimePairs) {
+	private void savePredictedData(List<Pair<GasStation, String>> gasStationTimePairs) {
 		try {
 			PrintWriter out = new PrintWriter(
 					System.getProperty("user.dir") + "/out/pricePrediction/" + file.getName() + "-predictedPrices.txt");

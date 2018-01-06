@@ -10,6 +10,8 @@ import carefuel.controller.PathFinder;
 import carefuel.util.Evaluator;
 import carefuel.util.Parser;
 
+// TODO Überlegen, ob die "Tests" Packages entfernt werden sollten
+
 /**
  *
  * App class containing the main-method. This class starts the parsing of the
@@ -53,8 +55,9 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction
-	 * and returns the choosen route file.
+	 * Function that allows the user to choose a file via console interaction and
+	 * returns the choosen route file or returns null if the user selected to
+	 * predict gasoline prices.
 	 *
 	 * @return file to parse
 	 */
@@ -73,20 +76,37 @@ public class App {
 
 		String in = "";
 		try {
-			in = System.console().readLine();
+			// So funktioniert es auch in Eclipse konsole und sollte auch in JAR
+			// funktionieren
+			in = String.valueOf(System.in.read());
 		} catch (Exception e) {
 			e.printStackTrace();
+			// TODO Wieso target folder? was muss da drin sein? Zu wenig Information!
 			log.info("!!!   Please run the .jar in the target folder   !!!");
 			System.exit(-1);
 
 		}
-
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
 		if (n == -1) {
 			log.info("*** Please enter a valid nummber ***");
+			// TODO Rekursion ist hier nicht sehr schön. Theoretisch sollte das sogar gar
+			// nicht funktionieren!
+			/*
+			 * 1. Durchlauf: Buchstaben eintippen
+			 * 
+			 * 2. Durchlauf: Zahl eintippen (< i) returnt dann routeFolder... ABER wird
+			 * nicht in einer Variable gespeichert
+			 * 
+			 * 3. n wird in der obersten Rekursionsebene weiterhin -1 sein
+			 * 
+			 * 4. Array Zugriff auf -1 -1 = -2 => Exception.
+			 * 
+			 * 
+			 */
 			getOperation();
 		}
 
+		// TODO n > i Was passiert...?
 		// evaluation
 		if (n == i) {
 			return null;
@@ -99,8 +119,8 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction
-	 * and returns the choosen gasoline price file.
+	 * Function that allows the user to choose a file via console interaction and
+	 * returns the choosen gasoline price file.
 	 *
 	 * @return file to parse
 	 */
@@ -117,6 +137,7 @@ public class App {
 		String in = "";
 
 		try {
+			// TODO Hier das gleiche Spiel wie oben. Bitte abändern!
 			in = System.console().readLine();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -128,9 +149,12 @@ public class App {
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
 		if (n == -1) {
 			log.info("*** Please enter a valid nummber ***");
+			// TODO Gleiches Problem wie oben. Bitte abändern! (Keine Rekursion, wenn
+			// möglich!)
 			getFileToPredictPrices();
 		}
 
+		// TODO n > i? Was passiert....?
 		// exit
 		if (n == i) {
 			System.exit(-1);
