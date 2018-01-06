@@ -2,6 +2,8 @@ package carefuel.path;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -12,6 +14,7 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.data.util.Pair;
 
 import carefuel.controller.DatabaseHandler;
 import carefuel.controller.Fuel;
@@ -39,6 +42,9 @@ public class PathFinder {
 
 		this.dbHandler = dbHandler;
 
+	}
+
+	public void setup() {
 		// load the graph in background
 		double startTime = System.currentTimeMillis();
 		loadGraph();
@@ -46,7 +52,6 @@ public class PathFinder {
 		// try to lose allocated RAM (3-4 GB)
 		System.gc();
 		System.runFinalization();
-
 	}
 
 	/**
@@ -238,12 +243,24 @@ public class PathFinder {
 				int timeInMins = (int) ((e.getDistance() / averageSpeed) * 60.0);
 				calendar.add(Calendar.MINUTE, timeInMins);
 				Date arrivalTime = calendar.getTime();
+				long arrivalTimeLong = arrivalTime.getTime();
 
-				// double price = pricePredictor.predictPrice(arrivalTime, arrivalTime,
-				// idMapper.getId(successor.getValue().getId()));
-				double price = 0;
+				// get predicted prices for gasStation
+				List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(e.getTo().getValue().getId(),
+						gasType);
 
-				e.setWeight(price);
+				int pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
+					@Override
+					public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
+						long diff1 = Math.abs(d1.getFirst().getTime() - arrivalTimeLong);
+						long diff2 = Math.abs(d2.getFirst().getTime() - arrivalTimeLong);
+						return Long.compare(diff1, diff2);
+					}
+				}).getSecond();
+
+				// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in "centicent"
+				double pricePrediction = pricePredictionInCentiCent / 10.0;
+				e.setWeight(pricePrediction);
 
 				// predict price
 

@@ -1,6 +1,7 @@
 package carefuel.controller;
 
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -107,6 +108,16 @@ public class RequestController {
 			startTimeDate = df.parse(startTime, Locale.GERMAN);
 		} catch (ParseException e) {
 			e.printStackTrace();
+		}
+		Calendar c = Calendar.getInstance();
+		c.set(Calendar.HOUR_OF_DAY, 0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+		Date today = c.getTime();
+
+		if (startTimeDate.before(today)) {
+			log.error("Requested start time before today: " + df.print(startTimeDate, Locale.GERMAN));
+			return errorResponse(9002, "Requested start time before today").toString();
 		}
 
 		float range = (float) ((capacity / consumption) * 100.0);

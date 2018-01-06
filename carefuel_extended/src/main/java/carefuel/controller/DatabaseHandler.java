@@ -1,7 +1,6 @@
 package carefuel.controller;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -101,12 +100,12 @@ public class DatabaseHandler {
 	 * @param fuel
 	 * @return
 	 */
-	public List<Pair<Date, Integer>> getPricePrediction(String id, Enum<Fuel> fuel) {
+	public List<Pair<Date, Integer>> getPricePrediction(UUID uuid, Enum<Fuel> fuel) {
 		Session session = this.sessionFactory.getCurrentSession();
 		session.beginTransaction();
 
-		org.hibernate.Query query = session
-				.createQuery("from " + GasStationPricePrediction.class.getSimpleName() + " where stid='" + id + "'");
+		org.hibernate.Query query = session.createQuery(
+				"from " + GasStationPricePrediction.class.getSimpleName() + " where stid='" + uuid.toString() + "'");
 
 		@SuppressWarnings("unchecked")
 		List<GasStationPricePrediction> temp = query.list();
@@ -173,74 +172,6 @@ public class DatabaseHandler {
 			log.error(ex);
 			StandardServiceRegistryBuilder.destroy(registry);
 		}
-	}
-
-	public void test() {
-		List<String> testIDs = Arrays.asList("001975cc-d534-4819-ab35-8e88848c3096",
-				"005056ba-7cb6-1ed2-bceb-60191af70d1b", "005056ba-7cb6-1ed2-bceb-7a1cf1468d26",
-				"005056ba-7cb6-1ed2-bceb-7ddfa374cd2a", "005056ba-7cb6-1ed2-bceb-97d3e2bc8d3b",
-				"005056ba-7cb6-1ed2-bceb-b776305dcd4a", "005056ba-7cb6-1ed2-bceb-bc577a5e6d4e",
-				"005056ba-7cb6-1ed5-a6a1-930ae49a5411", "0055bbb5-2c30-4cb9-89f4-d937cf121770",
-				"0173fd22-174a-41f2-9e0d-004b7da5b74f", "01a2529b-da12-40db-9e07-8a6646b54ddb",
-				"0263adda-28e0-415c-97f7-dac62ebbf179", "026e1252-db5d-459f-944a-15081d9d2c60",
-				"0271f0fc-65ed-4725-a922-57eec615195b", "028687da-704e-5500-8a63-3223f4a589f8",
-				"03697a19-4dec-4562-9264-bb8cd4d19fb2", "057827cd-6583-4a3a-a461-f8546073fd02",
-				"066f69fb-c215-418b-9177-89e6ea5e1654", "072c35bc-349b-4ffa-852e-5ac20d98c211",
-				"0a5f98bf-3dd4-4bf3-bd09-57c1cfa9b397", "0b7b03b2-feb8-4c6d-9e65-053003a7e450",
-				"0f269d49-b196-49c4-b21d-df11a40cd3ff", "0fb89c36-de83-46c7-9526-fbfef75bea3a");
-
-		List<UUID> testUUIDs = testIDs.stream().map(idString -> UUID.fromString(idString)).collect(Collectors.toList());
-		log.info(testUUIDs);
-
-		// Methode 1 - alles in einem
-		double startTime = System.currentTimeMillis();
-		Session session = this.sessionFactory.openSession();
-		session.beginTransaction();
-
-		Query spSQLQuery = session.createQuery("FROM GasStation G WHERE G.id IN (:param1)");
-		spSQLQuery.setParameterList("param1", testUUIDs);
-
-		@SuppressWarnings("unchecked")
-		Set<GasStation> gasStations = ((Set<GasStation>) spSQLQuery.list()).stream().collect(Collectors.toSet());
-
-		session.getTransaction().commit();
-
-		double runTime = System.currentTimeMillis() - startTime;
-		log.info("#1: RunTime: " + (runTime / 1000.0));
-
-		// Methode 2 - für alles ne Session etc...
-		final double startTime2 = System.currentTimeMillis();
-		Session session2 = this.sessionFactory.openSession();
-		List<Boolean> finished = new ArrayList<>();
-		for (UUID id : testUUIDs) {
-			new Thread() {
-				@Override
-				public void run() {
-
-					Query spSQLQuery2 = session2.createQuery("FROM GasStation G WHERE G.id = :param1");
-					spSQLQuery2.setParameter("param1", id);
-
-					@SuppressWarnings("unchecked")
-					Set<GasStation> gasStation = ((Set<GasStation>) spSQLQuery2.list()).stream()
-							.collect(Collectors.toSet());
-
-					finished.add(Boolean.TRUE);
-					if (finished.size() == testUUIDs.size()) {
-						double runTime = System.currentTimeMillis() - startTime2;
-						log.info("#2: RunTime: " + (runTime / 1000.0));
-					}
-				}
-			}.start();
-
-		}
-
-		// wait until the threads are about to be run
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
 	}
 
 	/**

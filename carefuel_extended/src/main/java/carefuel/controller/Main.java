@@ -47,5 +47,6 @@ public class Main {
 		p.start();
 
 		pathFinder = new PathFinder(databaseHandler);
+		pathFinder.setup();
 	}
 }
