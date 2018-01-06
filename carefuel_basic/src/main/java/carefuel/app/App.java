@@ -114,21 +114,6 @@ public class App {
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
 		if (n == -1) {
 			log.info("*** Please enter a valid nummber ***");
-			// TODO Rekursion ist hier nicht sehr schön. Theoretisch sollte das
-			// sogar gar
-			// nicht funktionieren!
-			/*
-			 * 1. Durchlauf: Buchstaben eintippen
-			 *
-			 * 2. Durchlauf: Zahl eintippen (< i) returnt dann routeFolder...
-			 * ABER wird nicht in einer Variable gespeichert
-			 *
-			 * 3. n wird in der obersten Rekursionsebene weiterhin -1 sein
-			 *
-			 * 4. Array Zugriff auf -1 -1 = -2 => Exception.
-			 *
-			 *
-			 */
 			getOperation();
 		}
 
@@ -174,13 +159,9 @@ public class App {
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
 		if (n == -1) {
 			log.info("*** Please enter a valid nummber ***");
-			// TODO Gleiches Problem wie oben. Bitte abändern! (Keine Rekursion,
-			// wenn
-			// möglich!)
 			getFileToPredictPrices();
 		}
 
-		// TODO n > i? Was passiert....?
 		// exit
 		if (n == i) {
 			log.info("Progam exited");

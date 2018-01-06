@@ -55,7 +55,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>${project.name}_${project.version}</finalName>
+		<finalName>carefuel_basic</finalName>
 
 		<resources>
 			<resource>
@@ -79,14 +79,25 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>carefuel.app.App</mainClass>
+									<mainClass>carefuel.app.App.java</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
-
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.4</version>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>carefuel.app.App</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
 

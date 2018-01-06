@@ -11,7 +11,7 @@
         <directory>src/main/resources</directory>
       </resource>
     </resources>
-    <finalName>${project.name}_${project.version}</finalName>
+    <finalName>carefuel_basic</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -25,12 +25,23 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>carefuel.app.App</mainClass>
+                  <mainClass>carefuel.app.App.java</mainClass>
                 </transformer>
               </transformers>
             </configuration>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>carefuel.app.App</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
       </plugin>
     </plugins>
   </build>
