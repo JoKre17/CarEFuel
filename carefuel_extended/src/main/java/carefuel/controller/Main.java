@@ -8,6 +8,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import carefuel.path.PathFinder;
+import carefuel.tank.TankStrategy;
 
 /**
  *
@@ -28,6 +29,7 @@ public class Main {
 	private static final Logger log = LogManager.getLogger(Main.class);
 
 	public static PathFinder pathFinder;
+	public static TankStrategy tankStrategy;
 
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Extended at " + new Date().toString());
@@ -48,5 +50,7 @@ public class Main {
 
 		pathFinder = new PathFinder(databaseHandler);
 		pathFinder.setup();
+
+		tankStrategy = new TankStrategy(databaseHandler);
 	}
 }

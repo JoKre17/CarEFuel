@@ -138,7 +138,27 @@ public class RequestController {
 			return errorResponse(9001, "Unable to calculate route").toString();
 		}
 
+		/*
+		 * // List that holds the liter-value of gas that should be tanked at the //
+		 * corresponding gasStation List<Node> nodeRoute =
+		 * Main.tankStrategy.computeTankStrategy(route, startTimeDate, consumption,
+		 * tankLevel, capacity, range, averageSpeed, gasType);
+		 */
 		JSONArray path = new JSONArray();
+		/*
+		 * for (Node n : nodeRoute) { GasStation station = n.getValue(); JSONObject stop
+		 * = new JSONObject();
+		 * 
+		 * JSONObject loc = new JSONObject(); loc.put("lat", station.getLatitude());
+		 * loc.put("lng", station.getLongitude());
+		 * 
+		 * stop.put("id", station.getId().toString()); stop.put("location", loc);
+		 * 
+		 * stop.put("arrivalTime", n.getArrivalTime()); stop.put("predictedPrice",
+		 * n.getPredictedPrice()); stop.put("fillAmount", n.getFuelToBuy());
+		 * 
+		 * path.put(stop); }
+		 */
 
 		for (Vertex<GasStation> v : route) {
 			GasStation station = v.getValue();
