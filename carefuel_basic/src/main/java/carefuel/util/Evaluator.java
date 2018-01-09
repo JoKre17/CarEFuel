@@ -34,9 +34,9 @@ public class Evaluator {
 	}
 
 	/**
-	 * Method that starts the evaluation of the gasoline prices and outputs it to
-	 * the console. Evaluation means the the mean difference between the predicted
-	 * and the actual gasoline price.
+	 * Method that starts the evaluation of the gasoline prices and outputs it
+	 * to the console. Evaluation means the the mean difference between the
+	 * predicted and the actual gasoline price.
 	 */
 	public void evaluate() {
 		log.info("\n----------------- Evaluation -------------------");
@@ -57,11 +57,8 @@ public class Evaluator {
 
 		double meanDiff = sum / gasStations.size();
 
-		// 10? Magic Number! Werden die Preise nicht in 100stel Euro sondern in 1000stel
-		// Euro angegeben?
-
-		// Kein log verwendet? warum? :P
-		System.out.println("\nMean difference: " + meanDiff / 10);
+		// to show the mean difference in whole cents it is divided by 10
+		log.info("\nMean difference: " + meanDiff / 10);
 	}
 
 	/**
@@ -78,10 +75,14 @@ public class Evaluator {
 		try {
 			Date arrivalTime = parseDateString(time);
 
-			// TODO Hard Coded Path, bitte kommentieren, oder die System Property... siehe
-			// PricePredictor Zeile 59
-			BufferedReader reader = new BufferedReader(new FileReader(
-					new File(System.getProperty("user.dir") + "/../input_files/gasprices/" + gasStationID + ".csv")));
+			// Default is the directory above
+			String gasPricesDirectory = System.getProperty("user.dir") + "/../input_files/gasprices/";
+			if (System.getProperty("gasPricesDir") != null) {
+				gasPricesDirectory = System.getProperty("gasPricesDir");
+			}
+
+			BufferedReader reader = new BufferedReader(
+					new FileReader(new File(gasPricesDirectory + gasStationID + ".csv")));
 
 			Date lastDate = parseDateString(reader.readLine().split(";")[0]);
 
@@ -104,14 +105,13 @@ public class Evaluator {
 		return price;
 	}
 
-	// TODO Redundanz: Vielleicht die Methode in PricePredictor static machen und
-	// von da verwenden? Auslagern in eine Util Klasse?
 	/**
-	 * This function takes a string representing a single date and time and parses
-	 * it into a java Date object. The string is expected to be in the format
-	 * "yyyy-MM-dd HH:mm:ssz". It is important to notice that the offset from the
-	 * GMT, indicated by the formatter z, is expected to be in the format +02, as it
-	 * is in the data base and CSV files and not +0200 as it would be commonly used.
+	 * This function takes a string representing a single date and time and
+	 * parses it into a java Date object. The string is expected to be in the
+	 * format "yyyy-MM-dd HH:mm:ssz". It is important to notice that the offset
+	 * from the GMT, indicated by the formatter z, is expected to be in the
+	 * format +02, as it is in the data base and CSV files and not +0200 as it
+	 * would be commonly used.
 	 *
 	 * @throws ParseException
 	 */

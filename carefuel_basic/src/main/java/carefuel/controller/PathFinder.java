@@ -44,9 +44,9 @@ public class PathFinder {
 	}
 
 	/**
-	 * This function starts the computation of the best path and saves it to a .txt
-	 * file. The algorithms is the fixed path algorithm taken from "To Fill or not
-	 * to Fill: The Gas Station Problem" by Khuller et. al.(available at
+	 * This function starts the computation of the best path and saves it to a
+	 * .txt file. The algorithms is the fixed path algorithm taken from "To Fill
+	 * or not to Fill: The Gas Station Problem" by Khuller et. al.(available at
 	 * https://dl.acm.org/citation.cfm?doid=1978782.1978791)
 	 */
 	public void computeBestPath() {
@@ -56,13 +56,19 @@ public class PathFinder {
 	}
 
 	/**
-	 * Function used to save the computed path to a plain text file (.txt). The file
-	 * is located at /resource/solution.txt
+	 * Function used to save the computed path to a plain text file (.txt). The
+	 * file is located at /resource/solution.txt
 	 */
 	private void savePath() {
 		try {
-			PrintWriter out = new PrintWriter(
-					System.getProperty("user.dir") + "/out/routes/" + fileName + "-solution.txt");
+
+			// Default is the directory above
+			String routesOutDirectory = System.getProperty("user.dir") + "/out/routes/";
+			if (System.getProperty("routesDir") != null) {
+				routesOutDirectory = System.getProperty("routesOutDir");
+			}
+
+			PrintWriter out = new PrintWriter(routesOutDirectory + fileName + "-solution.txt");
 
 			for (Node n : bestPath) {
 				out.println(n.getGasStation().getArrivalDate() + ";" + n.getGasStation().getID() + ";"

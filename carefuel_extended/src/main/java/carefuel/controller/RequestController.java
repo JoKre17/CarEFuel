@@ -1,6 +1,7 @@
 package carefuel.controller;
 
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -108,6 +109,16 @@ public class RequestController {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+		Calendar c = Calendar.getInstance();
+		c.set(Calendar.HOUR_OF_DAY, 0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+		Date today = c.getTime();
+
+		if (startTimeDate.before(today)) {
+			log.error("Requested start time before today: " + df.print(startTimeDate, Locale.GERMAN));
+			return errorResponse(9002, "Requested start time before today").toString();
+		}
 
 		float range = (float) ((capacity / consumption) * 100.0);
 
@@ -127,7 +138,27 @@ public class RequestController {
 			return errorResponse(9001, "Unable to calculate route").toString();
 		}
 
+		/*
+		 * // List that holds the liter-value of gas that should be tanked at the //
+		 * corresponding gasStation List<Node> nodeRoute =
+		 * Main.tankStrategy.computeTankStrategy(route, startTimeDate, consumption,
+		 * tankLevel, capacity, range, averageSpeed, gasType);
+		 */
 		JSONArray path = new JSONArray();
+		/*
+		 * for (Node n : nodeRoute) { GasStation station = n.getValue(); JSONObject stop
+		 * = new JSONObject();
+		 * 
+		 * JSONObject loc = new JSONObject(); loc.put("lat", station.getLatitude());
+		 * loc.put("lng", station.getLongitude());
+		 * 
+		 * stop.put("id", station.getId().toString()); stop.put("location", loc);
+		 * 
+		 * stop.put("arrivalTime", n.getArrivalTime()); stop.put("predictedPrice",
+		 * n.getPredictedPrice()); stop.put("fillAmount", n.getFuelToBuy());
+		 * 
+		 * path.put(stop); }
+		 */
 
 		for (Vertex<GasStation> v : route) {
 			GasStation station = v.getValue();

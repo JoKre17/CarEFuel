@@ -15,24 +15,26 @@ import org.apache.logging.log4j.Logger;
 import carefuel.model.GasStation;
 import carefuel.model.GasStationPricePrediction;
 
-
 /**
- * This class can be used to update the price prediction entries of the local PSQL database. For that, a new object
- * needs to be created and the start() method needs to be invoked. A new thread is started that listens on port
- * 50001 for incoming TCP connections. When the historic prices are updated by the update script that is run on the
- * server frequently, it tries to open a connection to this application, indicating that it is finished. Then,
- * the predictions of all gas stations are updated, based on the newest gas station prices.
+ * This class can be used to update the price prediction entries of the local
+ * PSQL database. For that, a new object needs to be created and the start()
+ * method needs to be invoked. A new thread is started that listens on port
+ * 50001 for incoming TCP connections. When the historic prices are updated by
+ * the update script that is run on the server frequently, it tries to open a
+ * connection to this application, indicating that it is finished. Then, the
+ * predictions of all gas stations are updated, based on the newest gas station
+ * prices.
  *
  * @author nils
  */
-public class PredictionUpdater extends Thread{
-	private static final Logger log = LogManager.getLogger(Main.class);
+public class PredictionUpdater extends Thread {
+	private static final Logger log = LogManager.getLogger(PredictionUpdater.class);
 	private static final int portNumber = 50001;
 
 	private DatabaseHandler dbHandler;
 	private PricePredictor pricePredictor;
 
-	public PredictionUpdater(DatabaseHandler dbHandler){
+	public PredictionUpdater(DatabaseHandler dbHandler) {
 		this.dbHandler = dbHandler;
 		pricePredictor = new PricePredictor();
 	}
@@ -40,7 +42,7 @@ public class PredictionUpdater extends Thread{
 	@Override
 	public void run() {
 		// Run this thread indefinitely
-		while(true){
+		while (true) {
 			try {
 				ServerSocket serverSocket = new ServerSocket(portNumber);
 
@@ -51,49 +53,57 @@ public class PredictionUpdater extends Thread{
 				Set<GasStation> gasStations = dbHandler.getAllGasStations();
 
 				int counter = 0;
-				for(GasStation gasStation : gasStations){
-					System.out.println(counter++);
-
+				int perc = 0;
+				for (GasStation gasStation : gasStations) {
+					if (counter % 10 == 0) {
+						log.debug(counter);
+					}
 					Set<GasStationPricePrediction> predictions = null;
 					// Catch prediction errors that are caused by missing or erroneous data
-					try{
+					try {
 						predictions = pricePredictor.predictNextMonth(gasStation);
-					} catch (Exception e){
+					} catch (Exception e) {
 						ArrayList<ArrayList<Pair<Date, Integer>>> prices = gasStation.getGasStationPrices();
 						Date lastDate = prices.get(0).get(prices.get(0).size() - 1).getLeft();
 						predictions = createConstantPrediction(gasStation, lastDate);
 					}
 					dbHandler.insertPricePredictions(predictions);
+
+					if (((((double) counter) / gasStations.size()) * 100) > perc) {
+						log.info("Predictions: " + perc + " %");
+						perc += 10;
+					}
+					counter++;
 				}
+				log.info("Predictions: " + perc + " %");
 
 				serviceSocket.close();
 				serverSocket.close();
-			}
-			catch (IOException e) {
+			} catch (IOException e) {
 				log.error(e);
 			}
 		}
 	}
 
 	/**
-	 * This function can be used to create a new price prediction of a given gas station
-	 * containing only constant prices. That may be necessary in case the prediction
-	 * process is erroneous.
+	 * This function can be used to create a new price prediction of a given gas
+	 * station containing only constant prices. That may be necessary in case the
+	 * prediction process is erroneous.
+	 * 
 	 * @param gasStation
 	 * @param startDate
 	 * @return
 	 */
-	private Set<GasStationPricePrediction> createConstantPrediction(GasStation gasStation,
-			Date startDate){
+	private Set<GasStationPricePrediction> createConstantPrediction(GasStation gasStation, Date startDate) {
 		Set<GasStationPricePrediction> predictions = new HashSet<>();
 		int e5 = 1250;
 		int diesel = 1150;
 		int e10 = 1300;
 
 		Date currentDate = startDate;
-		for(int i = 0; i < 372; ++i){
-			GasStationPricePrediction prediction = new GasStationPricePrediction(gasStation,
-					currentDate, e5, e10, diesel);
+		for (int i = 0; i < 372; ++i) {
+			GasStationPricePrediction prediction = new GasStationPricePrediction(gasStation, currentDate, e5, e10,
+					diesel);
 			predictions.add(prediction);
 			currentDate = new Date(currentDate.getTime() + (2 * 3600 * 1000));
 		}
