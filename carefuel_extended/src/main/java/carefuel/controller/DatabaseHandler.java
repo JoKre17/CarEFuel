@@ -19,9 +19,10 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.springframework.data.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 
 import carefuel.model.GasStation;
+import carefuel.model.GasStationPrice;
 import carefuel.model.GasStationPricePrediction;
 
 /**
@@ -35,25 +36,6 @@ public class DatabaseHandler {
 	private static final Logger log = LogManager.getLogger(Main.class);
 
 	protected SessionFactory sessionFactory;
-
-	/**
-	 * GasStations will be created in the DB, if they are not already created
-	 *
-	 * @param list
-	 *            of GasStations
-	 *
-	 */
-	public void createGasStations(List<GasStation> list) {
-		// code to save a gas station
-		Session session = this.sessionFactory.openSession();
-		session.beginTransaction();
-
-		for (GasStation gas : list) {
-			session.saveOrUpdate(gas);
-		}
-
-		session.getTransaction().commit();
-	}
 
 	public void exit() {
 		// code to close Hibernate Session factory
@@ -71,8 +53,28 @@ public class DatabaseHandler {
 		gasStations = (Set<GasStation>) query.list().stream().collect(Collectors.toSet());
 
 		session.getTransaction().commit();
+		session.close();
 
 		return gasStations;
+	}
+	
+	/**
+	 * retrieves all IDs of gasStations. Used to avoid memory overflow while iterating over all gasStations with lazy relation loading
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public Set<UUID> getAllGasStationIDs() {
+		Set<UUID> gasStationIDs = new HashSet<>();
+
+		Session session = this.sessionFactory.openSession();
+		session.beginTransaction();
+
+		Query query = session.createQuery("select id from " + GasStation.class.getSimpleName());
+		gasStationIDs = (Set<UUID>) query.list().stream().collect(Collectors.toSet());
+		session.getTransaction().commit();
+		session.close();
+		
+		return gasStationIDs;
 	}
 
 	/**
@@ -84,12 +86,32 @@ public class DatabaseHandler {
 	public GasStation getGasStation(String uuid) {
 		GasStation gasStation;
 
-		Session session = this.sessionFactory.getCurrentSession();
+		Session session = this.sessionFactory.openSession();
 		session.beginTransaction();
 		Query query = session.createQuery("from " + GasStation.class.getSimpleName() + " where id='" + uuid + "'");
 		gasStation = (GasStation) query.uniqueResult();
-
 		session.getTransaction().commit();
+		session.close();
+		
+		return gasStation;
+	}
+	
+	/**
+	 * return a gas station by id
+	 *
+	 * @param uuid
+	 * @return
+	 */
+	public GasStation getGasStation(UUID uuid) {
+		GasStation gasStation;
+
+		Session session = this.sessionFactory.openSession();
+		session.beginTransaction();
+		Query query = session.createQuery("from " + GasStation.class.getSimpleName() + " where id='" + uuid.toString() + "'");
+		gasStation = (GasStation) query.uniqueResult();
+		session.getTransaction().commit();
+		session.close();
+		
 		return gasStation;
 	}
 
@@ -102,16 +124,16 @@ public class DatabaseHandler {
 	 * @return
 	 */
 	public List<Pair<Date, Integer>> getPricePrediction(String id, Enum<Fuel> fuel) {
-		Session session = this.sessionFactory.getCurrentSession();
+		
+		Session session = this.sessionFactory.openSession();
 		session.beginTransaction();
-
 		org.hibernate.Query query = session
 				.createQuery("from " + GasStationPricePrediction.class.getSimpleName() + " where stid='" + id + "'");
-
+		
 		@SuppressWarnings("unchecked")
 		List<GasStationPricePrediction> temp = query.list();
-
 		session.getTransaction().commit();
+		session.close();
 
 		List<Pair<Date, Integer>> toReturn = new ArrayList<>();
 
@@ -126,13 +148,13 @@ public class DatabaseHandler {
 		Collections.sort(toReturn, new Comparator<Pair<Date, Integer>>() {
 			@Override
 			public int compare(Pair<Date, Integer> o1, Pair<Date, Integer> o2) {
-				return o1.getFirst().compareTo(o2.getFirst());
+				return o1.getLeft().compareTo(o2.getLeft());
 			}
 		});
 
 		return toReturn;
 	}
-
+	
 	/**
 	 * truncates the whole prediction table and inserts all predictions of the set
 	 * of predictions
@@ -143,15 +165,14 @@ public class DatabaseHandler {
 	public void insertPricePredictions(Set<GasStationPricePrediction> predictedPrices) {
 
 		try {
-			truncateTable(GasStationPricePrediction.tableName);
-
 			// insert new predictions
-			Session session = this.sessionFactory.getCurrentSession();
+			Session session = this.sessionFactory.openSession();
 			session.beginTransaction();
 			for (GasStationPricePrediction predicted : predictedPrices) {
 				session.save(predicted);
 			}
 			session.getTransaction().commit();
+			session.close();
 		} catch (NullPointerException e) {
 			log.error("NullPointerException");
 			log.error("No predicted Prices to insert, refusing!");
@@ -172,6 +193,8 @@ public class DatabaseHandler {
 			log.error("Error setting up the database connection!");
 			log.error(ex);
 			StandardServiceRegistryBuilder.destroy(registry);
+		} finally {
+			this.sessionFactory.getCurrentSession().close();
 		}
 	}
 
@@ -249,11 +272,52 @@ public class DatabaseHandler {
 	 * @param tableName
 	 *            table to truncate
 	 */
-	private void truncateTable(String tableName) {
-		Session session = this.sessionFactory.getCurrentSession();
+	public void truncateTable(String tableName) {
+		Session session = this.sessionFactory.openSession();
 		session.beginTransaction();
 		Query query = session.createSQLQuery("truncate " + tableName);
 		query.executeUpdate();
 		session.getTransaction().commit();
+		session.close();
+	}
+	
+	/**
+	 * retrieves all historic prices for a given uuid of a gasStation
+	 * @param uuid
+	 * 		gasStation id
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public ArrayList<ArrayList<Pair<Date, Integer>>> getGasStationPrices(UUID uuid){
+		
+		Set<GasStationPrice> prices = new HashSet<>();
+		Session session = this.sessionFactory.openSession();
+		session.beginTransaction();
+		Query query = session.createQuery("from " + GasStationPrice.class.getSimpleName() + " where stid='" + uuid + "'");
+		prices = (Set<GasStationPrice>) query.list().stream().collect(Collectors.toSet());
+		session.getTransaction().commit();
+		session.close();
+		
+		
+		ArrayList<Pair<Date, Integer>> historicE5 = new ArrayList<>();
+		ArrayList<Pair<Date, Integer>> historicE10 = new ArrayList<>();
+		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
+		for(GasStationPrice price : prices){
+			historicE5.add(Pair.of(price.getDate(), price.getE5()));
+			historicE10.add(Pair.of(price.getDate(), price.getE10()));
+			historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
+		}
+
+		Comparator<Pair<Date, Integer>> comp = Comparator.comparing(Pair::getLeft);
+		historicE5.sort(comp);
+		historicE10.sort(comp);
+		historicDiesel.sort(comp);
+
+		ArrayList<ArrayList<Pair<Date, Integer>>> result = new ArrayList<>();
+		result.add(historicE5);
+		result.add(historicE10);
+		result.add(historicDiesel);
+
+		return result;
 	}
 }
