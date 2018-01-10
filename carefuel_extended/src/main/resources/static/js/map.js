@@ -97,7 +97,10 @@ function displayMarkers(positions) {
  *            route in the right order
  * @returns
  */
-function calculateAndDisplayRoute(positions) {
+function calculateAndDisplayRoute(routeList) {
+	
+	var positions = routeList[0]
+	var fillAmounts = routeList[1]
 
 	var waypoints = [];
 
@@ -129,6 +132,7 @@ function calculateAndDisplayRoute(positions) {
 			for (var i = 0; i < route.legs.length; i++) {
 				routeInformation += '<div class="route rtable"><div class="rrow">';
 				routeInformation += '<div class="route distance">' + route.legs[i].distance.text + '</div>' + '<div class="arrow">&#8675;</div>';
+				routeInformation += '<div class="tank">' + fillAmounts[i] + '</div>';
 				routeInformation += '</div></div>';
 				
 				if (i == (route.legs.length - 1)) {

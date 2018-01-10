@@ -243,7 +243,7 @@ input[type="radio"] {
 
 .arrow {
 	display: table-cell;
-	width: 55%;
+	width: 36%;
 	font-size-adjust: 2;
 	color: #99BEFF;
 	vertical-align: middle;
@@ -251,7 +251,15 @@ input[type="radio"] {
 
 .distance {
 	display: table-cell;
-	width: 45%;
+	width: 32%;
+	text-align: center;
+	font-weight: bold;
+	vertical-align: middle;
+}
+
+.tank {
+	display: table-cell;
+	width: 32%;
 	text-align: center;
 	font-weight: bold;
 	vertical-align: middle;
