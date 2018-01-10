@@ -91,8 +91,7 @@ public class Parser {
 	 * Parses the gasStations File with the gas stations to predict prices for.
 	 *
 	 * @param file
-	 *            File containing the gas stations, which priced shall be
-	 *            predicted
+	 *            File containing the gas stations, which priced shall be predicted
 	 */
 	public void parseGasStationsToPredict(File file) {
 		this.file = file;
