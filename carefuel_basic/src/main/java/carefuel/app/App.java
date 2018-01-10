@@ -79,6 +79,9 @@ public class App {
 				Evaluator ev = new Evaluator(parser.getGasStations());
 				ev.evaluate();
 			}
+
+			log.info("\n\n\n......... Press enter to continue! ............");
+			sc.nextLine();
 		}
 	}
 
