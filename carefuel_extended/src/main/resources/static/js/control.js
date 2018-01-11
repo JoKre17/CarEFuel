@@ -68,6 +68,10 @@ function submitButtonPressed() {
 		success : function(data) {
 			
 			// now draw the route
+			route = []
+			
+			fillAmounts = []
+			
 			positions = []
 			start_pos = {
 					lat: from.lat,
@@ -88,11 +92,17 @@ function submitButtonPressed() {
 						lng: data[i]['location']['lng'] 
 				}
 				positions.push(pos)
+				
+				fillAmount = data[i]['fillAmount']
+				fillAmounts.push(fillAmount)
 			}
 			
 			positions.push(end_pos)
 			
-			calculateAndDisplayRoute(positions)
+			route.push(positions)
+			route.push(fillAmounts)
+			
+			calculateAndDisplayRoute(route)
 			
 			
 		},

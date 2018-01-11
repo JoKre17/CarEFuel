@@ -79,13 +79,16 @@ public class App {
 				Evaluator ev = new Evaluator(parser.getGasStations());
 				ev.evaluate();
 			}
+
+			log.info("\n\n\n......... Press enter to continue! ............");
+			sc.nextLine();
 		}
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction
-	 * and returns the choosen route file or returns null if the user selected
-	 * to predict gasoline prices.
+	 * Function that allows the user to choose a file via console interaction and
+	 * returns the choosen route file or returns null if the user selected to
+	 * predict gasoline prices.
 	 *
 	 * @return file to parse
 	 */
@@ -98,7 +101,7 @@ public class App {
 			File f = routeFolder.listFiles()[i - 1];
 			log.info("[" + i + "] " + f.getName());
 		}
-		log.info("------------------ More options ----------------------");
+		log.info("----------------- More options ---------------------");
 		log.info("[" + i + "] Predict gasoline prices");
 		log.info("[" + (i + 1) + "] Exit");
 
@@ -112,6 +115,10 @@ public class App {
 			System.exit(-1);
 		}
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
+		if (n < 1 || n > (i + 1)) {
+			log.info("*** Please enter a number in the valid range ***");
+			getOperation();
+		}
 		if (n == -1) {
 			log.info("*** Please enter a valid nummber ***");
 			getOperation();
@@ -130,8 +137,8 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction
-	 * and returns the choosen gasoline price file.
+	 * Function that allows the user to choose a file via console interaction and
+	 * returns the choosen gasoline price file.
 	 *
 	 * @return file to parse
 	 */
@@ -157,6 +164,10 @@ public class App {
 		}
 
 		int n = in.matches("\\d+") ? Integer.parseInt(in) : -1;
+		if (n < 1 || n > i) {
+			log.info("*** Please enter a number in the valid range ***");
+			getFileToPredictPrices();
+		}
 		if (n == -1) {
 			log.info("*** Please enter a valid nummber ***");
 			getFileToPredictPrices();
