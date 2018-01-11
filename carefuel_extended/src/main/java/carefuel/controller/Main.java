@@ -1,7 +1,11 @@
 package carefuel.controller;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Date;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
@@ -33,6 +37,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Extended at " + new Date().toString());
+		configureOutput();
 
 		if (args.length >= 2) {
 			if (args[0].equals("-gasPricesDir")) {
@@ -49,8 +54,44 @@ public class Main {
 		p.start();
 
 		pathFinder = new PathFinder(databaseHandler);
-		pathFinder.setup();
+		// pathFinder.setup();
 
 		tankStrategy = new TankStrategy(databaseHandler);
+	}
+
+	private static void configureOutput() {
+		OutputStream errLogStream = new StandardOutputStream(Level.WARN);
+		OutputStream outLogStream = new StandardOutputStream(Level.INFO);
+
+		PrintStream errorPs = new PrintStream(errLogStream);
+		PrintStream outPs = new PrintStream(outLogStream);
+
+		System.setErr(errorPs);
+		System.setOut(outPs);
+	}
+}
+
+class StandardOutputStream extends OutputStream {
+
+	// default Level is INFO
+	private Level level = Level.INFO;
+	private String buffer = "";
+	private final int breakSymbol = '\n';
+
+	public StandardOutputStream(Level level) {
+		this.level = level;
+	}
+
+	@Override
+	public final void write(int b) throws IOException {
+		// the correct way of doing this would be using a buffer
+		// to store characters until a newline is encountered,
+		// this implementation is for illustration only
+		if (b == breakSymbol) {
+			LogManager.getLogger(StandardOutputStream.class).log(level, buffer.substring(0, buffer.length() - 1));
+			buffer = "";
+		} else {
+			buffer += (char) b;
+		}
 	}
 }

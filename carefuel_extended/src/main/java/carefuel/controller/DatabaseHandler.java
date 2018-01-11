@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Query;
@@ -18,7 +19,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.apache.commons.lang3.tuple.Pair;
 
 import carefuel.model.GasStation;
 import carefuel.model.GasStationPrice;
@@ -56,9 +56,11 @@ public class DatabaseHandler {
 
 		return gasStations;
 	}
-	
+
 	/**
-	 * retrieves all IDs of gasStations. Used to avoid memory overflow while iterating over all gasStations with lazy relation loading
+	 * retrieves all IDs of gasStations. Used to avoid memory overflow while
+	 * iterating over all gasStations with lazy relation loading
+	 * 
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -72,7 +74,7 @@ public class DatabaseHandler {
 		gasStationIDs = (Set<UUID>) query.list().stream().collect(Collectors.toSet());
 		session.getTransaction().commit();
 		session.close();
-		
+
 		return gasStationIDs;
 	}
 
@@ -91,10 +93,10 @@ public class DatabaseHandler {
 		gasStation = (GasStation) query.uniqueResult();
 		session.getTransaction().commit();
 		session.close();
-		
+
 		return gasStation;
 	}
-	
+
 	/**
 	 * return a gas station by id
 	 *
@@ -106,11 +108,12 @@ public class DatabaseHandler {
 
 		Session session = this.sessionFactory.openSession();
 		session.beginTransaction();
-		Query query = session.createQuery("from " + GasStation.class.getSimpleName() + " where id='" + uuid.toString() + "'");
+		Query query = session
+				.createQuery("from " + GasStation.class.getSimpleName() + " where id='" + uuid.toString() + "'");
 		gasStation = (GasStation) query.uniqueResult();
 		session.getTransaction().commit();
 		session.close();
-		
+
 		return gasStation;
 	}
 
@@ -153,7 +156,7 @@ public class DatabaseHandler {
 
 		return toReturn;
 	}
-	
+
 	/**
 	 * truncates the whole prediction table and inserts all predictions of the set
 	 * of predictions
@@ -211,29 +214,30 @@ public class DatabaseHandler {
 		session.getTransaction().commit();
 		session.close();
 	}
-	
+
 	/**
 	 * retrieves all historic prices for a given uuid of a gasStation
+	 * 
 	 * @param uuid
-	 * 		gasStation id
+	 *            gasStation id
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public ArrayList<ArrayList<Pair<Date, Integer>>> getGasStationPrices(UUID uuid){
-		
+	public List<List<Pair<Date, Integer>>> getGasStationPrices(UUID uuid) {
+
 		Set<GasStationPrice> prices = new HashSet<>();
 		Session session = this.sessionFactory.openSession();
 		session.beginTransaction();
-		Query query = session.createQuery("from " + GasStationPrice.class.getSimpleName() + " where stid='" + uuid + "'");
+		Query query = session
+				.createQuery("from " + GasStationPrice.class.getSimpleName() + " where stid='" + uuid + "'");
 		prices = (Set<GasStationPrice>) query.list().stream().collect(Collectors.toSet());
 		session.getTransaction().commit();
 		session.close();
-		
-		
+
 		ArrayList<Pair<Date, Integer>> historicE5 = new ArrayList<>();
 		ArrayList<Pair<Date, Integer>> historicE10 = new ArrayList<>();
 		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
-		for(GasStationPrice price : prices){
+		for (GasStationPrice price : prices) {
 			historicE5.add(Pair.of(price.getDate(), price.getE5()));
 			historicE10.add(Pair.of(price.getDate(), price.getE10()));
 			historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
@@ -244,7 +248,7 @@ public class DatabaseHandler {
 		historicE10.sort(comp);
 		historicDiesel.sort(comp);
 
-		ArrayList<ArrayList<Pair<Date, Integer>>> result = new ArrayList<>();
+		List<List<Pair<Date, Integer>>> result = new ArrayList<>();
 		result.add(historicE5);
 		result.add(historicE10);
 		result.add(historicDiesel);
