@@ -91,7 +91,7 @@ public class RequestController {
 		if (gasTypeAsString == null) {
 			gasType = Fuel.DIESEL;
 		} else {
-			gasType = Fuel.valueOf(gasTypeAsString);
+			gasType = Fuel.valueOf(gasTypeAsString.toUpperCase());
 		}
 
 		log.info("Path Request received");
