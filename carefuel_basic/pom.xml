@@ -8,6 +8,7 @@
 	<name>CarEFuel_Basic</name>
 
 	<properties>
+		<java.version>1.8</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencies>
@@ -31,26 +32,26 @@
 			<artifactId>log4j-core</artifactId>
 			<version>2.9.1</version>
 		</dependency>
-		
+
 		<!-- TensorFlow -->
 		<dependency>
-  			<groupId>org.tensorflow</groupId>
-  			<artifactId>tensorflow</artifactId>
-  			<version>1.4.0</version>
+			<groupId>org.tensorflow</groupId>
+			<artifactId>tensorflow</artifactId>
+			<version>1.4.0</version>
 		</dependency>
-		
+
 		<!-- For the Pair class -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.7</version>
 		</dependency>
-		
+
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-math3 -->
 		<dependency>
-    		<groupId>org.apache.commons</groupId>
-    		<artifactId>commons-math3</artifactId>
-    		<version>3.0</version>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>3.0</version>
 		</dependency>
 	</dependencies>
 
@@ -63,8 +64,22 @@
 			</resource>
 		</resources>
 
-		<plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.1</version>
+					<configuration>
+						<source>${java.version}</source>
+						<target>${java.version}</target>
+					</configuration>
+				</plugin>
+			</plugins>
 
+		</pluginManagement>
+		
+		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
