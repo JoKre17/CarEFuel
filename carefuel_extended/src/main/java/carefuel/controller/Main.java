@@ -50,6 +50,13 @@ public class Main {
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
 
+		new Thread() {
+			@Override
+			public void run() {
+				log.info("The dump file was read on " + databaseHandler.getMostRecentPriceDataDate());
+			}
+		}.start();
+
 		PredictionUpdater p = new PredictionUpdater(databaseHandler);
 		p.start();
 

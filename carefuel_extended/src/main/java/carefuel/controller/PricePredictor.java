@@ -3,6 +3,7 @@ package carefuel.controller;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -79,7 +80,7 @@ public class PricePredictor {
 	 * @throws Exception
 	 */
 	public Set<GasStationPricePrediction> predictNextMonth(GasStation gasStation,
-			List<List<Pair<Date, Integer>>> datePriceList)
+			Map<Fuel, List<Pair<Date, Integer>>> datePriceList)
 			throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
 
 		/*
@@ -91,17 +92,17 @@ public class PricePredictor {
 		 * the month before the month that needs to be predicted,
 		 * interpolatedPrices[0][1] the price before that and so on.
 		 */
-		float[][] interpolatedPricesE5 = interpolatePrices(datePriceList.get(0));
-		float[][] interpolatedPricesE10 = interpolatePrices(datePriceList.get(1));
-		float[][] interpolatedPricesDiesel = interpolatePrices(datePriceList.get(2));
+		float[][] interpolatedPricesE5 = interpolatePrices(datePriceList.get(Fuel.E5));
+		float[][] interpolatedPricesE10 = interpolatePrices(datePriceList.get(Fuel.E10));
+		float[][] interpolatedPricesDiesel = interpolatePrices(datePriceList.get(Fuel.DIESEL));
 
 		// Predict prices for all fuel type using the neural network
-		float[] predictionE5 = runNetwork(interpolatedPricesE5, "e5");
-		float[] predictionE10 = runNetwork(interpolatedPricesE10, "e10");
-		float[] predictionDiesel = runNetwork(interpolatedPricesDiesel, "diesel");
+		float[] predictionE5 = runNetwork(interpolatedPricesE5, Fuel.E5.toString().toLowerCase());
+		float[] predictionE10 = runNetwork(interpolatedPricesE10, Fuel.E10.toString().toLowerCase());
+		float[] predictionDiesel = runNetwork(interpolatedPricesDiesel, Fuel.DIESEL.toString().toLowerCase());
 
 		// We need the last date as starting point for the prediction
-		Date currentDate = datePriceList.get(0).get(datePriceList.get(0).size() - 1).getLeft();
+		Date currentDate = datePriceList.get(Fuel.DIESEL).get(datePriceList.get(Fuel.DIESEL).size() - 1).getLeft();
 
 		// Wrap all price predictions into objects of the GasStationPricePrediction
 		// class

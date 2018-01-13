@@ -1,11 +1,14 @@
 package carefuel.controller;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -216,14 +219,15 @@ public class DatabaseHandler {
 	}
 
 	/**
-	 * retrieves all historic prices for a given uuid of a gasStation
+	 * retrieves all historic prices for a given uuid of a gasStation in sorted oder
+	 * from oldest beginning to newest date
 	 * 
 	 * @param uuid
 	 *            gasStation id
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public List<List<Pair<Date, Integer>>> getGasStationPrices(UUID uuid) {
+	public Map<Fuel, List<Pair<Date, Integer>>> getGasStationPrices(UUID uuid) {
 
 		Set<GasStationPrice> prices = new HashSet<>();
 		Session session = this.sessionFactory.openSession();
@@ -248,11 +252,41 @@ public class DatabaseHandler {
 		historicE10.sort(comp);
 		historicDiesel.sort(comp);
 
-		List<List<Pair<Date, Integer>>> result = new ArrayList<>();
-		result.add(historicE5);
-		result.add(historicE10);
-		result.add(historicDiesel);
+		Map<Fuel, List<Pair<Date, Integer>>> result = new HashMap<>();
+		result.put(Fuel.E5, historicE5);
+		result.put(Fuel.E10, historicE10);
+		result.put(Fuel.DIESEL, historicDiesel);
 
 		return result;
+	}
+
+	/**
+	 * Returns the most recent date of all historic price data. Means the import
+	 * date of the dump file.
+	 * 
+	 * TODO This function could be replaced later on by a properties file, which
+	 * gets updated, when the database is updated
+	 * 
+	 * @return
+	 */
+	public Date getMostRecentPriceDataDate() {
+		/*
+		 * SELECT date FROM gas_station_information_history ORDER BY date DESC LIMIT 1;
+		 */
+		Session session = this.sessionFactory.openSession();
+		// gets the date of the most recent entry of fuel price for all gas stations
+		Query query = session.createQuery("FROM " + GasStationPrice.class.getSimpleName() + " ORDER BY date DESC")
+				.setMaxResults(1);
+		GasStationPrice mostRecentPriceData = (GasStationPrice) query.list().stream().findFirst().get();
+		session.close();
+
+		// get day of the most recent entry
+		Calendar c = Calendar.getInstance();
+		c.setTime(mostRecentPriceData.getDate());
+		c.set(Calendar.HOUR_OF_DAY, 0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+
+		return c.getTime();
 	}
 }

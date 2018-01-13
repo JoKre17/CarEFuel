@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -54,9 +54,13 @@ public class PredictionUpdater extends Thread {
 
 				// Wait for incoming connection
 				Socket serviceSocket = serverSocket.accept();
+				log.info("Starting to update price predictions");
 
 				// Fetch all gas stations from the database and update one after another
 				List<UUID> gasStationUUIDs = dbHandler.getAllGasStationIDs().stream().collect(Collectors.toList());
+				log.info("Calculating import date of database with dump file");
+				Date mostRecentDate = dbHandler.getMostRecentPriceDataDate();
+				log.info("Database seems to be imported on " + mostRecentDate);
 
 				// multi threading
 				int cores = Runtime.getRuntime().availableProcessors();
@@ -65,7 +69,6 @@ public class PredictionUpdater extends Thread {
 				List<Pair<Integer, Integer>> subListIndices = new ArrayList<>(cores);
 				int currentIndex = 0;
 				double stepSize = ((gasStationUUIDs.size() - 1) / ((double) cores));
-				log.info("Stepsize: " + stepSize);
 				for (int i = 0; i < cores; i++) {
 					int nextIndex = (int) ((i + 1) * stepSize);
 					nextIndex = Math.min(nextIndex, gasStationUUIDs.size() - 1);
@@ -73,43 +76,37 @@ public class PredictionUpdater extends Thread {
 					currentIndex = nextIndex;
 
 				}
-				log.info("Split at " + 0);
-				for (Pair<Integer, Integer> pair : subListIndices) {
-					log.info(pair.getLeft() + " to " + pair.getRight());
-				}
 
 				predictionWorkers.clear();
-				double lastTimestamp = System.currentTimeMillis() / 1000.0;
+				double startTimestamp = System.currentTimeMillis();
 				for (Pair<Integer, Integer> indices : subListIndices) {
 					PredictionWorkerThread thread = new PredictionWorkerThread(gasStationUUIDs, indices.getLeft(),
-							indices.getRight(), pricePredictor, dbHandler);
+							indices.getRight(), mostRecentDate, pricePredictor, dbHandler);
 					predictionWorkers.add(thread);
 					thread.start();
 				}
 
 				// hold TCP connection while Threads are working
 				while (isRunning()) {
-					double lastProgress = 0;
 					try {
 						// print Progress every minute
+						Thread.sleep(60000);
 
 						double currentProgress = getProgress();
-						double currentTimestamp = System.currentTimeMillis() / 1000.0;
-						log.info(String.format("Prediction Progress: %.2f %%", currentProgress * 100));
+						double currentTimestamp = System.currentTimeMillis();
 
 						// predicted runtime left
-						double progressLeft = 1 - currentProgress;
-						double progressSpeedPerSecond = (currentProgress - lastProgress)
-								/ (currentTimestamp - lastTimestamp);
+						double progressLeft = 1.0 - currentProgress;
+						double progressSpeedPerMillisecond = currentProgress / ((currentTimestamp - startTimestamp));
+						double progressSpeedPerMinute = progressSpeedPerMillisecond * 60000;
+						double predictedTimeInMinutesLeft = progressLeft / progressSpeedPerMinute;
 
-						double predictedTimeInMinutesLeft = progressLeft / (progressSpeedPerSecond * 60000);
 						int hoursLeft = (int) (predictedTimeInMinutesLeft / 60.0);
-						int minLeft = (int) ((predictedTimeInMinutesLeft / 60.0) - hoursLeft);
-						log.info(String.format("Predicted time left %d:%d", hoursLeft, minLeft));
+						int minLeft = (int) (((predictedTimeInMinutesLeft / 60.0) - hoursLeft) * 60);
 
-						lastProgress = currentProgress;
-						lastTimestamp = currentTimestamp;
-						Thread.sleep(60000);
+						log.info(String.format("Prediction Progress: %.2f %%", currentProgress * 100));
+						log.info(String.format("Predicted time left %d:%2d", hoursLeft, minLeft));
+
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -170,17 +167,20 @@ class PredictionWorkerThread extends Thread {
 	private List<UUID> gasStationUUIDs;
 	private Integer startIndex = 0;
 	private Integer endIndex = 0;
+	private Date mostRecentDate;
 
 	private PricePredictor pricePredictor;
 	private DatabaseHandler dbHandler;
 
 	private double progress = 0;
 
-	public PredictionWorkerThread(List<UUID> gasStationUUIDs, Integer startIndex, Integer endIndex,
+	public PredictionWorkerThread(List<UUID> gasStationUUIDs, Integer startIndex, Integer endIndex, Date mostRecentDate,
 			PricePredictor pricePredictor, DatabaseHandler dbHandler) {
 		this.gasStationUUIDs = gasStationUUIDs;
 		this.startIndex = startIndex;
 		this.endIndex = endIndex;
+		this.mostRecentDate = mostRecentDate;
+
 		this.pricePredictor = pricePredictor;
 		this.dbHandler = dbHandler;
 
@@ -195,13 +195,35 @@ class PredictionWorkerThread extends Thread {
 	public void run() {
 
 		for (int counter = startIndex; counter < endIndex; counter++) {
+			// update progress of thread for global progress printing
+			progress = (double) (counter - startIndex) / (endIndex - startIndex);
+
 			UUID gasStationUUID = gasStationUUIDs.get(counter);
 			GasStation gasStation = dbHandler.getGasStation(gasStationUUID);
-			List<List<Pair<Date, Integer>>> datePriceList = dbHandler.getGasStationPrices(gasStationUUID);
+			Map<Fuel, List<Pair<Date, Integer>>> datePriceList = dbHandler.getGasStationPrices(gasStationUUID);
 
 			Set<GasStationPricePrediction> predictions = null;
-			// Catch prediction errors that are caused by missing or erroneous data
+
+			double timeDiff = 30 * 1000 * 60 * 60 * 24;
+			int dayDiff = 30;
 			try {
+				// timeDiff in milliseconds
+				timeDiff = mostRecentDate.getTime() - datePriceList.get(Fuel.DIESEL)
+						.get(datePriceList.get(Fuel.DIESEL).size() - 1).getLeft().getTime();
+				// to seconds, to minutes, to hours, to days
+				dayDiff = (int) (timeDiff / (1000 * 60 * 60 * 24));
+
+				// > 30 Days...
+				if (dayDiff > 30) {
+					log.debug(gasStation.getId() + ": Skipping due to no prices in past 30 days.");
+					continue;
+				} else {
+					if (dayDiff != 0) {
+						log.debug(gasStation.getId() + ": Need to predict " + (dayDiff + 30) + " days into future.");
+					}
+				}
+
+				// Catch prediction errors that are caused by missing or erroneous data
 				predictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
 			} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
 				// TODO Clarify, why there are gasStations without prices in database
@@ -209,19 +231,52 @@ class PredictionWorkerThread extends Thread {
 				// Catches if there is none or too less data for the gasStation
 				log.warn("Little or none historical price data for gas station with id "
 						+ gasStation.getId().toString());
-				Calendar c = Calendar.getInstance();
-				c.set(Calendar.HOUR_OF_DAY, 0);
-				c.set(Calendar.MINUTE, 0);
-				c.set(Calendar.SECOND, 0);
-				
-				//
-				c.set(2017, 11, 26, 0, 0, 0);
-				Date today = c.getTime();
-				predictions = createConstantPrediction(gasStation, today);
+
+				predictions = createConstantPrediction(gasStation, mostRecentDate);
 			}
 			dbHandler.insertPricePredictions(predictions);
 
-			progress = (double) (counter - startIndex) / (endIndex - startIndex);
+			// calculate until 30 days into future
+			if (dayDiff > 0) {
+				log.debug(gasStation.getId() + ": T+30 days done. Predict next " + dayDiff + " days");
+				List<Pair<Date, Integer>> dieselData = datePriceList.get(Fuel.DIESEL);
+				List<Pair<Date, Integer>> e10Data = datePriceList.get(Fuel.E10);
+				List<Pair<Date, Integer>> e5Data = datePriceList.get(Fuel.E5);
+				final int dayDiffForPredictions = dayDiff;
+				// iterate over sorted...
+				predictions.stream().sorted((a, b) -> a.getDate().compareTo(b.getDate())).forEach(pred -> {
+
+					/*
+					 * if last date of historic price data was until e.g. 10 days before
+					 * mostRecentDate (last import date from dump file), then we also want to
+					 * predict until 30 days into future FROM mostRecentDate.
+					 * 
+					 * So (mostRecentDate + 30 days) is the aim.
+					 * 
+					 * Therefore we have to add the predicted data of the next 10 days to the
+					 * history data to predict the 30 days, after these 10 days.
+					 */
+					if (pred.getDate().getTime() < mostRecentDate.getTime()) {
+						dieselData.add(Pair.of(pred.getDate(), pred.getDiesel()));
+						e10Data.add(Pair.of(pred.getDate(), pred.getE10()));
+						e5Data.add(Pair.of(pred.getDate(), pred.getE5()));
+					}
+				});
+
+				try {
+					predictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
+				} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+					log.debug(e);
+					// TODO Clarify, why there are gasStations without prices in database
+
+					// Catches if there is none or too less data for the gasStation
+					log.warn("Little or none historical price data for gas station with id "
+							+ gasStation.getId().toString());
+
+					predictions = createConstantPrediction(gasStation, mostRecentDate);
+				}
+				dbHandler.insertPricePredictions(predictions);
+			}
 		}
 	}
 
