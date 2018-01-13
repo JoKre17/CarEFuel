@@ -213,6 +213,9 @@ class PredictionWorkerThread extends Thread {
 				c.set(Calendar.HOUR_OF_DAY, 0);
 				c.set(Calendar.MINUTE, 0);
 				c.set(Calendar.SECOND, 0);
+				
+				//
+				c.set(2017, 11, 26, 0, 0, 0);
 				Date today = c.getTime();
 				predictions = createConstantPrediction(gasStation, today);
 			}
