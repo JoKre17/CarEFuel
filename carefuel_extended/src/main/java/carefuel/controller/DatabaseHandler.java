@@ -229,12 +229,12 @@ public class DatabaseHandler {
 	@SuppressWarnings("unchecked")
 	public Map<Fuel, List<Pair<Date, Integer>>> getGasStationPrices(UUID uuid) {
 
-		Set<GasStationPrice> prices = new HashSet<>();
+		List<GasStationPrice> prices = new ArrayList<>();
 		Session session = this.sessionFactory.openSession();
 		session.beginTransaction();
 		Query query = session
 				.createQuery("from " + GasStationPrice.class.getSimpleName() + " where stid='" + uuid + "'");
-		prices = (Set<GasStationPrice>) query.list().stream().collect(Collectors.toSet());
+		prices = query.list();
 		session.getTransaction().commit();
 		session.close();
 
@@ -242,11 +242,17 @@ public class DatabaseHandler {
 		ArrayList<Pair<Date, Integer>> historicE10 = new ArrayList<>();
 		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
 		for (GasStationPrice price : prices) {
-			historicE5.add(Pair.of(price.getDate(), price.getE5()));
-			historicE10.add(Pair.of(price.getDate(), price.getE10()));
-			historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
+			if (price.getE5() > 0) {
+				historicE5.add(Pair.of(price.getDate(), price.getE5()));				
+			}
+			if (price.getE10() > 0) {
+				historicE10.add(Pair.of(price.getDate(), price.getE10()));				
+			}
+			if (price.getDiesel() > 0) {
+				historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));				
+			}
 		}
-
+		
 		Comparator<Pair<Date, Integer>> comp = Comparator.comparing(Pair::getLeft);
 		historicE5.sort(comp);
 		historicE10.sort(comp);
