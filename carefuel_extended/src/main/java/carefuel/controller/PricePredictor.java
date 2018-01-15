@@ -1,9 +1,9 @@
 package carefuel.controller;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -79,9 +79,9 @@ public class PricePredictor {
 	 * @return A set of of price predictions for the next month of 'gasStation'.
 	 * @throws Exception
 	 */
-	public Set<GasStationPricePrediction> predictNextMonth(GasStation gasStation){
-		// First get a sorted list of historic prices for all fuel types with corresponding date
-		ArrayList<ArrayList<Pair<Date, Integer>>> datePriceList = gasStation.getGasStationPrices();
+	public Set<GasStationPricePrediction> predictNextMonth(GasStation gasStation,
+			Map<Fuel, List<Pair<Date, Integer>>> datePriceList)
+			throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
 
 		/*
 		 * Interpolate the data from the first to the entry at lastEntryIndex at every
@@ -92,21 +92,22 @@ public class PricePredictor {
 		 * the month before the month that needs to be predicted,
 		 * interpolatedPrices[0][1] the price before that and so on.
 		 */
-		float[][] interpolatedPricesE5 = interpolatePrices(datePriceList.get(0));
-		float[][] interpolatedPricesE10 = interpolatePrices(datePriceList.get(1));
-		float[][] interpolatedPricesDiesel = interpolatePrices(datePriceList.get(2));
+		float[][] interpolatedPricesE5 = interpolatePrices(datePriceList.get(Fuel.E5));
+		float[][] interpolatedPricesE10 = interpolatePrices(datePriceList.get(Fuel.E10));
+		float[][] interpolatedPricesDiesel = interpolatePrices(datePriceList.get(Fuel.DIESEL));
 
 		// Predict prices for all fuel type using the neural network
-		float[] predictionE5 = runNetwork(interpolatedPricesE5, "e5");
-		float[] predictionE10 = runNetwork(interpolatedPricesE10, "e10");
-		float[] predictionDiesel = runNetwork(interpolatedPricesDiesel, "diesel");
+		float[] predictionE5 = runNetwork(interpolatedPricesE5, Fuel.E5.toString().toLowerCase());
+		float[] predictionE10 = runNetwork(interpolatedPricesE10, Fuel.E10.toString().toLowerCase());
+		float[] predictionDiesel = runNetwork(interpolatedPricesDiesel, Fuel.DIESEL.toString().toLowerCase());
 
 		// We need the last date as starting point for the prediction
-		Date currentDate = datePriceList.get(0).get(0).getLeft();
+		Date currentDate = datePriceList.get(Fuel.DIESEL).get(datePriceList.get(Fuel.DIESEL).size() - 1).getLeft();
 
-		// Wrap all price predictions into objects of the GasStationPricePrediction class
+		// Wrap all price predictions into objects of the GasStationPricePrediction
+		// class
 		Set<GasStationPricePrediction> predictions = new HashSet<>();
-		for(int i = 0; i < predictionE5.length; ++i){
+		for (int i = 0; i < predictionE5.length; ++i) {
 			GasStationPricePrediction prediction = new GasStationPricePrediction(gasStation, currentDate,
 					(int) predictionE5[i], (int) predictionE10[i], (int) predictionDiesel[i]);
 
@@ -146,7 +147,8 @@ public class PricePredictor {
 
 			long diff = (lastDate.getTime() - currentDate.getTime()); // difference in milliseconds;
 
-			// Just in case two dates are added at the same time, slightly move the point to the right for 0.5s
+			// Just in case two dates are added at the same time, slightly move the point to
+			// the right for 0.5s
 			if (i < (datePriceList.size() - 1)) {
 				if ((diff == x[datePriceList.size() - i - 2]) || (diff < 0)) {
 					diff = (long) x[datePriceList.size() - i - 2] + 500;
@@ -159,8 +161,10 @@ public class PricePredictor {
 		// Create the interpolating function from data points
 		PolynomialSplineFunction func = new LinearInterpolator().interpolate(x, y);
 
-
-		/* Use the function to interpolate data at every two hours of each month, beginning */
+		/*
+		 * Use the function to interpolate data at every two hours of each month,
+		 * beginning
+		 */
 
 		// Calculate the number of 'whole' months contained in the data
 		long diff_hours = (lastDate.getTime() - datePriceList.get(0).getLeft().getTime()) / (3600 * 1000);
@@ -181,11 +185,12 @@ public class PricePredictor {
 	}
 
 	/**
-	 * This function takes the interpolated historic prices of any fuel type and predicts the prices of the next month
-	 * by running the neural network.
+	 * This function takes the interpolated historic prices of any fuel type and
+	 * predicts the prices of the next month by running the neural network.
+	 * 
 	 * @return the prices of the next month every two hours
 	 */
-	private float[] runNetwork(float[][] interpolatedHistoricPrices, String fuelType){
+	private float[] runNetwork(float[][] interpolatedHistoricPrices, String fuelType) {
 		/*
 		 * The network expects exactly maxPrevMonths = 50 entries in the first dimension
 		 * of the input tensor (even though not all data from the first months may be
@@ -199,7 +204,8 @@ public class PricePredictor {
 		// Add another dimension (the network expects three dimensions, due to batches)
 		float[][][] input = { combinedInput };
 
-		// Create the first input tensor of shape (1, 50, hoursPerMonth) containing the previous months
+		// Create the first input tensor of shape (1, 50, hoursPerMonth) containing the
+		// previous months
 		Tensor<Float> prevMonthsTensor = Tensor.create(input, Float.class);
 
 		// Also create an input tensor for the number of previous months of shape (1, 1)
@@ -210,7 +216,7 @@ public class PricePredictor {
 		// Choose the right session and extract graph
 		Session session = null;
 		Graph graph = null;
-		switch (fuelType){
+		switch (fuelType) {
 		case "e5":
 			session = e5_session;
 			graph = e5_graph;
@@ -231,9 +237,8 @@ public class PricePredictor {
 
 		// Feed the input tensors and run the TensorFlow graph
 		float[][] result = new float[1][hoursPerMonth];
-		session.runner().feed("Input/prev_months", prevMonthsTensor)
-		.feed("Input/n_prev_months", nPrevMonthsTensor)
-		.fetch(output).run().get(0).copyTo(result);
+		session.runner().feed("Input/prev_months", prevMonthsTensor).feed("Input/n_prev_months", nPrevMonthsTensor)
+				.fetch(output).run().get(0).copyTo(result);
 		return result[0];
 	}
 }

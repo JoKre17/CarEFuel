@@ -65,10 +65,12 @@ public class GasStation implements Serializable {
 	@Column(name = "lng")
 	private double longitude;
 
+	//memory overflow while updating the prediction table, but FetchType.EAGER not possible for the algorithm
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "stid")
 	private Set<GasStationPrice> gasStationPrices;
 
+	//memory overflow while updating the prediction table, but FetchType.EAGER not possible for the algorithm
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "stid")
 	private Set<GasStationPricePrediction> gasStationPricePredictions;
@@ -95,13 +97,13 @@ public class GasStation implements Serializable {
 		return city;
 	}
 
-	/**
-	 * @return the gasStationPricePredictions
-	 */
-	@Transactional
-	public Set<GasStationPricePrediction> getGasStationPricePredictions() {
-		return gasStationPricePredictions;
-	}
+//	/**
+//	 * @return the gasStationPricePredictions
+//	 */
+//	@Transactional
+//	public Set<GasStationPricePrediction> getGasStationPricePredictions() {
+//		return gasStationPricePredictions;
+//	}
 
 	/**
 	 * This function extracts the historic prices of all fuel types from this GasStation object.
@@ -109,6 +111,7 @@ public class GasStation implements Serializable {
 	 * @return An array list of array lists containing all prices with corresponding dates, sorted by date. The array
 	 * has a length of three, where array[0] is the entry for E5, array[1] for E10 and array[2] for diesel
 	 */
+	@Deprecated
 	@Transactional
 	public ArrayList<ArrayList<Pair<Date, Integer>>> getGasStationPrices() {
 		//Fetch all historic price data and sort by date and fuel type

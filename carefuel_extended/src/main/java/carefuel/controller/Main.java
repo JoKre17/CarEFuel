@@ -1,13 +1,18 @@
 package carefuel.controller;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Date;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import carefuel.path.PathFinder;
+import carefuel.tank.TankStrategy;
 
 /**
  *
@@ -28,9 +33,11 @@ public class Main {
 	private static final Logger log = LogManager.getLogger(Main.class);
 
 	public static PathFinder pathFinder;
+	public static TankStrategy tankStrategy;
 
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Extended at " + new Date().toString());
+		configureOutput();
 
 		if (args.length >= 2) {
 			if (args[0].equals("-gasPricesDir")) {
@@ -43,10 +50,55 @@ public class Main {
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
 
+		new Thread() {
+			@Override
+			public void run() {
+				log.info("The dump file was read on " + databaseHandler.getMostRecentPriceDataDate());
+			}
+		}.start();
+
 		PredictionUpdater p = new PredictionUpdater(databaseHandler);
 		p.start();
 
 		pathFinder = new PathFinder(databaseHandler);
-		pathFinder.setup();
+		// pathFinder.setup();
+
+		tankStrategy = new TankStrategy(databaseHandler);
+	}
+
+	private static void configureOutput() {
+		OutputStream errLogStream = new StandardOutputStream(Level.WARN);
+		OutputStream outLogStream = new StandardOutputStream(Level.INFO);
+
+		PrintStream errorPs = new PrintStream(errLogStream);
+		PrintStream outPs = new PrintStream(outLogStream);
+
+		System.setErr(errorPs);
+		System.setOut(outPs);
+	}
+}
+
+class StandardOutputStream extends OutputStream {
+
+	// default Level is INFO
+	private Level level = Level.INFO;
+	private String buffer = "";
+	private final int breakSymbol = '\n';
+
+	public StandardOutputStream(Level level) {
+		this.level = level;
+	}
+
+	@Override
+	public final void write(int b) throws IOException {
+		// the correct way of doing this would be using a buffer
+		// to store characters until a newline is encountered,
+		// this implementation is for illustration only
+		if (b == breakSymbol) {
+			LogManager.getLogger(StandardOutputStream.class).log(level, buffer.substring(0, buffer.length() - 1));
+			buffer = "";
+		} else {
+			buffer += (char) b;
+		}
 	}
 }

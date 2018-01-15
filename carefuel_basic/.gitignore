@@ -6,3 +6,7 @@
 !/out/routes/README.txt
 /out/precitedPrices/*
 !/out/precitedPrices/README.txt
+.settings
+.classpath
+bin/
+dependency-reduced-pom.xml

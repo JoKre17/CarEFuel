@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import carefuel.model.GasStation;
 import carefuel.path.Vertex;
+import carefuel.tank.Node;
 
 /**
  *
@@ -90,7 +91,7 @@ public class RequestController {
 		if (gasTypeAsString == null) {
 			gasType = Fuel.DIESEL;
 		} else {
-			gasType = Fuel.valueOf(gasTypeAsString);
+			gasType = Fuel.valueOf(gasTypeAsString.toUpperCase());
 		}
 
 		log.info("Path Request received");
@@ -138,10 +139,15 @@ public class RequestController {
 			return errorResponse(9001, "Unable to calculate route").toString();
 		}
 
+		// List that holds the liter-value of gas that should be tanked at the
+		// corresponding gasStation
+		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startTimeDate, consumption, tankLevel,
+				capacity, range, averageSpeed, gasType);
+
 		JSONArray path = new JSONArray();
 
-		for (Vertex<GasStation> v : route) {
-			GasStation station = v.getValue();
+		for (Node n : nodeRoute) {
+			GasStation station = n.getValue();
 			JSONObject stop = new JSONObject();
 
 			JSONObject loc = new JSONObject();
@@ -151,8 +157,25 @@ public class RequestController {
 			stop.put("id", station.getId().toString());
 			stop.put("location", loc);
 
+			stop.put("arrivalTime", n.getArrivalTime());
+			stop.put("predictedPrice", n.getPredictedPrice());
+			stop.put("fillAmount", n.getFuelToBuy());
+
 			path.put(stop);
 		}
+
+		/*
+		 * for (Vertex<GasStation> v : route) { GasStation station =
+		 * v.getValue(); JSONObject stop = new JSONObject();
+		 *
+		 * JSONObject loc = new JSONObject(); loc.put("lat",
+		 * station.getLatitude()); loc.put("lng", station.getLongitude());
+		 *
+		 * stop.put("id", station.getId().toString()); stop.put("location",
+		 * loc);
+		 *
+		 * path.put(stop); }
+		 */
 
 		return path.toString();
 	}
