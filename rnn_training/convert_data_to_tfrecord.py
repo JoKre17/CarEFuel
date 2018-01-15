@@ -17,7 +17,7 @@ from scipy import interpolate
 
 # Parse user input
 flags = tf.flags
-flags.DEFINE_string("data_path", 'data', "Path of the folder containing prices of gas stations")
+flags.DEFINE_string("data_path", 'data_', "Path of the folder containing prices of gas stations")
 FLAGS = flags.FLAGS
 
 # Ratios in which to split the data (training, validation, test)
@@ -35,6 +35,13 @@ n_data_points = int(hours_per_month / 2)
 
 def append_to_tfrecord(writer, dates, price_data):
     """Append the data to the current writer"""
+
+    # First, clean the data
+    dates, price_data = clean_data(dates, price_data)
+
+    # Ignore, if nothing to write
+    if len(dates) <= n_data_points:
+        return
 
     # Parse entries to a new format: The first entry is seen as hour zero. All following entries are relative
     # to the first one.
@@ -120,12 +127,6 @@ def load_data_from_database():
     cur.execute("SELECT ID FROM gas_station;")
     gas_station_IDs = cur.fetchall()
 
-    # Will later contain the data of all gas stations
-    data = {'dates': [],
-            'e5': [],
-            'e10': [],
-            'diesel': []}
-
     # Iterate over all gas stations
     with progressbar.ProgressBar(max_value=len(gas_station_IDs)) as bar:
         for index, ID in enumerate(gas_station_IDs):
@@ -141,6 +142,13 @@ def load_data_from_database():
                 e5 = []
                 e10 = []
                 diesel = []
+
+                # Ignore gas stations with not enough entries
+                if results is None:
+                    continue
+                if len(results) < 400:
+                    continue
+
                 for entry in results:
                     dates.append(entry[0])
                     e5.append(entry[1])
@@ -148,15 +156,29 @@ def load_data_from_database():
                     diesel.append(entry[3])
 
                 yield dates, {'e5': e5, 'e10': e10, 'diesel': diesel}
-
-            except:
+            except Exception as e:
                 print("Error at index", index)
+                print(e)
+                continue
 
     # Close communication with the database
     cur.close()
     conn.close()
 
-    return data
+
+def clean_data(dates, prices):
+    """
+    This function takes the two lists of dates and prices and returns two new lists that are cleared of errenous data
+    """
+    new_dates = []
+    new_prices = []
+    for i, price in enumerate(prices):
+        # Assume that every price that is < 100 and > 3000, is garbage
+        if 100 < price < 3000:
+            new_dates.append(dates[i])
+            new_prices.append(price)
+
+    return new_dates, new_prices
 
 
 def main(_):
@@ -175,31 +197,37 @@ def main(_):
             path = FLAGS.data_path + "/" + fuel_type + '_' + data_set
             writers[fuel_type + '_' + data_set] = tf.python_io.TFRecordWriter(path)
 
-    # Iterate over all gas stations using a generator function
-    gas_station_gen_func = load_data_from_database()
-    for index, data in enumerate(gas_station_gen_func):
-        # Unpack data
-        dates = data[0]
-        fuel_prices = data[1]
+    # Iterate over all gas stations using a generator function, just in case something breaks during execution, handle
+    # the exception in a way that the files can still be closed gracefully
+    try:
+        gas_station_gen_func = load_data_from_database()
+        for index, data in enumerate(gas_station_gen_func):
+            # Unpack data
+            dates = data[0]
+            fuel_prices = data[1]
 
-        # Assign correct data set
-        if index < validation_index:
-            data_set = 'training'
-        elif index < testing_index:
-            data_set = 'validation'
-        else:
-            data_set = 'testing'
+            # Assign correct data set
+            if index < validation_index:
+                data_set = 'training'
+            elif index < testing_index:
+                data_set = 'validation'
+            else:
+                data_set = 'testing'
 
-        # Append new data to file
-        for fuel_type in ['e5', 'e10', 'diesel']:
-            append_to_tfrecord(writers[fuel_type + '_' + data_set], dates, fuel_prices[fuel_type])
+            # Append new data to file in parallel
+            for fuel_type in ['e5', 'e10', 'diesel']:
+                append_to_tfrecord(writers[fuel_type + '_' + data_set], dates, fuel_prices[fuel_type])
+
+    except Exception as e:
+        print("Something went wrong during creation of tfrecord files")
+        print(e.with_traceback())
 
     # Close all writers
     for data_set in ['training', 'validation', 'testing']:
         for fuel_type in ['e5', 'e10', 'diesel']:
+            print("bla")
             writers[fuel_type + '_' + data_set].close()
 
 
 if __name__ == '__main__':
     tf.app.run()
-

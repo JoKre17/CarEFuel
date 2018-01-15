@@ -32,11 +32,11 @@ tf.logging.set_verbosity(tf.logging.INFO)
 params = {
     'n_hours_per_month': 372,
     'max_past_months': 50,
-    'batch_size': 1,
-    'num_epochs': 10,
-    'max_price': 3000,  # TODO: better normalization
+    'batch_size': 25,
+    'num_epochs': 5,
+    'max_price': 3000,
     'keep_prob': 0.5,
-    'learning_rate': 0.1,
+    'learning_rate': 0.0001,
     'prefetched_elements': 50
 }
 
@@ -54,7 +54,7 @@ def input_fn(path):
     # In general perform all input computing on the CPU, letting GPU concentrate on training
     with tf.device('/cpu:0'):
         # Open TFRecord file
-        dataset = tf.data.TFRecordDataset(path)
+        dataset = tf.data.TFRecordDataset(path, compression_type="")
 
         # Prefetch data for more efficient hardware utilization
         dataset = dataset.prefetch(params['prefetched_elements'])
@@ -158,11 +158,7 @@ def model_fn(features, labels, mode):
 
     ''' One Dense Layer at the end '''
     size = params['n_hours_per_month']
-    # Apply dropout if training
-    if mode == tf.estimator.ModeKeys.TRAIN and params['keep_prob'] < 1:
-        output = tf.nn.dropout(output, params['keep_prob'])
-
-    output = tf.layers.dense(inputs=output, units=size, activation=tf.nn.relu)
+    output = dense_layer(output, size)
 
     # Rescale and give name for later usage
     with tf.name_scope("Output"):
@@ -174,10 +170,12 @@ def model_fn(features, labels, mode):
     if mode != tf.estimator.ModeKeys.PREDICT:
         # Loss function
         next_month = labels / params['max_price']
-        loss = tf.losses.absolute_difference(next_month, output)
+        loss = tf.losses.mean_squared_error(next_month, output)
 
         # Define optimizer for training
-        optimizer = tf.train.AdamOptimizer(params["learning_rate"])
+        learning_rate = tf.train.exponential_decay(params["learning_rate"], tf.train.get_global_step(),
+                                                   10000, 0.96, staircase=False)
+        optimizer = tf.train.AdamOptimizer(learning_rate)
         train_op = optimizer.minimize(loss=loss, global_step=tf.train.get_global_step())
 
     return tf.estimator.EstimatorSpec(
@@ -215,10 +213,10 @@ def train_network(fuel_type):
         nn.train(input_fn=lambda: input_fn(training_file_path))
 
         print("Evaluation:")
-        #nn.evaluate(input_fn=lambda: input_fn(validation_file_path))
+        nn.evaluate(input_fn=lambda: input_fn(validation_file_path))
 
     print("Testing:")
-    #nn.evaluate(input_fn=lambda: input_fn(testing_file_path))
+    nn.evaluate(input_fn=lambda: input_fn(testing_file_path))
 
     # Export the trained model
     save_model(nn, fuel_type)
