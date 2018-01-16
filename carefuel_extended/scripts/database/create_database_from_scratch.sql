@@ -98,9 +98,9 @@ CREATE INDEX idx_updated
     TABLESPACE pg_default;
 	
 	
-CREATE INDEX index_on_gas_station_stid
+CREATE INDEX index_on_gas_station_id
     ON public.gas_station USING btree
-    (stid)
+    (id)
     TABLESPACE pg_default;
 	
 	
