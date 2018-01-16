@@ -1,6 +1,9 @@
 package carefuel.controller;
 
+import java.io.File;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -11,7 +14,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.format.datetime.DateFormatter;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -40,7 +45,7 @@ public class RequestController {
 
 	@RequestMapping(value = "station/", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public JSONArray getGasStationById() {
+	public String getGasStationById() {
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		JSONArray toReturn = new JSONArray();
 		Set<GasStation> gasStations = databaseHandler.getAllGasStations();
@@ -49,17 +54,16 @@ public class RequestController {
 			toReturn.put(gasStation.toJSON());
 		}
 
-		return toReturn;
+		return toReturn.toString();
 	}
 
 	@RequestMapping(value = "station/{id}", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public JSONObject getGasStationById(@PathVariable String id) {
-		DatabaseHandler databaseHandler = new DatabaseHandler();
+	public String getGasStationById(@PathVariable String id) {
+		log.info(id);
+		GasStation gasStation = Main.databaseHandler.getGasStation(id);
 
-		GasStation gasStation = databaseHandler.getGasStation(id);
-
-		return gasStation.toJSON();
+		return gasStation.toJSON().toString();
 	}
 
 	@RequestMapping(value = "path", method = RequestMethod.GET, produces = "application/json")
@@ -165,19 +169,54 @@ public class RequestController {
 		}
 
 		/*
-		 * for (Vertex<GasStation> v : route) { GasStation station =
-		 * v.getValue(); JSONObject stop = new JSONObject();
+		 * for (Vertex<GasStation> v : route) { GasStation station = v.getValue();
+		 * JSONObject stop = new JSONObject();
 		 *
-		 * JSONObject loc = new JSONObject(); loc.put("lat",
-		 * station.getLatitude()); loc.put("lng", station.getLongitude());
+		 * JSONObject loc = new JSONObject(); loc.put("lat", station.getLatitude());
+		 * loc.put("lng", station.getLongitude());
 		 *
-		 * stop.put("id", station.getId().toString()); stop.put("location",
-		 * loc);
+		 * stop.put("id", station.getId().toString()); stop.put("location", loc);
 		 *
 		 * path.put(stop); }
 		 */
 
 		return path.toString();
+	}
+
+	@RequestMapping(value = "/download", method = RequestMethod.GET)
+	@ResponseBody
+	private String getDownloadables() {
+		File file = new File("download");
+
+		List<File> accessibleFiles = new ArrayList<>();
+		if (file.exists() && file.isDirectory()) {
+			accessibleFiles = Arrays.asList(file.listFiles());
+		}
+		// @formatter:off
+		String html = "<html>" 
+						+ "<head>"
+							+ "<title>Carefuel Downloads</title>"
+						+ "</head>"
+						+ "<body style=’background-color:#ccc’>"
+						+ "Downloadable Files:<br>";
+		// @formatter:on
+		for (File f : accessibleFiles) {
+			log.debug(f.getName());
+			html += "<span style='margin-left:10px'>" + "<a href='download/" + f.getName() + "'>" + f.getName()
+					+ "</a><br>";
+		}
+
+		html += "</body>";
+
+		return html;
+	}
+
+	@RequestMapping(value = "/download/{file}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@ResponseBody
+	private FileSystemResource getFile(@PathVariable("file") String vmFileName) {
+		File file = new File("download/" + vmFileName);
+		log.info("Downloading " + file.getAbsolutePath());
+		return new FileSystemResource(file);
 	}
 
 	private JSONObject errorResponse(int code, String message) {

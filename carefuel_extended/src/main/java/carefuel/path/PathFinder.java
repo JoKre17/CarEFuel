@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.lang3.tuple.Pair;
 
 import carefuel.controller.DatabaseHandler;
 import carefuel.controller.Fuel;
@@ -245,21 +245,26 @@ public class PathFinder {
 				Date arrivalTime = calendar.getTime();
 				long arrivalTimeLong = arrivalTime.getTime();
 
-				// get predicted prices for gasStation
-				List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(e.getTo().getValue().getId(),
-						gasType);
+				double pricePrediction = 0;
+				if (x > 0) {
+					// get predicted prices for gasStation
+					List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(e.getTo().getValue().getId(),
+							gasType);
 
-				int pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
-					@Override
-					public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
-						long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
-						long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
-						return Long.compare(diff1, diff2);
-					}
-				}).getRight();
+					int pricePredictionInCentiCent = Collections
+							.min(predictions, new Comparator<Pair<Date, Integer>>() {
+								@Override
+								public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
+									long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
+									long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
+									return Long.compare(diff1, diff2);
+								}
+							}).getRight();
 
-				// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in "centicent"
-				double pricePrediction = pricePredictionInCentiCent / 10.0;
+					// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in "centicent"
+					pricePrediction = pricePredictionInCentiCent / 10.0;
+
+				}
 				e.setWeight(pricePrediction);
 
 				// predict price

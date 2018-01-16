@@ -202,8 +202,9 @@ class PredictionWorkerThread extends Thread {
 			GasStation gasStation = dbHandler.getGasStation(gasStationUUID);
 			Map<Fuel, List<Pair<Date, Integer>>> datePriceList = dbHandler.getGasStationPrices(gasStationUUID);
 
-			Set<GasStationPricePrediction> predictions = null;
+			Set<GasStationPricePrediction> firstRunPredictions = null;
 
+			// 30 days
 			double timeDiff = 30 * 1000 * 60 * 60 * 24;
 			int dayDiff = 30;
 			try {
@@ -222,9 +223,9 @@ class PredictionWorkerThread extends Thread {
 						log.debug(gasStation.getId() + ": Need to predict " + (dayDiff + 30) + " days into future.");
 					}
 				}
+				firstRunPredictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
 
-				// Catch prediction errors that are caused by missing or erroneous data
-				predictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
+				// Catch prediction errors that are caused by missing data
 			} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
 				// TODO Clarify, why there are gasStations without prices in database
 
@@ -232,19 +233,20 @@ class PredictionWorkerThread extends Thread {
 				log.warn("Little or none historical price data for gas station with id "
 						+ gasStation.getId().toString());
 
-				predictions = createConstantPrediction(gasStation, mostRecentDate);
+				firstRunPredictions = createConstantPrediction(gasStation, mostRecentDate);
 			}
-			dbHandler.insertPricePredictions(predictions);
 
 			// calculate until 30 days into future
 			if (dayDiff > 0) {
+				// add predicted prices to historical data until the date, where the db was
+				// updated
 				log.debug(gasStation.getId() + ": T+30 days done. Predict next " + dayDiff + " days");
 				List<Pair<Date, Integer>> dieselData = datePriceList.get(Fuel.DIESEL);
 				List<Pair<Date, Integer>> e10Data = datePriceList.get(Fuel.E10);
 				List<Pair<Date, Integer>> e5Data = datePriceList.get(Fuel.E5);
-				final int dayDiffForPredictions = dayDiff;
+
 				// iterate over sorted...
-				predictions.stream().sorted((a, b) -> a.getDate().compareTo(b.getDate())).forEach(pred -> {
+				firstRunPredictions.stream().sorted((a, b) -> a.getDate().compareTo(b.getDate())).forEach(pred -> {
 
 					/*
 					 * if last date of historic price data was until e.g. 10 days before
@@ -263,8 +265,9 @@ class PredictionWorkerThread extends Thread {
 					}
 				});
 
+				Set<GasStationPricePrediction> secondRunPredictions = null;
 				try {
-					predictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
+					secondRunPredictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
 				} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
 					log.debug(e);
 					// TODO Clarify, why there are gasStations without prices in database
@@ -273,10 +276,14 @@ class PredictionWorkerThread extends Thread {
 					log.warn("Little or none historical price data for gas station with id "
 							+ gasStation.getId().toString());
 
-					predictions = createConstantPrediction(gasStation, mostRecentDate);
+					secondRunPredictions = createConstantPrediction(gasStation, mostRecentDate);
 				}
-				dbHandler.insertPricePredictions(predictions);
+
+				// combine both predictions
+				firstRunPredictions.addAll(secondRunPredictions);
 			}
+
+			dbHandler.insertPricePredictions(firstRunPredictions);
 		}
 	}
 

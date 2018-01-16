@@ -34,6 +34,7 @@ public class Main {
 
 	public static PathFinder pathFinder;
 	public static TankStrategy tankStrategy;
+	public static DatabaseHandler databaseHandler;
 
 	public static void main(String[] args) {
 		log.info("Startup of CarEFuel_Extended at " + new Date().toString());
@@ -47,21 +48,22 @@ public class Main {
 
 		SpringApplication.run(Main.class, args);
 
-		DatabaseHandler databaseHandler = new DatabaseHandler();
+		databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
 
-		new Thread() {
-			@Override
-			public void run() {
-				log.info("The dump file was read on " + databaseHandler.getMostRecentPriceDataDate());
-			}
-		}.start();
+		// new Thread() {
+		// @Override
+		// public void run() {
+		// log.info("The dump file was read on " +
+		// databaseHandler.getMostRecentPriceDataDate());
+		// }
+		// }.start();
 
 		PredictionUpdater p = new PredictionUpdater(databaseHandler);
 		p.start();
 
 		pathFinder = new PathFinder(databaseHandler);
-		// pathFinder.setup();
+		pathFinder.setup();
 
 		tankStrategy = new TankStrategy(databaseHandler);
 	}
@@ -95,7 +97,11 @@ class StandardOutputStream extends OutputStream {
 		// to store characters until a newline is encountered,
 		// this implementation is for illustration only
 		if (b == breakSymbol) {
-			LogManager.getLogger(StandardOutputStream.class).log(level, buffer.substring(0, buffer.length() - 1));
+			String printString = "\n";
+			if (buffer.length() > 0) {
+				printString = buffer.substring(0, buffer.length() - 1);
+			}
+			LogManager.getLogger(StandardOutputStream.class).log(level, printString);
 			buffer = "";
 		} else {
 			buffer += (char) b;
