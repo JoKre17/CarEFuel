@@ -95,7 +95,11 @@ public class RequestController {
 		if (gasTypeAsString == null) {
 			gasType = Fuel.DIESEL;
 		} else {
-			gasType = Fuel.valueOf(gasTypeAsString.toUpperCase());
+			try {
+				gasType = Fuel.valueOf(gasTypeAsString.toUpperCase());
+			} catch (java.lang.IllegalArgumentException e) {
+				gasType = Fuel.DIESEL;
+			}
 		}
 
 		log.info("Path Request received");

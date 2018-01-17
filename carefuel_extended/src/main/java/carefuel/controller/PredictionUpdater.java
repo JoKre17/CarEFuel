@@ -227,6 +227,7 @@ class PredictionWorkerThread extends Thread {
 
 				// Catch prediction errors that are caused by missing data
 			} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+				log.debug(e);
 				// TODO Clarify, why there are gasStations without prices in database
 
 				// Catches if there is none or too less data for the gasStation
