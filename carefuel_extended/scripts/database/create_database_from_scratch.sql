@@ -111,7 +111,7 @@ CREATE INDEX index_on_gas_station_id
 
 CREATE TABLE public.gas_station_information_history
 (
-    id SERIAL PRIMARY KEY,
+    id integer NOT NULL,
     stid uuid NOT NULL,
     e5 smallint,
     e10 smallint,

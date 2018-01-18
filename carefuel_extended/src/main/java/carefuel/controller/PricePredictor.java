@@ -1,6 +1,9 @@
 package carefuel.controller;
 
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -92,24 +95,45 @@ public class PricePredictor {
 		 * the month before the month that needs to be predicted,
 		 * interpolatedPrices[0][1] the price before that and so on.
 		 */
-		float[][] interpolatedPricesE5 = interpolatePrices(datePriceList.get(Fuel.E5));
-		float[][] interpolatedPricesE10 = interpolatePrices(datePriceList.get(Fuel.E10));
-		float[][] interpolatedPricesDiesel = interpolatePrices(datePriceList.get(Fuel.DIESEL));
-
-		// Predict prices for all fuel type using the neural network
-		float[] predictionE5 = runNetwork(interpolatedPricesE5, Fuel.E5.toString().toLowerCase());
-		float[] predictionE10 = runNetwork(interpolatedPricesE10, Fuel.E10.toString().toLowerCase());
-		float[] predictionDiesel = runNetwork(interpolatedPricesDiesel, Fuel.DIESEL.toString().toLowerCase());
-
-		// We need the last date as starting point for the prediction
-		Date currentDate = datePriceList.get(Fuel.DIESEL).get(datePriceList.get(Fuel.DIESEL).size() - 1).getLeft();
-
-		// Wrap all price predictions into objects of the GasStationPricePrediction
-		// class
+		
+		Map<Fuel, float[]> predictionsMap = new HashMap<>();
+		Date currentDate = null;
+		
+		for(Fuel fuel : Fuel.values()) {
+			float[][] interpolatedPrices = interpolatePrices(datePriceList.get(fuel));
+			float[] prediction;
+			
+			//null means the datePriceList was for this fuel empty
+			if(interpolatedPrices != null) {
+				// We need the last date as starting point for the prediction
+				currentDate = datePriceList.get(fuel).get(datePriceList.get(fuel).size() - 1).getLeft();
+				
+				// Predict prices for all fuel type using the neural network
+				prediction = runNetwork(interpolatedPrices, fuel.toString().toLowerCase());
+			} else {
+				prediction = new float[372];
+				int price = Fuel.getDefaultPrice(fuel);
+				Arrays.fill(prediction, price);
+			}
+			
+			predictionsMap.put(fuel, prediction);
+		}
+		
+		// should only be null, if the corresponding gasStation has only 0 elements as prices
+		if(currentDate == null) {
+			Calendar c = Calendar.getInstance();
+			c.setTime(new Date());
+			c.set(Calendar.HOUR_OF_DAY, 0);
+			c.set(Calendar.MINUTE, 0);
+			
+			currentDate = c.getTime();
+		}
+		
+		// Wrap all price predictions into objects of the GasStationPricePrediction class
 		Set<GasStationPricePrediction> predictions = new HashSet<>();
-		for (int i = 0; i < predictionE5.length; ++i) {
+		for (int i = 0; i < predictionsMap.get(Fuel.values()[0]).length; ++i) {
 			GasStationPricePrediction prediction = new GasStationPricePrediction(gasStation, currentDate,
-					(int) predictionE5[i], (int) predictionE10[i], (int) predictionDiesel[i]);
+					(int) predictionsMap.get(Fuel.E5)[i], (int) predictionsMap.get(Fuel.E10)[i], (int) predictionsMap.get(Fuel.E10)[i]);
 
 			prediction.setGasStation(gasStation);
 			predictions.add(prediction);
@@ -135,6 +159,11 @@ public class PricePredictor {
 	 *         order and begins at the last entry of datePriceList
 	 */
 	private float[][] interpolatePrices(List<Pair<Date, Integer>> datePriceList) {
+		
+		if(datePriceList.size() == 0) {
+			return null;
+		}
+		
 		// Create the data points for the interpolation
 		double[] x = new double[datePriceList.size()];
 		double[] y = new double[datePriceList.size()];

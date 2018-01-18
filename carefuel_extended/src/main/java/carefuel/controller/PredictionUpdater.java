@@ -105,12 +105,14 @@ public class PredictionUpdater extends Thread {
 						int minLeft = (int) (((predictedTimeInMinutesLeft / 60.0) - hoursLeft) * 60);
 
 						log.info(String.format("Prediction Progress: %.2f %%", currentProgress * 100));
-						log.info(String.format("Predicted time left %d:%2d", hoursLeft, minLeft));
+						log.info(String.format("Predicted time left %dh %2dmin", hoursLeft, minLeft));
 
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
+				log.info("Prediction Progress: 100 %");
+				log.info("Predictions finished.");
 
 				serviceSocket.close();
 				serverSocket.close();
@@ -209,8 +211,16 @@ class PredictionWorkerThread extends Thread {
 			int dayDiff = 30;
 			try {
 				// timeDiff in milliseconds
-				timeDiff = mostRecentDate.getTime() - datePriceList.get(Fuel.DIESEL)
-						.get(datePriceList.get(Fuel.DIESEL).size() - 1).getLeft().getTime();
+				for(Fuel f : Fuel.values()) {
+					if(datePriceList.get(f).size() > 0) {
+						double timeDiffForFuelType = mostRecentDate.getTime() - datePriceList.get(f)
+								.get(datePriceList.get(f).size() - 1).getLeft().getTime();
+						if(timeDiffForFuelType < timeDiff) {
+							timeDiff = timeDiffForFuelType;
+						}
+					}
+				}
+
 				// to seconds, to minutes, to hours, to days
 				dayDiff = (int) (timeDiff / (1000 * 60 * 60 * 24));
 
@@ -220,15 +230,14 @@ class PredictionWorkerThread extends Thread {
 					continue;
 				} else {
 					if (dayDiff != 0) {
-						log.debug(gasStation.getId() + ": Need to predict " + (dayDiff + 30) + " days into future.");
+//						log.debug(gasStation.getId() + ": Need to predict " + (dayDiff + 30) + " days into future.");
 					}
 				}
 				firstRunPredictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
 
 				// Catch prediction errors that are caused by missing data
-			} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+			} catch (Exception e) {
 				log.debug(e);
-				// TODO Clarify, why there are gasStations without prices in database
 
 				// Catches if there is none or too less data for the gasStation
 				log.warn("Little or none historical price data for gas station with id "
@@ -241,7 +250,7 @@ class PredictionWorkerThread extends Thread {
 			if (dayDiff > 0) {
 				// add predicted prices to historical data until the date, where the db was
 				// updated
-				log.debug(gasStation.getId() + ": T+30 days done. Predict next " + dayDiff + " days");
+//				log.debug(gasStation.getId() + ": T+30 days done. Predict next " + dayDiff + " days");
 				List<Pair<Date, Integer>> dieselData = datePriceList.get(Fuel.DIESEL);
 				List<Pair<Date, Integer>> e10Data = datePriceList.get(Fuel.E10);
 				List<Pair<Date, Integer>> e5Data = datePriceList.get(Fuel.E5);
@@ -269,9 +278,8 @@ class PredictionWorkerThread extends Thread {
 				Set<GasStationPricePrediction> secondRunPredictions = null;
 				try {
 					secondRunPredictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
-				} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+				} catch (Exception e) {
 					log.debug(e);
-					// TODO Clarify, why there are gasStations without prices in database
 
 					// Catches if there is none or too less data for the gasStation
 					log.warn("Little or none historical price data for gas station with id "
@@ -284,6 +292,7 @@ class PredictionWorkerThread extends Thread {
 				firstRunPredictions.addAll(secondRunPredictions);
 			}
 
+			// TODO dbHandler.deletePricePredictions(gasStation.getId())
 			dbHandler.insertPricePredictions(firstRunPredictions);
 		}
 	}
