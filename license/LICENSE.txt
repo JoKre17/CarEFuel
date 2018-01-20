@@ -1,0 +1,15 @@
+This product is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 
+International Public License
+
+You are free to copy and redistribute the material in any medium or format.
+
+Your are not allowed to: 
+	- you must give appropriate credit, provide a link to the license, and indicate if changes 
+	  were made. You may do so in any reasonable manner, but not in any way that suggests the 
+	  licensor endorses you or your use.
+	- use the material for commercial purposes.  
+	- distribute the modified material. 
+
+We do not hold any liability and grant no warranty for our product.
+
+See https://creativecommons.org/licenses/by-nc-nd/4.0/ for more information.
