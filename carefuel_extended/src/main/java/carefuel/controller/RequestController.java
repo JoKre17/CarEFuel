@@ -121,15 +121,24 @@ public class RequestController {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		Calendar c = Calendar.getInstance();
-		c.set(Calendar.HOUR_OF_DAY, 0);
-		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.SECOND, 0);
-		Date today = c.getTime();
 
-		if (startTimeDate.before(today)) {
-			log.error("Requested start time before today: " + df.print(startTimeDate, Locale.GERMAN));
-			return errorResponse(9002, "Requested start time before today").toString();
+		Date importDate = Main.databaseHandler.getMostRecentPriceDataDate();
+		Calendar c = Calendar.getInstance();
+		c.setTime(importDate);
+		c.add(Calendar.DAY_OF_MONTH, 30);
+		Date maxPredDate = c.getTime();
+		
+		log.info(df.print(importDate, Locale.GERMAN));
+		log.info(df.print(startTimeDate, Locale.GERMAN));
+		log.info(df.print(maxPredDate, Locale.GERMAN));
+
+		if (startTimeDate.before(importDate) || startTimeDate.after(maxPredDate)) {
+			String importDateString = df.print(importDate, Locale.GERMAN);
+			String maxPredDateString = df.print(maxPredDate, Locale.GERMAN);
+			log.error("Requested start time before today: " + importDateString + " or after " + maxPredDateString);
+			return errorResponse(9002,
+					"Requested start time out of predictable bounds.\nEither before import date of database: "
+							+ importDateString + "\nOr after maximal predict date: " + maxPredDateString).toString();
 		}
 
 		// km/h
@@ -148,7 +157,7 @@ public class RequestController {
 			log.error("Error while calculating route", e);
 			return errorResponse(9001, "Unable to calculate route. Graph might not be loaded yet.").toString();
 		}
-		log.debug("Found path in " + ((System.currentTimeMillis()-time)/1000.0) + " seconds");
+		log.debug("Found path in " + ((System.currentTimeMillis() - time) / 1000.0) + " seconds");
 
 		for (int i = 0; i < route.size(); i++) {
 			if (i == 0) {
@@ -163,7 +172,7 @@ public class RequestController {
 						+ route.get(i).getValue().getId());
 			}
 		}
-		
+
 		// List that holds the liter-value of gas that should be tanked at the
 		// corresponding gasStation
 		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startTimeDate, consumption, tankLevel,
@@ -185,7 +194,7 @@ public class RequestController {
 			stop.put("arrivalTime", n.getArrivalTime());
 			stop.put("predictedPrice", n.getPredictedPrice());
 			stop.put("fillAmount", n.getFuelToBuy());
-			
+
 			log.debug(station.getId() + " " + n.getFuelToBuy());
 
 			path.put(stop);

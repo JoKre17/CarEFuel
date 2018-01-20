@@ -40,6 +40,8 @@ public class DatabaseHandler {
 	private static final Logger log = LogManager.getLogger(DatabaseHandler.class);
 
 	protected SessionFactory sessionFactory;
+	
+	private Date mostRecentPriceDataDate = new Date();
 
 	public void exit() {
 		// code to close Hibernate Session factory
@@ -245,6 +247,8 @@ public class DatabaseHandler {
 		} finally {
 			this.sessionFactory.getCurrentSession().close();
 		}
+		
+		this.updateMostRecentPriceDataDate();
 	}
 
 	/**
@@ -310,6 +314,10 @@ public class DatabaseHandler {
 		return result;
 	}
 
+	public Date getMostRecentPriceDataDate() {
+		return this.mostRecentPriceDataDate;
+	}
+	
 	/**
 	 * Returns the most recent date of all historic price data. Means the import
 	 * date of the dump file.
@@ -319,7 +327,7 @@ public class DatabaseHandler {
 	 * 
 	 * @return
 	 */
-	public Date getMostRecentPriceDataDate() {
+	public void updateMostRecentPriceDataDate() {
 		/*
 		 * SELECT date FROM gas_station_information_history ORDER BY date DESC LIMIT 1;
 		 */
@@ -337,6 +345,10 @@ public class DatabaseHandler {
 		c.set(Calendar.MINUTE, 0);
 		c.set(Calendar.SECOND, 0);
 
-		return c.getTime();
+		this.mostRecentPriceDataDate = c.getTime();
+	}
+	
+	public void setMostRecentPriceDataDate(Date date) {
+		this.mostRecentPriceDataDate = date;
 	}
 }

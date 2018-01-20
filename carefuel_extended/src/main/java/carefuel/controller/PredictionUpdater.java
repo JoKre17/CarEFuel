@@ -59,6 +59,7 @@ public class PredictionUpdater extends Thread {
 				// Fetch all gas stations from the database and update one after another
 				List<UUID> gasStationUUIDs = dbHandler.getAllGasStationIDs().stream().collect(Collectors.toList());
 				log.info("Calculating import date of database with dump file");
+				dbHandler.updateMostRecentPriceDataDate();
 				Date mostRecentDate = dbHandler.getMostRecentPriceDataDate();
 				log.info("Database seems to be imported on " + mostRecentDate);
 
