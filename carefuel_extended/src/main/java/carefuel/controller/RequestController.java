@@ -159,7 +159,7 @@ public class RequestController {
 
 				double distance = GasStation.computeDistanceToGasStation(from.getLatitude(), from.getLongitude(),
 						to.getLatitude(), to.getLongitude());
-				log.debug(route.get(i - 1).getValue().getId() + " == " + distance + " ==>"
+				log.debug(route.get(i - 1).getValue().getId() + " == " + distance + " ==> "
 						+ route.get(i).getValue().getId());
 			}
 		}

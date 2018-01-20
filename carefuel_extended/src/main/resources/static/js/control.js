@@ -84,10 +84,10 @@ function submitButtonPressed() {
 	}
 	
 	var request = {
-			'from' : getClosestGasStation(from),
-			'to' : getClosestGasStation(to),
-			'from' : "",
-			'to' : "",
+//			'from' : getClosestGasStation(from),
+//			'to' : getClosestGasStation(to),
+			'from' : 'e1a15081-25e4-9107-e040-0b0a3dfe563c',
+			'to' : 'e1a15081-25d3-9107-e040-0b0a3dfe563c',
 			'startTime' : startTime,
 			'tankLevel' : tankLevel,
 			'capacity' : capacity,
@@ -125,6 +125,7 @@ function submitButtonPressed() {
 			route = []
 			
 			fillAmounts = []
+			predictedPrices = []
 			
 			positions = []
 			start_pos = {
@@ -149,12 +150,18 @@ function submitButtonPressed() {
 				
 				fillAmount = data[i]['fillAmount']
 				fillAmounts.push(fillAmount)
+				
+				predictedPrice = data[i]['predictedPrice']
+				predictedPrices.push(predictedPrice)
+				
+				
 			}
 			
 			positions.push(end_pos)
 			
 			route.push(positions)
 			route.push(fillAmounts)
+			route.push(predictedPrices)
 			
 			calculateAndDisplayRoute(route)
 			
@@ -180,6 +187,7 @@ function getClosestGasStation(coords){
 	var stations = [];
 	while (stations.length == 0) {
 		stations = getGasStationsByRadius(rad, coords);
+		console.log(stations);
 		rad += 5;
 	}
 	

@@ -119,13 +119,16 @@ public class Main {
 
 		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startDate, 7.0, 5, 15, 214.8, 100,
 				Fuel.DIESEL);
+		for(Node n : nodeRoute) {
+			log.debug(n.getValue().getId() + "Tank: " + n.getGasInTank() + " Buy: " + n.getFuelToBuy());
+		}
 		// ### TEST ENDE ###
 
-		// PredictionUpdater p = new PredictionUpdater(databaseHandler);
-		// p.start();
-		//
-		// pathFinder = new PathFinder(databaseHandler);
-		// pathFinder.setup();
+		 PredictionUpdater p = new PredictionUpdater(databaseHandler);
+		 p.start();
+		
+		 pathFinder = new PathFinder(databaseHandler);
+		 pathFinder.setup();
 	}
 
 	private static void configureOutput() {

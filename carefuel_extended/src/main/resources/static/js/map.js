@@ -101,6 +101,8 @@ function calculateAndDisplayRoute(routeList) {
 	
 	var positions = routeList[0]
 	var fillAmounts = routeList[1]
+	var predictedPrices = routeList[2]
+	console.log(predictedPrices);
 
 	var waypoints = [];
 
@@ -134,7 +136,11 @@ function calculateAndDisplayRoute(routeList) {
 				routeInformation += '<div class="route rtable"><div class="rrow">';
 				routeInformation += '<div class="route distance">' + route.legs[i].distance.text + '</div>';
 				routeInformation += '<div class="arrow"><image src="images/arrow_down_30_50.png"></div>';
-				routeInformation += '<div class="tank">' + fillAmounts[i] + '</div>';
+				var fillAmountString = ""
+				if(fillAmounts[i] != undefined) {
+					fillAmountString = parseFloat(Math.round(fillAmounts[i] * 100) / 100).toFixed(2) + "l" + "\nfor " + parseFloat(Math.round(predictedPrices[i]) / 100).toFixed(2) + "€/l";
+				}
+				routeInformation += '<div class="tank">' + fillAmountString + '</div>';
 				routeInformation += '</div></div>';
 				
 				routeInformation += "<div style='display: flex;'>";

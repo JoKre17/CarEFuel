@@ -111,25 +111,25 @@ public class TankStrategy {
 		DecimalFormat df = new DecimalFormat("#0.00");
 		double sum = 0;
 
-		log.info("------------------ Gasstations -----------------");
+		log.debug("------------------ Gasstations -----------------");
 		for (int i = 0; i < immutableNodes.size() - 1; i++) {
 			if (immutableNodes.get(i).getFuelToBuy() > 0) {
-				log.info(immutableNodes.get(i).getValue().getName() + " gas price: "
+				log.debug(immutableNodes.get(i).getValue().getName() + " gas price: "
 						+ immutableNodes.get(i).getPredictedPrice() + ", fill up "
 						+ df.format(immutableNodes.get(i).getFuelToBuy()) + " liter");
 			} else {
-				log.info(immutableNodes.get(i).getValue().getName() + " gas price: "
+				log.debug(immutableNodes.get(i).getValue().getName() + " gas price: "
 						+ immutableNodes.get(i).getPredictedPrice());
 			}
-			log.info("\t" + df.format(distance(immutableNodes.get(i), immutableNodes.get(i + 1))));
+			log.debug("\t" + df.format(distance(immutableNodes.get(i), immutableNodes.get(i + 1))));
 			sum += distance(immutableNodes.get(i), immutableNodes.get(i + 1));
 		}
-		log.info(immutableNodes.get(immutableNodes.size() - 1).getValue().getName());
-		log.info("------------------------------------------------");
+		log.debug(immutableNodes.get(immutableNodes.size() - 1).getValue().getName());
+		log.debug("------------------------------------------------");
 
 		log.debug("Sum: " + df.format(sum));
 
-		log.info("Distance between start and end: "
+		log.debug("Distance between start and end: "
 				+ df.format(indirectDistance(immutableNodes.get(0), immutableNodes.get(immutableNodes.size() - 1))));
 
 		return immutableNodes;
