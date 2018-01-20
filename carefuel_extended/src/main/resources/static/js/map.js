@@ -126,24 +126,29 @@ function calculateAndDisplayRoute(routeList) {
 			var routeInformation = "";
 
 			// For each route, display summary information.
+			routeInformation += "<div style='display: flex;'>";
 			routeInformation += '<h4 class="route">Start</h4>';
-			routeInformation += '<div class="route address">' + route.legs[0].start_address + '</div>';
+			routeInformation += '<div class="route address">' + route.legs[0].start_address + '</div></div>';
 			
 			for (var i = 0; i < route.legs.length; i++) {
 				routeInformation += '<div class="route rtable"><div class="rrow">';
-				routeInformation += '<div class="route distance">' + route.legs[i].distance.text + '</div>' + '<div class="arrow">&#8675;</div>';
+				routeInformation += '<div class="route distance">' + route.legs[i].distance.text + '</div>';
+				routeInformation += '<div class="arrow"><image src="images/arrow_down_30_50.png"></div>';
 				routeInformation += '<div class="tank">' + fillAmounts[i] + '</div>';
 				routeInformation += '</div></div>';
 				
+				routeInformation += "<div style='display: flex;'>";
 				if (i == (route.legs.length - 1)) {
+					
 					routeInformation += '<h4 class="route">Ziel</h4>';
 				} else {
 					routeInformation += '<h5 class="route">Stop: ' + (i+1) + '</h5>';
 				}
 				routeInformation += '<div class="route address">' + route.legs[i].end_address + '</div>';
+				routeInformation += "</div>";
 			}
 			
-			document.getElementById('routeContainer').innerHTML = routeInformation;
+			document.getElementById('routeContainerPanel').innerHTML = routeInformation;
 		}
 	});
 }
