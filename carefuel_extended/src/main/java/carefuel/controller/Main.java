@@ -58,11 +58,11 @@ public class Main {
 
 		databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
-		
+
 		tankStrategy = new TankStrategy(databaseHandler);
 
-//		databaseHandler.getPricePredictionClosestToDate(databaseHandler.getAllGasStations().iterator().next().getId(),
-//				Fuel.DIESEL, new Date());
+		databaseHandler.getPricePredictionClosestToDate(databaseHandler.getAllGasStations().iterator().next().getId(),
+				Fuel.DIESEL, new Date());
 
 		// new Thread() {
 		// @Override
@@ -71,19 +71,44 @@ public class Main {
 		// databaseHandler.getMostRecentPriceDataDate());
 		// }
 		// }.start();
-		
+
 		// ### TEST JONAS ALGORITHMUS ###
 		// Route: Josef-Heimat nach Nürnberg
+
+		// GasStation s1 = new GasStation();
+		// s1.setLatitude(52.706567);
+		// s1.setLongitude(7.284129);
+		// s1.setName("Meppen");
+		// GasStation s2 = new GasStation();
+		// s2.setLatitude(52.797222);
+		// s2.setLongitude(7.865279);
+		// s2.setName("Lastrup");
+		// GasStation s3 = new GasStation();
+		// s3.setLatitude(53.169574);
+		// s3.setLongitude(8.262815);
+		// s3.setName("Oldenburg");
+		// GasStation s4 = new GasStation();
+		// s4.setLatitude(53.595844);
+		// s4.setLongitude(8.567314);
+		// s4.setName("Bremerhaven");
+
 		Vertex<GasStation> g1 = new Vertex<>(databaseHandler.getGasStation("dadfc9a7-3715-453c-af05-d1dc6354843e"));
 		Vertex<GasStation> g2 = new Vertex<>(databaseHandler.getGasStation("308733a3-f3a6-4259-a10a-8a8e08efa94e"));
 		Vertex<GasStation> g3 = new Vertex<>(databaseHandler.getGasStation("2cb609f7-cfaa-4d5e-92ad-77b593091dab"));
 		Vertex<GasStation> g4 = new Vertex<>(databaseHandler.getGasStation("f8646cfb-fb24-479b-aa96-a5a29b76000b"));
 		List<Vertex<GasStation>> route = new ArrayList<>();
+
+		// Vertex<GasStation> g1 = new Vertex<>(s1);
+		// Vertex<GasStation> g2 = new Vertex<>(s2);
+		// Vertex<GasStation> g3 = new Vertex<>(s3);
+		// Vertex<GasStation> g4 = new Vertex<>(s4);
+		// List<Vertex<GasStation>> route = new ArrayList<>();
+
 		route.add(g1);
 		route.add(g2);
 		route.add(g3);
 		route.add(g4);
-		
+
 		DateFormatter df = new DateFormatter("dd.MM.yyyy HH:mm");
 		Date startDate = null;
 		try {
@@ -91,16 +116,16 @@ public class Main {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		
-		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startDate, 7.0, 5,
-				15, 214.28572, 100, Fuel.DIESEL);
+
+		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startDate, 7.0, 5, 15, 214.8, 100,
+				Fuel.DIESEL);
 		// ### TEST ENDE ###
 
-		PredictionUpdater p = new PredictionUpdater(databaseHandler);
-		p.start();
-
-		pathFinder = new PathFinder(databaseHandler);
-		pathFinder.setup();
+		// PredictionUpdater p = new PredictionUpdater(databaseHandler);
+		// p.start();
+		//
+		// pathFinder = new PathFinder(databaseHandler);
+		// pathFinder.setup();
 	}
 
 	private static void configureOutput() {

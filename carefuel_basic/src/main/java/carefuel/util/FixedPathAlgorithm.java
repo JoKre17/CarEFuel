@@ -201,10 +201,13 @@ public class FixedPathAlgorithm {
 	 * @return
 	 */
 	private double distance(Node n1, Node n2) {
-		return (6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat())
-				+ Math.cos(n1.getGasStation().getLat() * Math.cos(n2.getGasStation().getLat()))
-						* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon()))))
-				/ 1000;
+		double lat_a = Math.toRadians(n1.getGasStation().getLat());
+		double lon_a = Math.toRadians(n1.getGasStation().getLon());
+		double lat_b = Math.toRadians(n2.getGasStation().getLat());
+		double lon_b = Math.toRadians(n2.getGasStation().getLon());
+
+		return 6378.388 * Math
+				.acos(Math.sin(lat_a) * Math.sin(lat_b) + Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a));
 	}
 
 	/**
