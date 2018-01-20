@@ -81,7 +81,7 @@ public class Parser {
 
 			reader.close();
 			log.info("************** Parser ends ***********************");
-			log.info("\n##### Predicted prices safed to out/pricePrediction/predictedPrices.txt #####");
+			log.info("\n##### route information safed to out/routes/" + file.getName() + " #####");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
