@@ -194,8 +194,33 @@ public class PathFinder {
 		List<GasStation> stations = graph.getValues();
 		// log.info("Build heuristic values");
 		double curTime = System.currentTimeMillis();
+		
+		List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(end.getId(), gasType);
 		for (int i = 0; i < stations.size(); i++) {
-			heuristicMap.put(graph.getVertexByValue(stations.get(i)), (double) distances[i][stations.indexOf(end)]);
+			if (x > 0) {
+				long arrivalTimeLong = new Date(
+						(long) (startTime.getTime() + distances[i][stations.indexOf(end)] / averageSpeed)).getTime();
+
+				int pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
+					@Override
+					public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
+						long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
+						long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
+						return Long.compare(diff1, diff2);
+					}
+				}).getRight();
+				
+//				double pricePredictionInCentiCent = dbHandler
+//						.getPricePredictionClosestToDate(end.getId(), gasType, arrivalTime).getRight();
+
+				// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in "centicent"
+				double pricePredictionEuro = pricePredictionInCentiCent / 1000.0;
+
+				double hValue = distances[i][stations.indexOf(end)] * (1.0 + (pricePredictionEuro - 1.0) * x);
+				heuristicMap.put(graph.getVertexByValue(stations.get(i)), hValue);
+			} else {
+				heuristicMap.put(graph.getVertexByValue(stations.get(i)), (double) distances[i][stations.indexOf(end)]);
+			}
 		}
 		log.info("Built heuristic in " + ((System.currentTimeMillis() - curTime) / 1000.0) + " s");
 
@@ -214,10 +239,18 @@ public class PathFinder {
 		Calendar calendar = Calendar.getInstance();
 
 		while (!open.isEmpty()) {
-			// log.info("Iteration " + closed.size());
+			log.info("Iteration " + closed.size());
 			// log.info(open.size() + " nodes left to discover.");
 
 			currentNode = open.poll();
+
+			double distanceToDest = GasStation.computeDistanceToGasStation(currentNode.getValue().getLatitude(),
+					currentNode.getValue().getLongitude(), end.getLatitude(), end.getLongitude());
+			log.debug("Distance to destination: "
+					+ distanceToDest);
+			if(distanceToDest < 2) {
+				x = 0;
+			}
 
 			// found end node
 			if (currentNode.getValue().equals(end)) {
@@ -226,8 +259,8 @@ public class PathFinder {
 
 			// For each neighbour of currentNode
 			// expand currentNode
-			PriorityQueue<Edge<GasStation>> neighbours = graph.getNeighbours(currentNode, maxRange);
-			// log.info("Looking at " + neighbours.size() + " neighbours.");
+			PriorityQueue<Edge<GasStation>> neighbours = graph.getNeighbours(currentNode, maxRange, gasType);
+			// log.debug("Looking at " + neighbours.size() + " neighbours.");
 			for (Edge<GasStation> e : neighbours) {
 
 				Vertex<GasStation> successor = e.getTo();
@@ -243,31 +276,20 @@ public class PathFinder {
 				int timeInMins = (int) ((e.getDistance() / averageSpeed) * 60.0);
 				calendar.add(Calendar.MINUTE, timeInMins);
 				Date arrivalTime = calendar.getTime();
-				long arrivalTimeLong = arrivalTime.getTime();
+				arriveTimes.put(successor, arrivalTime);
 
-				double pricePrediction = 0;
+				double pricePredictionInEuro = 0;
+				// predict price
 				if (x > 0) {
 					// get predicted prices for gasStation
-					List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(e.getTo().getValue().getId(),
-							gasType);
-
-					int pricePredictionInCentiCent = Collections
-							.min(predictions, new Comparator<Pair<Date, Integer>>() {
-								@Override
-								public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
-									long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
-									long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
-									return Long.compare(diff1, diff2);
-								}
-							}).getRight();
-
+					double pricePredictionInCentiCent = dbHandler
+							.getPricePredictionClosestToDate(successor.getValue().getId(), gasType, arrivalTime).getRight();
+					
 					// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in "centicent"
-					pricePrediction = pricePredictionInCentiCent / 10.0;
+					pricePredictionInEuro = pricePredictionInCentiCent / 1000.0;
 
 				}
-				e.setWeight(pricePrediction);
-
-				// predict price
+				e.setWeight(pricePredictionInEuro);
 
 				// cost so far for path start -> successor (depending on x)
 				double g_tentative = currentNode.getGCost() + e.getValue(x);
@@ -297,17 +319,18 @@ public class PathFinder {
 
 		}
 
-		log.info("Needed " + closed.size() + " iterations.");
+		log.debug("Needed " + closed.size() + " iterations.");
 
 		// traverse the predecessor map from end node to start node
 		List<Vertex<GasStation>> path = new ArrayList<>();
 
 		// in case of start == end, pred is already null and path List stays empty
 		if (currentNode == null) {
+			log.debug("currentNode is null");
 			return path;
 		}
 
-		// log.info("Getting path");
+		// log.debug("Getting path");
 		// add the end node to the path
 		path.add(currentNode);
 		Vertex<GasStation> pred = predecessorMap.get(currentNode);

@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -22,6 +23,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.springframework.format.datetime.DateFormatter;
 
 import carefuel.model.GasStation;
 import carefuel.model.GasStationPrice;
@@ -35,7 +37,7 @@ import carefuel.model.GasStationPricePrediction;
  */
 public class DatabaseHandler {
 
-	private static final Logger log = LogManager.getLogger(Main.class);
+	private static final Logger log = LogManager.getLogger(DatabaseHandler.class);
 
 	protected SessionFactory sessionFactory;
 
@@ -132,7 +134,7 @@ public class DatabaseHandler {
 		Session session = this.sessionFactory.openSession();
 		session.beginTransaction();
 
-		org.hibernate.Query query = session.createQuery(
+		Query query = session.createQuery(
 				"from " + GasStationPricePrediction.class.getSimpleName() + " where stid='" + uuid.toString() + "'");
 
 		@SuppressWarnings("unchecked")
@@ -158,6 +160,48 @@ public class DatabaseHandler {
 		});
 
 		return toReturn;
+	}
+
+	DateFormatter df1 = new DateFormatter("yyyy-MM-dd HH:mm:ssX");
+
+	/**
+	 * returns a pair of date with prediction
+	 *
+	 * @param id
+	 * @param fuel
+	 * @return
+	 */
+	public Pair<Date, Integer> getPricePredictionClosestToDate(UUID uuid, Fuel fuel, Date date) {
+		Session session = this.sessionFactory.openSession();
+		session.beginTransaction();
+
+		Query query = session
+				.createQuery("FROM " + GasStationPricePrediction.class.getSimpleName() + " WHERE stid='"
+						+ uuid.toString() + "' AND date<'" + df1.print(date, Locale.GERMAN) + "' ORDER BY date DESC")
+				.setMaxResults(1);
+
+		@SuppressWarnings("unchecked")
+		List<GasStationPricePrediction> temp = query.list();
+
+		session.getTransaction().commit();
+		session.close();
+
+		if (temp.size() == 0) {
+			return Pair.of(date, Fuel.getDefaultPrice(fuel));
+		}
+		
+		GasStationPricePrediction pred = temp.iterator().next();
+
+		switch (fuel) {
+		case DIESEL:
+			return Pair.of(pred.getDate(), pred.getDiesel());
+		case E5:
+			return Pair.of(pred.getDate(), pred.getE5());
+		case E10:
+			return Pair.of(pred.getDate(), pred.getE10());
+		default:
+			return Pair.of(date, Fuel.getDefaultPrice(fuel));
+		}
 	}
 
 	/**
@@ -243,16 +287,16 @@ public class DatabaseHandler {
 		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
 		for (GasStationPrice price : prices) {
 			if (price.getE5() > 0) {
-				historicE5.add(Pair.of(price.getDate(), price.getE5()));				
+				historicE5.add(Pair.of(price.getDate(), price.getE5()));
 			}
 			if (price.getE10() > 0) {
-				historicE10.add(Pair.of(price.getDate(), price.getE10()));				
+				historicE10.add(Pair.of(price.getDate(), price.getE10()));
 			}
 			if (price.getDiesel() > 0) {
-				historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));				
+				historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
 			}
 		}
-		
+
 		Comparator<Pair<Date, Integer>> comp = Comparator.comparing(Pair::getLeft);
 		historicE5.sort(comp);
 		historicE10.sort(comp);

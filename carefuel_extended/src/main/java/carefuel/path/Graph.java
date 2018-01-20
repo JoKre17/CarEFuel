@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import carefuel.controller.Fuel;
+
 /**
  * Internal representation of a graph containing vertices and edges This graph
  * stores all values it's corresponding vertices with the distances between the
@@ -81,7 +83,7 @@ public class Graph<E> {
 	 * @param maxRange
 	 * @return
 	 */
-	public PriorityQueue<Edge<E>> getNeighbours(Vertex<E> node, float maxRange) {
+	public PriorityQueue<Edge<E>> getNeighbours(Vertex<E> node, float maxRange, Fuel fuel) {
 
 		PriorityQueue<Edge<E>> neighbours = node.getNeighbours();
 		// Try to use already computed neighbours
@@ -110,6 +112,7 @@ public class Graph<E> {
 				}
 				Edge<E> edge = new Edge<E>(node, to);
 				edge.setDistance(distance);
+				edge.setWeight(Fuel.getDefaultPrice(fuel));
 
 				// neighbours was already computed but maxRange was smaller back then, so the
 				// edge is not in neighbours

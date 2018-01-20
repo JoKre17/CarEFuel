@@ -70,7 +70,12 @@ public class Edge<E> implements Comparable<Edge<E>> {
 	 */
 	@Override
 	public int compareTo(Edge<E> other) {
-		return distance.compareTo(other.getDistance());
+		double c = this.getValue(1) - other.getValue(1);
+		if (c < 0) {
+			return -1;
+		} else {
+			return 1;
+		}
 	}
 
 }

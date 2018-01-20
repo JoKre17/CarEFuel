@@ -140,7 +140,7 @@ function calculateAndDisplayRoute(routeList) {
 				} else {
 					routeInformation += '<h5 class="route">Stop: ' + (i+1) + '</h5>';
 				}
-				routeInformation += '<div class="route address">' + route.legs[0].end_address + '</div>';
+				routeInformation += '<div class="route address">' + route.legs[i].end_address + '</div>';
 			}
 			
 			document.getElementById('routeContainer').innerHTML = routeInformation;

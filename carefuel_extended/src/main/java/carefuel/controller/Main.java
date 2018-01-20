@@ -3,15 +3,23 @@ package carefuel.controller;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.format.datetime.DateFormatter;
 
+import carefuel.model.GasStation;
 import carefuel.path.PathFinder;
+import carefuel.path.Vertex;
+import carefuel.tank.Node;
 import carefuel.tank.TankStrategy;
 
 /**
@@ -50,6 +58,11 @@ public class Main {
 
 		databaseHandler = new DatabaseHandler();
 		databaseHandler.setup();
+		
+		tankStrategy = new TankStrategy(databaseHandler);
+
+//		databaseHandler.getPricePredictionClosestToDate(databaseHandler.getAllGasStations().iterator().next().getId(),
+//				Fuel.DIESEL, new Date());
 
 		// new Thread() {
 		// @Override
@@ -58,14 +71,36 @@ public class Main {
 		// databaseHandler.getMostRecentPriceDataDate());
 		// }
 		// }.start();
+		
+		// ### TEST JONAS ALGORITHMUS ###
+		// Route: Josef-Heimat nach Nürnberg
+		Vertex<GasStation> g1 = new Vertex<>(databaseHandler.getGasStation("dadfc9a7-3715-453c-af05-d1dc6354843e"));
+		Vertex<GasStation> g2 = new Vertex<>(databaseHandler.getGasStation("308733a3-f3a6-4259-a10a-8a8e08efa94e"));
+		Vertex<GasStation> g3 = new Vertex<>(databaseHandler.getGasStation("2cb609f7-cfaa-4d5e-92ad-77b593091dab"));
+		Vertex<GasStation> g4 = new Vertex<>(databaseHandler.getGasStation("f8646cfb-fb24-479b-aa96-a5a29b76000b"));
+		List<Vertex<GasStation>> route = new ArrayList<>();
+		route.add(g1);
+		route.add(g2);
+		route.add(g3);
+		route.add(g4);
+		
+		DateFormatter df = new DateFormatter("dd.MM.yyyy HH:mm");
+		Date startDate = null;
+		try {
+			startDate = df.parse("20.01.2018 19:01", Locale.GERMAN);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		
+		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startDate, 7.0, 5,
+				15, 214.28572, 100, Fuel.DIESEL);
+		// ### TEST ENDE ###
 
 		PredictionUpdater p = new PredictionUpdater(databaseHandler);
 		p.start();
 
 		pathFinder = new PathFinder(databaseHandler);
 		pathFinder.setup();
-
-		tankStrategy = new TankStrategy(databaseHandler);
 	}
 
 	private static void configureOutput() {
@@ -97,7 +132,7 @@ class StandardOutputStream extends OutputStream {
 		// to store characters until a newline is encountered,
 		// this implementation is for illustration only
 		if (b == breakSymbol) {
-			String printString = "\n";
+			String printString = "";
 			if (buffer.length() > 0) {
 				printString = buffer.substring(0, buffer.length() - 1);
 			}

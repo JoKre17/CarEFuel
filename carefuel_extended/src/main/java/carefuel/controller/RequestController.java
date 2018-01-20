@@ -39,7 +39,7 @@ import carefuel.tank.Node;
 @RequestMapping("rest/")
 public class RequestController {
 
-	private final static Logger log = LogManager.getLogger(RequestMapping.class);
+	private final static Logger log = LogManager.getLogger();
 
 	DateFormatter df = new DateFormatter("dd.MM.yyyy HH:mm");
 
@@ -102,15 +102,18 @@ public class RequestController {
 			}
 		}
 
-		log.info("Path Request received");
-		log.info("from: " + fromId);
-		log.info("to: " + toId);
-		log.info("startTime: " + startTime);
-		log.info("tankLevel: " + tankLevel);
-		log.info("capacity: " + capacity);
-		log.info("consumption: " + consumption);
-		log.info("metric factor: " + metric);
-		log.info("gasType: " + gasType.toString());
+		float range = (float) ((capacity / consumption) * 100.0);
+
+		log.debug("Path Request received");
+		log.debug("from: " + fromId);
+		log.debug("to: " + toId);
+		log.debug("startTime: " + startTime);
+		log.debug("tankLevel: " + tankLevel);
+		log.debug("capacity: " + capacity);
+		log.debug("consumption: " + consumption);
+		log.debug("Max Range: " + range);
+		log.debug("metric factor: " + metric);
+		log.debug("gasType: " + gasType.toString());
 
 		Date startTimeDate = new Date();
 		try {
@@ -129,8 +132,6 @@ public class RequestController {
 			return errorResponse(9002, "Requested start time before today").toString();
 		}
 
-		float range = (float) ((capacity / consumption) * 100.0);
-
 		// km/h
 		float averageSpeed = 100;
 
@@ -139,6 +140,7 @@ public class RequestController {
 		}
 
 		List<Vertex<GasStation>> route;
+		long time = System.currentTimeMillis();
 		try {
 			route = Main.pathFinder.explorativeAStar(fromId, toId, startTimeDate, tankLevel, gasType, range,
 					averageSpeed, metric);
@@ -146,7 +148,22 @@ public class RequestController {
 			log.error("Error while calculating route", e);
 			return errorResponse(9001, "Unable to calculate route").toString();
 		}
+		log.debug("Found path in " + ((System.currentTimeMillis()-time)/1000.0) + " seconds");
 
+		for (int i = 0; i < route.size(); i++) {
+			if (i == 0) {
+				log.debug(route.get(i).getValue().getId());
+			} else {
+				GasStation from = route.get(i - 1).getValue();
+				GasStation to = route.get(i).getValue();
+
+				double distance = GasStation.computeDistanceToGasStation(from.getLatitude(), from.getLongitude(),
+						to.getLatitude(), to.getLongitude());
+				log.debug(route.get(i - 1).getValue().getId() + " == " + distance + " ==>"
+						+ route.get(i).getValue().getId());
+			}
+		}
+		
 		// List that holds the liter-value of gas that should be tanked at the
 		// corresponding gasStation
 		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startTimeDate, consumption, tankLevel,
@@ -168,6 +185,8 @@ public class RequestController {
 			stop.put("arrivalTime", n.getArrivalTime());
 			stop.put("predictedPrice", n.getPredictedPrice());
 			stop.put("fillAmount", n.getFuelToBuy());
+			
+			log.debug(station.getId() + " " + n.getFuelToBuy());
 
 			path.put(stop);
 		}
@@ -197,12 +216,8 @@ public class RequestController {
 			accessibleFiles = Arrays.asList(file.listFiles());
 		}
 		// @formatter:off
-		String html = "<html>" 
-						+ "<head>"
-							+ "<title>Carefuel Downloads</title>"
-						+ "</head>"
-						+ "<body style=’background-color:#ccc’>"
-						+ "Downloadable Files:<br>";
+		String html = "<html>" + "<head>" + "<title>Carefuel Downloads</title>" + "</head>"
+				+ "<body style=’background-color:#ccc’>" + "Downloadable Files:<br>";
 		// @formatter:on
 		for (File f : accessibleFiles) {
 			log.debug(f.getName());

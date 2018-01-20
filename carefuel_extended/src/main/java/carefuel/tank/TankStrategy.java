@@ -8,9 +8,9 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.lang3.tuple.Pair;
 
 import carefuel.controller.DatabaseHandler;
 import carefuel.controller.Fuel;
@@ -27,6 +27,7 @@ public class TankStrategy {
 	private double gasConsumption;
 	private double literGasPerKilometer;
 	private double range;
+	private LinkedList<Node> immutableNodes;
 	private LinkedList<Node> nodes;
 	private List<Node> breakPoints;
 	private LinkedList<Node> slidingWindow;
@@ -100,7 +101,7 @@ public class TankStrategy {
 			driveToNext(breakPoints.get(i), breakPoints.get(i + 1));
 		}
 
-		return nodes;
+		return immutableNodes;
 	}
 
 	/**
@@ -120,6 +121,7 @@ public class TankStrategy {
 			if (from.getGasInTank() < literGasPerKilometer * indirectDistance(from, to)) {
 				gasToBuy = literGasPerKilometer * indirectDistance(from, to) - from.getGasInTank();
 			}
+			log.debug(gasToBuy);
 			from.setFuelToBuy(gasToBuy);
 			log.debug("Before - Gas In Tank: " + from.getGasInTank());
 			from.setGasInTank(from.getGasInTank() + from.getFuelToBuy());
@@ -174,6 +176,8 @@ public class TankStrategy {
 			Node n = new Node(g);
 			nodes.add(n);
 		}
+		
+		immutableNodes = new LinkedList<>(nodes);
 
 		// set tankLevel for the first gasStation
 		nodes.getFirst().setGasInTank(tankLevel);
@@ -242,14 +246,14 @@ public class TankStrategy {
 	private double indirectDistance(Node n1, Node n2) {
 		double distance = 0;
 
-		int indexOfN1 = nodes.indexOf(n1);
-		int indexOfN2 = nodes.indexOf(n2);
+		int indexOfN1 = immutableNodes.indexOf(n1);
+		int indexOfN2 = immutableNodes.indexOf(n2);
 
 		int firstIndex = (indexOfN1 <= indexOfN2) ? indexOfN1 : indexOfN2;
 		int lastIndex = (indexOfN1 <= indexOfN2) ? indexOfN2 : indexOfN1;
 
 		for (int i = firstIndex; i < lastIndex; i++) {
-			distance += distance(nodes.get(i), nodes.get(i + 1));
+			distance += distance(immutableNodes.get(i), immutableNodes.get(i + 1));
 		}
 		return distance;
 	}
