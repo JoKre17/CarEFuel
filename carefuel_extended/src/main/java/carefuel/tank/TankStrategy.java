@@ -1,5 +1,6 @@
 package carefuel.tank;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -17,6 +18,12 @@ import carefuel.controller.Fuel;
 import carefuel.model.GasStation;
 import carefuel.path.Vertex;
 
+/**
+ * Class that computes the tanking strategy.
+ * 
+ * @author Jonas
+ * 
+ */
 public class TankStrategy {
 
 	private static final Logger log = LogManager.getLogger(TankStrategy.class);
@@ -101,6 +108,30 @@ public class TankStrategy {
 			driveToNext(breakPoints.get(i), breakPoints.get(i + 1));
 		}
 
+		DecimalFormat df = new DecimalFormat("#0.00");
+		double sum = 0;
+
+		log.debug("------------------ Gasstations -----------------");
+		for (int i = 0; i < immutableNodes.size() - 1; i++) {
+			if (immutableNodes.get(i).getFuelToBuy() > 0) {
+				log.debug(immutableNodes.get(i).getValue().getName() + " gas price: "
+						+ immutableNodes.get(i).getPredictedPrice() + ", fill up "
+						+ df.format(immutableNodes.get(i).getFuelToBuy()) + " liter");
+			} else {
+				log.debug(immutableNodes.get(i).getValue().getName() + " gas price: "
+						+ immutableNodes.get(i).getPredictedPrice());
+			}
+			log.debug("\t" + df.format(distance(immutableNodes.get(i), immutableNodes.get(i + 1))));
+			sum += distance(immutableNodes.get(i), immutableNodes.get(i + 1));
+		}
+		log.debug(immutableNodes.get(immutableNodes.size() - 1).getValue().getName());
+		log.debug("------------------------------------------------");
+
+		log.debug("Sum: " + df.format(sum));
+
+		log.debug("Distance between start and end: "
+				+ df.format(indirectDistance(immutableNodes.get(0), immutableNodes.get(immutableNodes.size() - 1))));
+
 		return immutableNodes;
 	}
 
@@ -112,8 +143,9 @@ public class TankStrategy {
 	 * @param to
 	 */
 	private void driveToNext(Node from, Node to) {
-		log.debug("From: " + from.getValue().getId() + ", to: " + to.getValue().getId());
-		log.debug("Distance: " + indirectDistance(from, to));
+		log.debug("From: " + from.getValue().getName() + ", to: " + to.getValue().getName());
+		log.debug("Distance: " + indirectDistance(from, to) + ", gas needed: "
+				+ literGasPerKilometer * indirectDistance(from, to));
 
 		if (indirectDistance(from, to) <= range) {
 			// just fill enough to get to "to"
@@ -176,7 +208,7 @@ public class TankStrategy {
 			Node n = new Node(g);
 			nodes.add(n);
 		}
-		
+
 		immutableNodes = new LinkedList<>(nodes);
 
 		// set tankLevel for the first gasStation
@@ -219,6 +251,11 @@ public class TankStrategy {
 			n.setPredictedPrice(pricePrediction);
 		}
 
+		// for (int i = 0; i < nodes.size(); i++) {
+		// Node n = nodes.get(i);
+		// n.setPredictedPrice(1390 - (i * 10));
+		// }
+
 	}
 
 	/**
@@ -229,10 +266,13 @@ public class TankStrategy {
 	 * @return
 	 */
 	private double distance(Node n1, Node n2) {
-		return (6378.388 * Math.acos(Math.sin(n1.getValue().getLatitude() * Math.sin(n2.getValue().getLatitude())
-				+ Math.cos(n1.getValue().getLatitude() * Math.cos(n2.getValue().getLatitude()))
-						* Math.cos(n2.getValue().getLongitude() - n1.getValue().getLongitude()))))
-				/ 1000;
+		double lat_a = Math.toRadians(n1.getValue().getLatitude());
+		double lon_a = Math.toRadians(n1.getValue().getLongitude());
+		double lat_b = Math.toRadians(n2.getValue().getLatitude());
+		double lon_b = Math.toRadians(n2.getValue().getLongitude());
+
+		return 6378.388 * Math
+				.acos(Math.sin(lat_a) * Math.sin(lat_b) + Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a));
 	}
 
 	/**

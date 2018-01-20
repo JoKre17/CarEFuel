@@ -248,9 +248,6 @@ public class PathFinder {
 					currentNode.getValue().getLongitude(), end.getLatitude(), end.getLongitude());
 			log.debug("Distance to destination: "
 					+ distanceToDest);
-			if(distanceToDest < 2) {
-				x = 0;
-			}
 
 			// found end node
 			if (currentNode.getValue().equals(end)) {

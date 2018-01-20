@@ -146,7 +146,7 @@ public class RequestController {
 					averageSpeed, metric);
 		} catch (Exception e) {
 			log.error("Error while calculating route", e);
-			return errorResponse(9001, "Unable to calculate route").toString();
+			return errorResponse(9001, "Unable to calculate route. Graph might not be loaded yet.").toString();
 		}
 		log.debug("Found path in " + ((System.currentTimeMillis()-time)/1000.0) + " seconds");
 
@@ -159,7 +159,7 @@ public class RequestController {
 
 				double distance = GasStation.computeDistanceToGasStation(from.getLatitude(), from.getLongitude(),
 						to.getLatitude(), to.getLongitude());
-				log.debug(route.get(i - 1).getValue().getId() + " == " + distance + " ==>"
+				log.debug(route.get(i - 1).getValue().getId() + " == " + distance + " ==> "
 						+ route.get(i).getValue().getId());
 			}
 		}
