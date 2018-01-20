@@ -117,7 +117,7 @@ public class Main {
 			e.printStackTrace();
 		}
 
-		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startDate, 7.0, 1, 5, 72.8, 100,
+		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startDate, 7.0, 5, 15, 214.8, 100,
 				Fuel.DIESEL);
 		// ### TEST ENDE ###
 
