@@ -21,12 +21,9 @@ public class PathFinder {
 	private List<Node> bestPath;
 	private int capacity;
 
-	// TODO Default given by task description, gets overriden ALWAYS => only one
-	// Constructor...
 	private final double gasConsumption = 5.6;
 	private String fileName;
 
-	// TODO Warnung: Offensichtliche Kommentare sind meistens unnötig.
 	/**
 	 * Constructor of the Path finder.
 	 *
@@ -52,7 +49,9 @@ public class PathFinder {
 	public void computeBestPath() {
 		FixedPathAlgorithm f = new FixedPathAlgorithm(gasStations, capacity, gasConsumption);
 		bestPath = f.run();
-		savePath();
+		if (bestPath != null) {
+			savePath();
+		}
 	}
 
 	/**

@@ -84,6 +84,10 @@ public class FixedPathAlgorithm {
 		// find breaking points according to algorithms
 		while (!slidingWindow.isEmpty()) {
 			if (!nodes.isEmpty()) {
+				if (distance(slidingWindow.getFirst(), nodes.getFirst()) > windowCapacity) {
+					log.info("$$$$$ Route impossible with the current tank-capacity $$$$$");
+					return null;
+				}
 				if (distance(slidingWindow.getFirst(), nodes.getFirst()) > windowCapacity - currentFill) {
 					first = slidingWindow.getFirst();
 					slidingWindow.remove(first);
