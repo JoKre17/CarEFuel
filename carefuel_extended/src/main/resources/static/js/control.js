@@ -84,10 +84,8 @@ function submitButtonPressed() {
 	}
 	
 	var request = {
-//			'from' : getClosestGasStation(from),
-//			'to' : getClosestGasStation(to),
-			'from' : 'e1a15081-25e4-9107-e040-0b0a3dfe563c',
-			'to' : 'e1a15081-25d3-9107-e040-0b0a3dfe563c',
+			'from' : getClosestGasStation(from),
+			'to' : getClosestGasStation(to),
 			'startTime' : startTime,
 			'tankLevel' : tankLevel,
 			'capacity' : capacity,
