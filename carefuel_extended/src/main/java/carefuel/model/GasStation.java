@@ -32,7 +32,7 @@ public class GasStation implements Serializable {
 	// private static final Logger log = LogManager.getLogger(Main.class);
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -65,19 +65,21 @@ public class GasStation implements Serializable {
 	@Column(name = "lng")
 	private double longitude;
 
-	//memory overflow while updating the prediction table, but FetchType.EAGER not possible for the algorithm
+	// memory overflow while updating the prediction table, but FetchType.EAGER
+	// not possible for the algorithm
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "stid")
 	private Set<GasStationPrice> gasStationPrices;
 
-	//memory overflow while updating the prediction table, but FetchType.EAGER not possible for the algorithm
+	// memory overflow while updating the prediction table, but FetchType.EAGER
+	// not possible for the algorithm
 	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "stid")
 	private Set<GasStationPricePrediction> gasStationPricePredictions;
 
 	/**
-	 * the default constructor is necessary for hibernate to get all gas stations
-	 * from the database
+	 * the default constructor is necessary for hibernate to get all gas
+	 * stations from the database
 	 */
 	public GasStation() {
 
@@ -97,29 +99,32 @@ public class GasStation implements Serializable {
 		return city;
 	}
 
-//	/**
-//	 * @return the gasStationPricePredictions
-//	 */
-//	@Transactional
-//	public Set<GasStationPricePrediction> getGasStationPricePredictions() {
-//		return gasStationPricePredictions;
-//	}
+	// /**
+	// * @return the gasStationPricePredictions
+	// */
+	// @Transactional
+	// public Set<GasStationPricePrediction> getGasStationPricePredictions() {
+	// return gasStationPricePredictions;
+	// }
 
 	/**
-	 * This function extracts the historic prices of all fuel types from this GasStation object.
+	 * This function extracts the historic prices of all fuel types from this
+	 * GasStation object.
 	 *
-	 * @return An array list of array lists containing all prices with corresponding dates, sorted by date. The array
-	 * has a length of three, where array[0] is the entry for E5, array[1] for E10 and array[2] for diesel
+	 * @return An array list of array lists containing all prices with
+	 *         corresponding dates, sorted by date. The array has a length of
+	 *         three, where array[0] is the entry for E5, array[1] for E10 and
+	 *         array[2] for diesel
 	 */
 	@Deprecated
 	@Transactional
 	public ArrayList<ArrayList<Pair<Date, Integer>>> getGasStationPrices() {
-		//Fetch all historic price data and sort by date and fuel type
+		// Fetch all historic price data and sort by date and fuel type
 		Set<GasStationPrice> prices = gasStationPrices;
 		ArrayList<Pair<Date, Integer>> historicE5 = new ArrayList<>();
 		ArrayList<Pair<Date, Integer>> historicE10 = new ArrayList<>();
 		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
-		for(GasStationPrice price : prices){
+		for (GasStationPrice price : prices) {
 			historicE5.add(Pair.of(price.getDate(), price.getE5()));
 			historicE10.add(Pair.of(price.getDate(), price.getE10()));
 			historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
@@ -287,8 +292,8 @@ public class GasStation implements Serializable {
 		lon_a = Math.toRadians(lon_a);
 		lon_b = Math.toRadians(lon_b);
 
-		return 6378.388 * Math
-				.acos((Math.sin(lat_a) * Math.sin(lat_b)) + (Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a)));
+		return 6378.388 * Math.acos(
+				(Math.sin(lat_a) * Math.sin(lat_b)) + (Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a)));
 	}
 
 	/**
@@ -319,9 +324,9 @@ public class GasStation implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		return "GasStation [id=" + id + ", name=" + name + ", brand=" + brand + ", streetName="
-				+ streetName + ", houseNumber=" + houseNumber + ", postalCode=" + postalCode + ", city="
-				+ city + ", latitude=" + latitude + ", longitude=" + longitude + "]";
+		return "GasStation [id=" + id + ", name=" + name + ", brand=" + brand + ", streetName=" + streetName
+				+ ", houseNumber=" + houseNumber + ", postalCode=" + postalCode + ", city=" + city + ", latitude="
+				+ latitude + ", longitude=" + longitude + "]";
 	}
 
 	@Override

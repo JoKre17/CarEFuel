@@ -22,7 +22,8 @@ public class Node implements Comparable<Node> {
 	private double gasInTank = 0;
 
 	/**
-	 * Constructor of the Node. Nodes contain the data necessary for the algorithm.
+	 * Constructor of the Node. Nodes contain the data necessary for the
+	 * algorithm.
 	 *
 	 * @param g
 	 *            gas station
@@ -122,9 +123,10 @@ public class Node implements Comparable<Node> {
 	}
 
 	/**
-	 * CompareTo-Method that is used to order the nodes in the PriorityQueue. The
-	 * Nodes are sorted ascending by their predicted price
+	 * CompareTo-Method that is used to order the nodes in the PriorityQueue.
+	 * The Nodes are sorted ascending by their predicted price
 	 */
+	@Override
 	public int compareTo(Node arg0) {
 		return (this.getPredictedPrice() >= arg0.getPredictedPrice() ? 1 : -1);
 	}

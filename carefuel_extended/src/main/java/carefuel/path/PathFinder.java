@@ -24,7 +24,7 @@ import carefuel.model.GasStation;
  * PathFinder uses Database Handler to build a graph and if possible loads the
  * distances from a file This class is used to find the path from one GasStation
  * to another with getting the best path according to the heuristic
- * 
+ *
  * @author josef
  *
  */
@@ -70,7 +70,8 @@ public class PathFinder {
 		log.info("Loading Graph from Database");
 
 		log.info("Fetching all stations from database.");
-		// transform gasstation positions into 2-dimensional shape(n,2) array containing
+		// transform gasstation positions into 2-dimensional shape(n,2) array
+		// containing
 		// Lon Lat of each gas_station
 		List<GasStation> allStations = new LinkedList<GasStation>(dbHandler.getAllGasStations());
 		int amountStations = allStations.size();
@@ -142,10 +143,10 @@ public class PathFinder {
 	/**
 	 * So far fix heuristic not depending on anything else. Could be overridden
 	 * later
-	 * 
-	 * Contains default A* heuristic: Absolute cost to get to VERTEX + assumed cost
-	 * to get from VERTEX to GOAL
-	 * 
+	 *
+	 * Contains default A* heuristic: Absolute cost to get to VERTEX + assumed
+	 * cost to get from VERTEX to GOAL
+	 *
 	 * @param heuristicMap
 	 * @return
 	 */
@@ -158,23 +159,23 @@ public class PathFinder {
 
 	/**
 	 * Explorative A* Algorithm to solve the Gas Station Problem ("extended")
-	 * 
+	 *
 	 * The algorithmus is capable of using the predicted prices for the specific
-	 * arrival time at each gas station including the selection of one of the three
-	 * Fuel types (Diesel, E5, E10)
-	 * 
-	 * Calculates the best path from start GasStation to end GasStation depending on
-	 * maxRange (what GasStations are reachable from another GasStation), how fast
-	 * the average travel speed is and the value x, specifying the bridge between
-	 * the shortest and the cheapest path.
-	 * 
-	 * 
+	 * arrival time at each gas station including the selection of one of the
+	 * three Fuel types (Diesel, E5, E10)
+	 *
+	 * Calculates the best path from start GasStation to end GasStation
+	 * depending on maxRange (what GasStations are reachable from another
+	 * GasStation), how fast the average travel speed is and the value x,
+	 * specifying the bridge between the shortest and the cheapest path.
+	 *
+	 *
 	 * 0 => shortest path
-	 * 
+	 *
 	 * 1 => cheapest path
-	 * 
+	 *
 	 * between 0 and 1: best path?
-	 * 
+	 *
 	 * @param start
 	 * @param end
 	 * @param maxRange
@@ -211,13 +212,15 @@ public class PathFinder {
 		List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(end.getId(), gasType);
 		for (int i = 0; i < stations.size(); i++) {
 			// x > 0 means the fuel prices weight into the edges of the graph
-			// therefore it is necessary to give the heuristic also weighted values for each
+			// therefore it is necessary to give the heuristic also weighted
+			// values for each
 			// station
 			if (x > 0) {
 				long arrivalTimeLong = new Date(
 						(long) (startTime.getTime() + distances[i][stations.indexOf(end)] / averageSpeed)).getTime();
 
-				// Diesel : 1109 means 1.109 euro. Therefore 1109 is given in "centicent"
+				// Diesel : 1109 means 1.109 euro. Therefore 1109 is given in
+				// "centicent"
 				int pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
 					@Override
 					public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
@@ -295,7 +298,8 @@ public class PathFinder {
 							.getPricePredictionClosestToDate(successor.getValue().getId(), gasType, arrivalTime)
 							.getRight();
 
-					// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in "centicent"
+					// Diesel : 1109 means 110.9 cent. Therefore 1109 is given
+					// in "centicent"
 					pricePredictionInEuro = pricePredictionInCentiCent / 1000.0;
 
 				}
@@ -304,7 +308,8 @@ public class PathFinder {
 				// cost so far for path start -> successor (depending on x)
 				double g_tentative = currentNode.getGCost() + e.getValue(x);
 
-				// if there is already a cheaper connection to this successor found
+				// if there is already a cheaper connection to this successor
+				// found
 				if (open.contains(successor) && g_tentative >= successor.getGCost()) {
 					continue;
 				}
@@ -334,7 +339,8 @@ public class PathFinder {
 		// traverse the predecessor map from end node to start node
 		List<Vertex<GasStation>> path = new ArrayList<>();
 
-		// in case of start == end, pred is already null and path List stays empty
+		// in case of start == end, pred is already null and path List stays
+		// empty
 		if (currentNode == null) {
 			log.debug("currentNode is null");
 			return path;
