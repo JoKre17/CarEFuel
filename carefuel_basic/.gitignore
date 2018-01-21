@@ -9,4 +9,7 @@
 .classpath
 bin/
 dependency-reduced-pom.xml
+
 /target/
+
+!target/carefuel_basic.jar
