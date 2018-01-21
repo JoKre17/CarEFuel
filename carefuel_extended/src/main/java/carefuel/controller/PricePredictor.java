@@ -13,8 +13,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.tensorflow.Graph;
 import org.tensorflow.Output;
 import org.tensorflow.SavedModelBundle;
@@ -33,7 +31,6 @@ import carefuel.model.GasStationPricePrediction;
  *
  */
 public class PricePredictor {
-	private static final Logger log = LogManager.getLogger(PricePredictor.class);
 
 	private Session e5_session;
 	private Session e10_session;
@@ -45,7 +42,8 @@ public class PricePredictor {
 
 	private String modelPath;
 	private final int hoursPerMonth = 372;
-	private final int maxPrevMonths = 50; // All gas stations have a maximum of 50 previous months of entries
+	private final int maxPrevMonths = 50; // All gas stations have a maximum of
+											// 50 previous months of entries
 
 	/**
 	 * TODO add functionality to decide between CSV files and database as data
@@ -58,7 +56,8 @@ public class PricePredictor {
 		// Set file path
 		modelPath = System.getProperty("user.dir") + "/rnn_model/";
 
-		// Initialize TensorFlow session with pretrained model for each fuel type
+		// Initialize TensorFlow session with pretrained model for each fuel
+		// type
 		SavedModelBundle e5_bundle = SavedModelBundle.load(modelPath + "e5/", "serve");
 		e5_session = e5_bundle.session();
 		e5_graph = e5_bundle.graph();
@@ -87,27 +86,28 @@ public class PricePredictor {
 			throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
 
 		/*
-		 * Interpolate the data from the first to the entry at lastEntryIndex at every
-		 * hour The array interpolatedPrices is of the form [?][nHoursPerMonth], where ?
-		 * is the number of "whole" months, i.e. every month that still has 31 days á 24
-		 * hours of entries. Note that the array is in reversed form, meaning it goes
-		 * back in time. Therefore, interpolatedPrices[0][0] contains the last price of
-		 * the month before the month that needs to be predicted,
+		 * Interpolate the data from the first to the entry at lastEntryIndex at
+		 * every hour The array interpolatedPrices is of the form
+		 * [?][nHoursPerMonth], where ? is the number of "whole" months, i.e.
+		 * every month that still has 31 days á 24 hours of entries. Note that
+		 * the array is in reversed form, meaning it goes back in time.
+		 * Therefore, interpolatedPrices[0][0] contains the last price of the
+		 * month before the month that needs to be predicted,
 		 * interpolatedPrices[0][1] the price before that and so on.
 		 */
-		
+
 		Map<Fuel, float[]> predictionsMap = new HashMap<>();
 		Date currentDate = null;
-		
-		for(Fuel fuel : Fuel.values()) {
+
+		for (Fuel fuel : Fuel.values()) {
 			float[][] interpolatedPrices = interpolatePrices(datePriceList.get(fuel));
 			float[] prediction;
-			
-			//null means the datePriceList was for this fuel empty
-			if(interpolatedPrices != null) {
+
+			// null means the datePriceList was for this fuel empty
+			if (interpolatedPrices != null) {
 				// We need the last date as starting point for the prediction
 				currentDate = datePriceList.get(fuel).get(datePriceList.get(fuel).size() - 1).getLeft();
-				
+
 				// Predict prices for all fuel type using the neural network
 				prediction = runNetwork(interpolatedPrices, fuel.toString().toLowerCase());
 			} else {
@@ -115,25 +115,28 @@ public class PricePredictor {
 				int price = Fuel.getDefaultPrice(fuel);
 				Arrays.fill(prediction, price);
 			}
-			
+
 			predictionsMap.put(fuel, prediction);
 		}
-		
-		// should only be null, if the corresponding gasStation has only 0 elements as prices
-		if(currentDate == null) {
+
+		// should only be null, if the corresponding gasStation has only 0
+		// elements as prices
+		if (currentDate == null) {
 			Calendar c = Calendar.getInstance();
 			c.setTime(new Date());
 			c.set(Calendar.HOUR_OF_DAY, 0);
 			c.set(Calendar.MINUTE, 0);
-			
+
 			currentDate = c.getTime();
 		}
-		
-		// Wrap all price predictions into objects of the GasStationPricePrediction class
+
+		// Wrap all price predictions into objects of the
+		// GasStationPricePrediction class
 		Set<GasStationPricePrediction> predictions = new HashSet<>();
 		for (int i = 0; i < predictionsMap.get(Fuel.values()[0]).length; ++i) {
 			GasStationPricePrediction prediction = new GasStationPricePrediction(gasStation, currentDate,
-					(int) predictionsMap.get(Fuel.E5)[i], (int) predictionsMap.get(Fuel.E10)[i], (int) predictionsMap.get(Fuel.E10)[i]);
+					(int) predictionsMap.get(Fuel.E5)[i], (int) predictionsMap.get(Fuel.E10)[i],
+					(int) predictionsMap.get(Fuel.E10)[i]);
 
 			prediction.setGasStation(gasStation);
 			predictions.add(prediction);
@@ -146,24 +149,24 @@ public class PricePredictor {
 	}
 
 	/**
-	 * This function interpolates the data given by 'datePriceList' at every hour
-	 * linearly.
+	 * This function interpolates the data given by 'datePriceList' at every
+	 * hour linearly.
 	 *
 	 * @param datePriceList
 	 *            should contain a list of ordered dates and prices from the
 	 *            beginning to the last entry.
 	 *
-	 * @return Returns a two dimensional array of interpolated data. The first index
-	 *         corresponds to the month and second to the hour of the month,
-	 *         resulting in the shape [?][nHoursPerMonth]. The data is in reversed
-	 *         order and begins at the last entry of datePriceList
+	 * @return Returns a two dimensional array of interpolated data. The first
+	 *         index corresponds to the month and second to the hour of the
+	 *         month, resulting in the shape [?][nHoursPerMonth]. The data is in
+	 *         reversed order and begins at the last entry of datePriceList
 	 */
 	private float[][] interpolatePrices(List<Pair<Date, Integer>> datePriceList) {
-		
-		if(datePriceList.size() == 0) {
+
+		if (datePriceList.size() == 0) {
 			return null;
 		}
-		
+
 		// Create the data points for the interpolation
 		double[] x = new double[datePriceList.size()];
 		double[] y = new double[datePriceList.size()];
@@ -174,9 +177,12 @@ public class PricePredictor {
 			Date currentDate = datePriceList.get(i).getLeft();
 			int currentPrice = datePriceList.get(i).getRight();
 
-			long diff = (lastDate.getTime() - currentDate.getTime()); // difference in milliseconds;
+			long diff = (lastDate.getTime() - currentDate.getTime()); // difference
+																		// in
+																		// milliseconds;
 
-			// Just in case two dates are added at the same time, slightly move the point to
+			// Just in case two dates are added at the same time, slightly move
+			// the point to
 			// the right for 0.5s
 			if (i < (datePriceList.size() - 1)) {
 				if ((diff == x[datePriceList.size() - i - 2]) || (diff < 0)) {
@@ -191,8 +197,8 @@ public class PricePredictor {
 		PolynomialSplineFunction func = new LinearInterpolator().interpolate(x, y);
 
 		/*
-		 * Use the function to interpolate data at every two hours of each month,
-		 * beginning
+		 * Use the function to interpolate data at every two hours of each
+		 * month, beginning
 		 */
 
 		// Calculate the number of 'whole' months contained in the data
@@ -216,28 +222,32 @@ public class PricePredictor {
 	/**
 	 * This function takes the interpolated historic prices of any fuel type and
 	 * predicts the prices of the next month by running the neural network.
-	 * 
+	 *
 	 * @return the prices of the next month every two hours
 	 */
 	private float[] runNetwork(float[][] interpolatedHistoricPrices, String fuelType) {
 		/*
-		 * The network expects exactly maxPrevMonths = 50 entries in the first dimension
-		 * of the input tensor (even though not all data from the first months may be
-		 * accessible). Therefore, fill in the according number of zero arrays
+		 * The network expects exactly maxPrevMonths = 50 entries in the first
+		 * dimension of the input tensor (even though not all data from the
+		 * first months may be accessible). Therefore, fill in the according
+		 * number of zero arrays
 		 */
 		int nPrevMonths = interpolatedHistoricPrices.length;
 		int nMissingEntries = maxPrevMonths - nPrevMonths;
 		float[][] zeros = new float[nMissingEntries][hoursPerMonth];
 		float[][] combinedInput = ArrayUtils.addAll(interpolatedHistoricPrices, zeros);
 
-		// Add another dimension (the network expects three dimensions, due to batches)
+		// Add another dimension (the network expects three dimensions, due to
+		// batches)
 		float[][][] input = { combinedInput };
 
-		// Create the first input tensor of shape (1, 50, hoursPerMonth) containing the
+		// Create the first input tensor of shape (1, 50, hoursPerMonth)
+		// containing the
 		// previous months
 		Tensor<Float> prevMonthsTensor = Tensor.create(input, Float.class);
 
-		// Also create an input tensor for the number of previous months of shape (1, 1)
+		// Also create an input tensor for the number of previous months of
+		// shape (1, 1)
 		// -> network avoids using the padded inputs
 		int[] nPrevMonthsArray = { nPrevMonths };
 		Tensor<Integer> nPrevMonthsTensor = Tensor.create(nPrevMonthsArray, Integer.class);
