@@ -14,7 +14,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.transaction.Transactional;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.hibernate.annotations.Type;
@@ -102,7 +101,6 @@ public class GasStation implements Serializable {
 	// /**
 	// * @return the gasStationPricePredictions
 	// */
-	// @Transactional
 	// public Set<GasStationPricePrediction> getGasStationPricePredictions() {
 	// return gasStationPricePredictions;
 	// }
@@ -117,7 +115,6 @@ public class GasStation implements Serializable {
 	 *         array[2] for diesel
 	 */
 	@Deprecated
-	@Transactional
 	public ArrayList<ArrayList<Pair<Date, Integer>>> getGasStationPrices() {
 		// Fetch all historic price data and sort by date and fuel type
 		Set<GasStationPrice> prices = gasStationPrices;
@@ -283,7 +280,6 @@ public class GasStation implements Serializable {
 	/**
 	 * Computes distance in kilometers
 	 *
-	 * @param other
 	 * @return
 	 */
 	public static double computeDistanceToGasStation(double lat_a, double lon_a, double lat_b, double lon_b) {
