@@ -23,7 +23,6 @@ public class NaiveTankStrategy {
 	private int capacity;
 	private double gasConsumption;
 	private double literGasPerKilometer;
-	private double range;
 	private List<GasStation> gasStations;
 	private DecimalFormat df = new DecimalFormat("#0.00");
 
@@ -42,7 +41,6 @@ public class NaiveTankStrategy {
 		this.setGasConsumption(gasConsumption);
 		this.gasStations = gasStations;
 		this.literGasPerKilometer = gasConsumption / 100;
-		this.range = capacity * (1 / literGasPerKilometer);
 	}
 
 	/**
@@ -86,6 +84,12 @@ public class NaiveTankStrategy {
 				.acos(Math.sin(lat_a) * Math.sin(lat_b) + Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a));
 	}
 
+	/**
+	 * Prints the total route-price for all the fuel, that has been bought.
+	 *
+	 * @param route
+	 *            - route for which the price shall be computed
+	 */
 	private void printRoutePrice(List<Node> route) {
 		double price = 0;
 		for (Node n : route) {
