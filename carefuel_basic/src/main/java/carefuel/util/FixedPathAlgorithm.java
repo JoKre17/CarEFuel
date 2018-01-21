@@ -85,6 +85,7 @@ public class FixedPathAlgorithm {
 		while (!slidingWindow.isEmpty()) {
 			if (!nodes.isEmpty()) {
 				if (distance(slidingWindow.getFirst(), nodes.getFirst()) > windowCapacity) {
+					log.info("Error distance: " + distance(slidingWindow.getFirst(), nodes.getFirst()));
 					log.info("$$$$$ Route impossible with the current tank-capacity $$$$$");
 					return null;
 				}
@@ -154,7 +155,7 @@ public class FixedPathAlgorithm {
 		}
 
 		log.info("Distance between start and end: "
-				+ df.format(indirectDistance(gasStations.get(0), gasStations.get(gasStations.size() - 1))));
+				+ df.format(indirectDistance(gasStations.get(0), gasStations.get(gasStations.size() - 1))) + " Km");
 
 		printRoutePrice(gasStations);
 

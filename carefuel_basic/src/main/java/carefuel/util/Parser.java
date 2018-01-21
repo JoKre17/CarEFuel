@@ -126,7 +126,7 @@ public class Parser {
 
 			reader.close();
 			savePredictedData(gasStationTimePairs);
-			log.info("\n##### Predicted prices safed to out/predictedPrices/" + file.getName() + ".txt #####");
+			log.info("\n##### Predicted prices safed to out/pricePrediction/" + file.getName() + ".txt #####");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
