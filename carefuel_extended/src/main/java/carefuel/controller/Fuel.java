@@ -9,10 +9,9 @@ package carefuel.controller;
  */
 public enum Fuel {
 	DIESEL, E5, E10;
-	
-	
+
 	public static int getDefaultPrice(Fuel fuel) {
-		switch(fuel) {
+		switch (fuel) {
 		case DIESEL:
 			return 1150;
 		case E5:

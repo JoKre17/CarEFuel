@@ -14,7 +14,7 @@ import carefuel.controller.Fuel;
  * Internal representation of a graph containing vertices and edges This graph
  * stores all values it's corresponding vertices with the distances between the
  * vertices
- * 
+ *
  * @author josef
  *
  * @param <E>
@@ -30,7 +30,7 @@ public class Graph<E> {
 
 	/**
 	 * Constructor takes a list of all values and a completed distance matrix
-	 * 
+	 *
 	 * @param values
 	 * @param distances
 	 * @throws Exception
@@ -46,7 +46,7 @@ public class Graph<E> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param distances
 	 */
 	private void setDistances(float[][] distances) {
@@ -77,8 +77,9 @@ public class Graph<E> {
 	}
 
 	/**
-	 * Returns the neighbours of a vertex depending on the range given by the user
-	 * 
+	 * Returns the neighbours of a vertex depending on the range given by the
+	 * user
+	 *
 	 * @param node
 	 * @param maxRange
 	 * @param fuel
@@ -90,7 +91,8 @@ public class Graph<E> {
 		PriorityQueue<Edge<E>> neighbours = node.getNeighbours();
 		// Try to use already computed neighbours
 		if (!neighbours.isEmpty()) {
-			// if max distance of already calculated distances is bigger than maxRange, we
+			// if max distance of already calculated distances is bigger than
+			// maxRange, we
 			// can reuse it
 			if (neighbours.stream().map(e -> e.getDistance()).max(Double::compareTo).get() > maxRange) {
 				PriorityQueue<Edge<E>> p = new PriorityQueue<>(new EdgeComparator<>());
@@ -116,7 +118,8 @@ public class Graph<E> {
 				edge.setDistance(distance);
 				edge.setWeight(Fuel.getDefaultPrice(fuel));
 
-				// neighbours was already computed but maxRange was smaller back then, so the
+				// neighbours was already computed but maxRange was smaller back
+				// then, so the
 				// edge is not in neighbours
 				if (!neighbours.contains(edge)) {
 					neighbours.add(edge);
@@ -130,7 +133,7 @@ public class Graph<E> {
 	/**
 	 * Creates a Vertex by value only if there is no vertex containing the same
 	 * value
-	 * 
+	 *
 	 * @param value
 	 * @return
 	 */

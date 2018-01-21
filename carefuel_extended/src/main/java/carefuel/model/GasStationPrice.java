@@ -141,8 +141,8 @@ public class GasStationPrice {
 	 */
 	@Override
 	public String toString() {
-		return "GasStationPrice [id=" + this.id + ", date=" + this.date + ", e5="
-				+ this.e5 + ", e10=" + this.e10 + ", diesel=" + this.diesel + "]";
+		return "GasStationPrice [id=" + this.id + ", date=" + this.date + ", e5=" + this.e5 + ", e10=" + this.e10
+				+ ", diesel=" + this.diesel + "]";
 	}
 
 }

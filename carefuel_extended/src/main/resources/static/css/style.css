@@ -297,6 +297,7 @@ input[type="radio"] {
 	font-size: x-large;
     display: block;
     text-align: center;
+    overflow-y: auto;
 }
 
 /***************/
@@ -385,6 +386,12 @@ input[type="radio"] {
 	
 	.route-container {
 		display: none;
+	}
+	
+	.form.submit-button{
+		width: 100%;
+		margin-left: 0%;
+		margin-bottom: 6%;
 	}
 }
 
