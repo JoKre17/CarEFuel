@@ -56,10 +56,11 @@ public class PredictionUpdater extends Thread {
 				Socket serviceSocket = serverSocket.accept();
 				log.info("Starting to update price predictions");
 
-				// Fetch all gas stations from the database and update one after another
+				// Fetch all gas stations from the database and update one after
+				// another
 				List<UUID> gasStationUUIDs = dbHandler.getAllGasStationIDs().stream().collect(Collectors.toList());
 				log.info("Calculating import date of database with dump file");
-				Date mostRecentDate = dbHandler.getMostRecentPriceDataDate();
+				Date mostRecentDate = dbHandler.getPredictableTimeBound().getLeft();
 				log.info("Database seems to be imported on " + mostRecentDate);
 
 				// multi threading
@@ -105,12 +106,16 @@ public class PredictionUpdater extends Thread {
 						int minLeft = (int) (((predictedTimeInMinutesLeft / 60.0) - hoursLeft) * 60);
 
 						log.info(String.format("Prediction Progress: %.2f %%", currentProgress * 100));
-						log.info(String.format("Predicted time left %d:%2d", hoursLeft, minLeft));
+						log.info(String.format("Predicted time left %dh %2dmin", hoursLeft, minLeft));
 
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
+				log.info("Prediction Progress: 100 %");
+				log.info("Predictions finished.");
+
+				dbHandler.updatePredictableTimeBound();
 
 				serviceSocket.close();
 				serverSocket.close();
@@ -122,7 +127,7 @@ public class PredictionUpdater extends Thread {
 
 	/**
 	 * Returns true, if the PredictionUpdater is actual updating the Predictions
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isRunning() {
@@ -135,9 +140,9 @@ public class PredictionUpdater extends Thread {
 	}
 
 	/**
-	 * Returns 1 if the last update is finished and between 0 and 1, if there is an
-	 * Update in Progress
-	 * 
+	 * Returns 1 if the last update is finished and between 0 and 1, if there is
+	 * an Update in Progress
+	 *
 	 * @return
 	 */
 	public double getProgress() {
@@ -202,14 +207,23 @@ class PredictionWorkerThread extends Thread {
 			GasStation gasStation = dbHandler.getGasStation(gasStationUUID);
 			Map<Fuel, List<Pair<Date, Integer>>> datePriceList = dbHandler.getGasStationPrices(gasStationUUID);
 
-			Set<GasStationPricePrediction> predictions = null;
+			Set<GasStationPricePrediction> firstRunPredictions = null;
 
+			// 30 days
 			double timeDiff = 30 * 1000 * 60 * 60 * 24;
 			int dayDiff = 30;
 			try {
 				// timeDiff in milliseconds
-				timeDiff = mostRecentDate.getTime() - datePriceList.get(Fuel.DIESEL)
-						.get(datePriceList.get(Fuel.DIESEL).size() - 1).getLeft().getTime();
+				for (Fuel f : Fuel.values()) {
+					if (datePriceList.get(f).size() > 0) {
+						double timeDiffForFuelType = mostRecentDate.getTime()
+								- datePriceList.get(f).get(datePriceList.get(f).size() - 1).getLeft().getTime();
+						if (timeDiffForFuelType < timeDiff) {
+							timeDiff = timeDiffForFuelType;
+						}
+					}
+				}
+
 				// to seconds, to minutes, to hours, to days
 				dayDiff = (int) (timeDiff / (1000 * 60 * 60 * 24));
 
@@ -219,42 +233,50 @@ class PredictionWorkerThread extends Thread {
 					continue;
 				} else {
 					if (dayDiff != 0) {
-						log.debug(gasStation.getId() + ": Need to predict " + (dayDiff + 30) + " days into future.");
+						// log.debug(gasStation.getId() + ": Need to predict " +
+						// (dayDiff + 30) + " days
+						// into future.");
 					}
 				}
+				firstRunPredictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
 
-				// Catch prediction errors that are caused by missing or erroneous data
-				predictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
-			} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
-				// TODO Clarify, why there are gasStations without prices in database
+				// Catch prediction errors that are caused by missing data
+			} catch (Exception e) {
+				log.debug(e);
 
 				// Catches if there is none or too less data for the gasStation
 				log.warn("Little or none historical price data for gas station with id "
 						+ gasStation.getId().toString());
 
-				predictions = createConstantPrediction(gasStation, mostRecentDate);
+				firstRunPredictions = createConstantPrediction(gasStation, mostRecentDate);
 			}
-			dbHandler.insertPricePredictions(predictions);
 
 			// calculate until 30 days into future
 			if (dayDiff > 0) {
-				log.debug(gasStation.getId() + ": T+30 days done. Predict next " + dayDiff + " days");
+				// add predicted prices to historical data until the date, where
+				// the db was
+				// updated
+				// log.debug(gasStation.getId() + ": T+30 days done. Predict
+				// next " + dayDiff +
+				// " days");
 				List<Pair<Date, Integer>> dieselData = datePriceList.get(Fuel.DIESEL);
 				List<Pair<Date, Integer>> e10Data = datePriceList.get(Fuel.E10);
 				List<Pair<Date, Integer>> e5Data = datePriceList.get(Fuel.E5);
-				final int dayDiffForPredictions = dayDiff;
+
 				// iterate over sorted...
-				predictions.stream().sorted((a, b) -> a.getDate().compareTo(b.getDate())).forEach(pred -> {
+				firstRunPredictions.stream().sorted((a, b) -> a.getDate().compareTo(b.getDate())).forEach(pred -> {
 
 					/*
-					 * if last date of historic price data was until e.g. 10 days before
-					 * mostRecentDate (last import date from dump file), then we also want to
-					 * predict until 30 days into future FROM mostRecentDate.
-					 * 
+					 * if last date of historic price data was until e.g. 10
+					 * days before mostRecentDate (last import date from dump
+					 * file), then we also want to predict until 30 days into
+					 * future FROM mostRecentDate.
+					 *
 					 * So (mostRecentDate + 30 days) is the aim.
-					 * 
-					 * Therefore we have to add the predicted data of the next 10 days to the
-					 * history data to predict the 30 days, after these 10 days.
+					 *
+					 * Therefore we have to add the predicted data of the next
+					 * 10 days to the history data to predict the 30 days, after
+					 * these 10 days.
 					 */
 					if (pred.getDate().getTime() < mostRecentDate.getTime()) {
 						dieselData.add(Pair.of(pred.getDate(), pred.getDiesel()));
@@ -263,28 +285,34 @@ class PredictionWorkerThread extends Thread {
 					}
 				});
 
+				Set<GasStationPricePrediction> secondRunPredictions = null;
 				try {
-					predictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
-				} catch (ArrayIndexOutOfBoundsException | IllegalArgumentException e) {
+					secondRunPredictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
+				} catch (Exception e) {
 					log.debug(e);
-					// TODO Clarify, why there are gasStations without prices in database
 
-					// Catches if there is none or too less data for the gasStation
+					// Catches if there is none or too less data for the
+					// gasStation
 					log.warn("Little or none historical price data for gas station with id "
 							+ gasStation.getId().toString());
 
-					predictions = createConstantPrediction(gasStation, mostRecentDate);
+					secondRunPredictions = createConstantPrediction(gasStation, mostRecentDate);
 				}
-				dbHandler.insertPricePredictions(predictions);
+
+				// combine both predictions
+				firstRunPredictions.addAll(secondRunPredictions);
 			}
+
+			// TODO dbHandler.deletePricePredictions(gasStation.getId())
+			dbHandler.insertPricePredictions(firstRunPredictions);
 		}
 	}
 
 	/**
 	 * This function can be used to create a new price prediction of a given gas
-	 * station containing only constant prices. That may be necessary in case the
-	 * prediction process is erroneous.
-	 * 
+	 * station containing only constant prices. That may be necessary in case
+	 * the prediction process is erroneous.
+	 *
 	 * @param gasStation
 	 * @param startDate
 	 * @return

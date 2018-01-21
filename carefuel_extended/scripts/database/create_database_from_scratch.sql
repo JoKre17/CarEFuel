@@ -98,9 +98,9 @@ CREATE INDEX idx_updated
     TABLESPACE pg_default;
 	
 	
-CREATE INDEX index_on_gas_station_stid
+CREATE INDEX index_on_gas_station_id
     ON public.gas_station USING btree
-    (stid)
+    (id)
     TABLESPACE pg_default;
 	
 	
@@ -111,7 +111,7 @@ CREATE INDEX index_on_gas_station_stid
 
 CREATE TABLE public.gas_station_information_history
 (
-    id SERIAL PRIMARY KEY,
+    id integer NOT NULL,
     stid uuid NOT NULL,
     e5 smallint,
     e10 smallint,
@@ -204,6 +204,9 @@ CREATE OR REPLACE FUNCTION delete_gas_stations_with_insufficient_price_data() RE
 			) as sub
 		);
 		
+		ALTER TABLE gas_station_information_history DISABLE TRIGGER ALL;
+        ALTER TABLE gas_station_information_prediction DISABLE TRIGGER ALL;
+        ALTER TABLE gas_station DISABLE TRIGGER ALL;
 		RAISE NOTICE 'Performing delete on gas_station_information_history at %', current_timestamp;
 		DELETE FROM gas_station_information_history gsih WHERE gsih.stid = ANY(SELECT * FROM insufficient_station);
 		RAISE NOTICE 'Performing delete on gas_station_information_prediction at %', current_timestamp;
@@ -211,6 +214,9 @@ CREATE OR REPLACE FUNCTION delete_gas_stations_with_insufficient_price_data() RE
 		RAISE NOTICE 'Performing delete on gas_station at %', current_timestamp;
 		DELETE FROM gas_station gs WHERE gs.id = ANY(SELECT * FROM insufficient_station);
 		RAISE NOTICE '--------- finished at % ---------', current_timestamp;
+        ALTER TABLE gas_station_information_history ENABLE TRIGGER ALL;
+        ALTER TABLE gas_station_information_prediction ENABLE TRIGGER ALL;
+        ALTER TABLE gas_station ENABLE TRIGGER ALL;
 	END;
 $$ LANGUAGE plpgsql;
 

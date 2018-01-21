@@ -10,7 +10,8 @@
 	<property name="connection.username">postgres</property>
     <property name="hibernate.connection.password">NJuJh1A!Wln..</property>
     <property name="hibernate.show_sql">false</property>
-    <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+<!--     <property name="dialect">org.hibernate.dialect.PostgreSQLDialect</property> -->
+    <property name="dialect">org.hibernate.dialect.PostgreSQL82Dialect</property>
     <property name="current_session_context_class">thread</property> 
     
     <mapping class="carefuel.model.GasStation" />

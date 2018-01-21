@@ -102,6 +102,13 @@
 			<resource>
 				<directory>src/main/resources</directory>
 			</resource>
+			<resource>
+				<directory>.</directory>
+				<includes>
+					<include>*.keystore</include>
+				</includes>
+				<targetPath>..</targetPath>
+			</resource>
 		</resources>
 
 		<plugins>

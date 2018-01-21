@@ -58,7 +58,7 @@ public class Evaluator {
 		double meanDiff = sum / gasStations.size();
 
 		// to show the mean difference in whole cents it is divided by 10
-		log.info("\nMean difference: " + meanDiff / 10);
+		log.info("\nMean difference: " + meanDiff / 10 + " Cent");
 	}
 
 	/**

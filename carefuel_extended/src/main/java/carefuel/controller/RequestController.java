@@ -1,17 +1,22 @@
 package carefuel.controller;
 
+import java.io.File;
 import java.text.ParseException;
-import java.util.Calendar;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.format.datetime.DateFormatter;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -34,13 +39,13 @@ import carefuel.tank.Node;
 @RequestMapping("rest/")
 public class RequestController {
 
-	private final static Logger log = LogManager.getLogger(RequestMapping.class);
+	private final static Logger log = LogManager.getLogger();
 
 	DateFormatter df = new DateFormatter("dd.MM.yyyy HH:mm");
 
 	@RequestMapping(value = "station/", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public JSONArray getGasStationById() {
+	public String getGasStationById() {
 		DatabaseHandler databaseHandler = new DatabaseHandler();
 		JSONArray toReturn = new JSONArray();
 		Set<GasStation> gasStations = databaseHandler.getAllGasStations();
@@ -49,17 +54,16 @@ public class RequestController {
 			toReturn.put(gasStation.toJSON());
 		}
 
-		return toReturn;
+		return toReturn.toString();
 	}
 
 	@RequestMapping(value = "station/{id}", method = RequestMethod.GET, produces = "application/json")
 	@ResponseBody
-	public JSONObject getGasStationById(@PathVariable String id) {
-		DatabaseHandler databaseHandler = new DatabaseHandler();
+	public String getGasStationById(@PathVariable String id) {
+		log.info(id);
+		GasStation gasStation = Main.databaseHandler.getGasStation(id);
 
-		GasStation gasStation = databaseHandler.getGasStation(id);
-
-		return gasStation.toJSON();
+		return gasStation.toJSON().toString();
 	}
 
 	@RequestMapping(value = "path", method = RequestMethod.GET, produces = "application/json")
@@ -91,18 +95,25 @@ public class RequestController {
 		if (gasTypeAsString == null) {
 			gasType = Fuel.DIESEL;
 		} else {
-			gasType = Fuel.valueOf(gasTypeAsString.toUpperCase());
+			try {
+				gasType = Fuel.valueOf(gasTypeAsString.toUpperCase());
+			} catch (java.lang.IllegalArgumentException e) {
+				gasType = Fuel.DIESEL;
+			}
 		}
 
-		log.info("Path Request received");
-		log.info("from: " + fromId);
-		log.info("to: " + toId);
-		log.info("startTime: " + startTime);
-		log.info("tankLevel: " + tankLevel);
-		log.info("capacity: " + capacity);
-		log.info("consumption: " + consumption);
-		log.info("metric factor: " + metric);
-		log.info("gasType: " + gasType.toString());
+		float range = (float) ((capacity / consumption) * 100.0);
+
+		log.debug("Path Request received");
+		log.debug("from: " + fromId);
+		log.debug("to: " + toId);
+		log.debug("startTime: " + startTime);
+		log.debug("tankLevel: " + tankLevel);
+		log.debug("capacity: " + capacity);
+		log.debug("consumption: " + consumption);
+		log.debug("Max Range: " + range);
+		log.debug("metric factor: " + metric);
+		log.debug("gasType: " + gasType.toString());
 
 		Date startTimeDate = new Date();
 		try {
@@ -110,18 +121,24 @@ public class RequestController {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
-		Calendar c = Calendar.getInstance();
-		c.set(Calendar.HOUR_OF_DAY, 0);
-		c.set(Calendar.MINUTE, 0);
-		c.set(Calendar.SECOND, 0);
-		Date today = c.getTime();
 
-		if (startTimeDate.before(today)) {
-			log.error("Requested start time before today: " + df.print(startTimeDate, Locale.GERMAN));
-			return errorResponse(9002, "Requested start time before today").toString();
+		Pair<Date, Date> predictableTimeBound = Main.databaseHandler.getPredictableTimeBound();
+
+		log.info(df.print(predictableTimeBound.getLeft(), Locale.GERMAN));
+		log.info(df.print(startTimeDate, Locale.GERMAN));
+		log.info(df.print(predictableTimeBound.getRight(), Locale.GERMAN));
+
+		if (startTimeDate.before(predictableTimeBound.getLeft())
+				|| startTimeDate.after(predictableTimeBound.getRight())) {
+			String importDateString = df.print(predictableTimeBound.getLeft(), Locale.GERMAN);
+			String maxPredDateString = df.print(predictableTimeBound.getRight(), Locale.GERMAN);
+			log.error("Requested start time before: " + importDateString + " or after " + maxPredDateString);
+			return errorResponse(9002,
+					"Angefragte Startzeit fuer die Route ist ausserhalb der vorhersagbaren Zeiten.\n"
+							+ "Die Startzeit der Route muss nach: " + importDateString + "\n"
+							+ "Order vor dem maximal vorhersagbaren Datum: " + maxPredDateString).toString()
+					+ "\n" + "sein.";
 		}
-
-		float range = (float) ((capacity / consumption) * 100.0);
 
 		// km/h
 		float averageSpeed = 100;
@@ -131,12 +148,31 @@ public class RequestController {
 		}
 
 		List<Vertex<GasStation>> route;
+		long time = System.currentTimeMillis();
 		try {
 			route = Main.pathFinder.explorativeAStar(fromId, toId, startTimeDate, tankLevel, gasType, range,
 					averageSpeed, metric);
 		} catch (Exception e) {
 			log.error("Error while calculating route", e);
-			return errorResponse(9001, "Unable to calculate route").toString();
+			return errorResponse(9001,
+					"Das berechnen der Route war leider nicht moeglich." + "\n"
+							+ "Möglicherweise ist der Graph noch nicht komplett geladen." + "\n"
+							+ "Versuchen sie es in 1-2 Minuten erneut.").toString();
+		}
+		log.debug("Found path in " + ((System.currentTimeMillis() - time) / 1000.0) + " seconds");
+
+		for (int i = 0; i < route.size(); i++) {
+			if (i == 0) {
+				log.debug(route.get(i).getValue().getId());
+			} else {
+				GasStation from = route.get(i - 1).getValue();
+				GasStation to = route.get(i).getValue();
+
+				double distance = GasStation.computeDistanceToGasStation(from.getLatitude(), from.getLongitude(),
+						to.getLatitude(), to.getLongitude());
+				log.debug(route.get(i - 1).getValue().getId() + " == " + distance + " ==> "
+						+ route.get(i).getValue().getId());
+			}
 		}
 
 		// List that holds the liter-value of gas that should be tanked at the
@@ -161,6 +197,8 @@ public class RequestController {
 			stop.put("predictedPrice", n.getPredictedPrice());
 			stop.put("fillAmount", n.getFuelToBuy());
 
+			log.debug(station.getId() + " " + n.getFuelToBuy());
+
 			path.put(stop);
 		}
 
@@ -178,6 +216,38 @@ public class RequestController {
 		 */
 
 		return path.toString();
+	}
+
+	@RequestMapping(value = "/download", method = RequestMethod.GET)
+	@ResponseBody
+	private String getDownloadables() {
+		File file = new File("download");
+
+		List<File> accessibleFiles = new ArrayList<>();
+		if (file.exists() && file.isDirectory()) {
+			accessibleFiles = Arrays.asList(file.listFiles());
+		}
+		// @formatter:off
+		String html = "<html>" + "<head>" + "<title>Carefuel Downloads</title>" + "</head>"
+				+ "<body style=’background-color:#ccc’>" + "Downloadable Files:<br>";
+		// @formatter:on
+		for (File f : accessibleFiles) {
+			log.debug(f.getName());
+			html += "<span style='margin-left:10px'>" + "<a href='download/" + f.getName() + "'>" + f.getName()
+					+ "</a><br>";
+		}
+
+		html += "</body>";
+
+		return html;
+	}
+
+	@RequestMapping(value = "/download/{file}", method = RequestMethod.GET, produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+	@ResponseBody
+	private FileSystemResource getFile(@PathVariable("file") String vmFileName) {
+		File file = new File("download/" + vmFileName);
+		log.info("Downloading " + file.getAbsolutePath());
+		return new FileSystemResource(file);
 	}
 
 	private JSONObject errorResponse(int code, String message) {

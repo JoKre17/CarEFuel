@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.lang3.tuple.Pair;
 
 import carefuel.controller.DatabaseHandler;
 import carefuel.controller.Fuel;
@@ -24,7 +24,7 @@ import carefuel.model.GasStation;
  * PathFinder uses Database Handler to build a graph and if possible loads the
  * distances from a file This class is used to find the path from one GasStation
  * to another with getting the best path according to the heuristic
- * 
+ *
  * @author josef
  *
  */
@@ -44,12 +44,14 @@ public class PathFinder {
 
 	}
 
+	/**
+	 * Setup the PathFinder. Basically only loading the graph
+	 */
 	public void setup() {
 		// load the graph in background
 		double startTime = System.currentTimeMillis();
 		loadGraph();
 		log.info("Loading graph completed in " + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds.");
-		// try to lose allocated RAM (3-4 GB)
 		System.gc();
 		System.runFinalization();
 	}
@@ -68,7 +70,9 @@ public class PathFinder {
 		log.info("Loading Graph from Database");
 
 		log.info("Fetching all stations from database.");
-		// transform gasstation positions into 2-dimensional shape(n,2) array.
+		// transform gasstation positions into 2-dimensional shape(n,2) array
+		// containing
+		// Lon Lat of each gas_station
 		List<GasStation> allStations = new LinkedList<GasStation>(dbHandler.getAllGasStations());
 		int amountStations = allStations.size();
 		double[][] graphMap = new double[amountStations][2];
@@ -77,6 +81,7 @@ public class PathFinder {
 		}
 		log.info("Fetched " + allStations.size() + " stations.");
 
+		// contains all distances from each gasStation to every other gasStation
 		float[][] distances = new float[amountStations][amountStations];
 
 		log.info("Building all vertices and edges for each station.");
@@ -112,6 +117,7 @@ public class PathFinder {
 
 			distances[i] = neighbourDistances;
 
+			// prints the actual progress every 10%
 			if (((int) ((double) (i) / amountStations * 100)) > perc) {
 				log.info("Vertices: " + perc + " %");
 				perc += 10;
@@ -122,7 +128,7 @@ public class PathFinder {
 		// fetch new copy => maybe ram gets cleared ?
 		Graph<GasStation> graph = null;
 		try {
-			graph = new Graph<GasStation>(new ArrayList<>(dbHandler.getAllGasStations()), distances);
+			graph = new Graph<GasStation>(allStations, distances);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -137,10 +143,10 @@ public class PathFinder {
 	/**
 	 * So far fix heuristic not depending on anything else. Could be overridden
 	 * later
-	 * 
-	 * Absolute cost so far to get to VERTEX + assumed cost to get from VERTEX to
-	 * GOAL
-	 * 
+	 *
+	 * Contains default A* heuristic: Absolute cost to get to VERTEX + assumed
+	 * cost to get from VERTEX to GOAL
+	 *
 	 * @param heuristicMap
 	 * @return
 	 */
@@ -152,16 +158,24 @@ public class PathFinder {
 	}
 
 	/**
-	 * calculates the best path from start GasStation to end GasStation depending on
-	 * maxRange (what GasStations are reachable from another GasStation), how fast
-	 * the average travel speed is and the value x, specifying the bridge between
-	 * 
+	 * Explorative A* Algorithm to solve the Gas Station Problem ("extended")
+	 *
+	 * The algorithmus is capable of using the predicted prices for the specific
+	 * arrival time at each gas station including the selection of one of the
+	 * three Fuel types (Diesel, E5, E10)
+	 *
+	 * Calculates the best path from start GasStation to end GasStation
+	 * depending on maxRange (what GasStations are reachable from another
+	 * GasStation), how fast the average travel speed is and the value x,
+	 * specifying the bridge between the shortest and the cheapest path.
+	 *
+	 *
 	 * 0 => shortest path
-	 * 
+	 *
 	 * 1 => cheapest path
-	 * 
+	 *
 	 * between 0 and 1: best path?
-	 * 
+	 *
 	 * @param start
 	 * @param end
 	 * @param maxRange
@@ -194,8 +208,35 @@ public class PathFinder {
 		List<GasStation> stations = graph.getValues();
 		// log.info("Build heuristic values");
 		double curTime = System.currentTimeMillis();
+
+		List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(end.getId(), gasType);
 		for (int i = 0; i < stations.size(); i++) {
-			heuristicMap.put(graph.getVertexByValue(stations.get(i)), (double) distances[i][stations.indexOf(end)]);
+			// x > 0 means the fuel prices weight into the edges of the graph
+			// therefore it is necessary to give the heuristic also weighted
+			// values for each
+			// station
+			if (x > 0) {
+				long arrivalTimeLong = new Date(
+						(long) (startTime.getTime() + distances[i][stations.indexOf(end)] / averageSpeed)).getTime();
+
+				// Diesel : 1109 means 1.109 euro. Therefore 1109 is given in
+				// "centicent"
+				int pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
+					@Override
+					public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
+						long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
+						long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
+						return Long.compare(diff1, diff2);
+					}
+				}).getRight();
+
+				double pricePredictionEuro = pricePredictionInCentiCent / 1000.0;
+
+				double hValue = distances[i][stations.indexOf(end)] * (1.0 + (pricePredictionEuro - 1.0) * x);
+				heuristicMap.put(graph.getVertexByValue(stations.get(i)), hValue);
+			} else {
+				heuristicMap.put(graph.getVertexByValue(stations.get(i)), (double) distances[i][stations.indexOf(end)]);
+			}
 		}
 		log.info("Built heuristic in " + ((System.currentTimeMillis() - curTime) / 1000.0) + " s");
 
@@ -214,10 +255,14 @@ public class PathFinder {
 		Calendar calendar = Calendar.getInstance();
 
 		while (!open.isEmpty()) {
-			// log.info("Iteration " + closed.size());
+			log.debug("Iteration " + closed.size());
 			// log.info(open.size() + " nodes left to discover.");
 
 			currentNode = open.poll();
+
+			double distanceToDest = GasStation.computeDistanceToGasStation(currentNode.getValue().getLatitude(),
+					currentNode.getValue().getLongitude(), end.getLatitude(), end.getLongitude());
+			log.debug("Distance to destination: " + distanceToDest);
 
 			// found end node
 			if (currentNode.getValue().equals(end)) {
@@ -226,8 +271,8 @@ public class PathFinder {
 
 			// For each neighbour of currentNode
 			// expand currentNode
-			PriorityQueue<Edge<GasStation>> neighbours = graph.getNeighbours(currentNode, maxRange);
-			// log.info("Looking at " + neighbours.size() + " neighbours.");
+			PriorityQueue<Edge<GasStation>> neighbours = graph.getNeighbours(currentNode, maxRange, gasType);
+			// log.debug("Looking at " + neighbours.size() + " neighbours.");
 			for (Edge<GasStation> e : neighbours) {
 
 				Vertex<GasStation> successor = e.getTo();
@@ -243,31 +288,28 @@ public class PathFinder {
 				int timeInMins = (int) ((e.getDistance() / averageSpeed) * 60.0);
 				calendar.add(Calendar.MINUTE, timeInMins);
 				Date arrivalTime = calendar.getTime();
-				long arrivalTimeLong = arrivalTime.getTime();
+				arriveTimes.put(successor, arrivalTime);
 
-				// get predicted prices for gasStation
-				List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(e.getTo().getValue().getId(),
-						gasType);
-
-				int pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
-					@Override
-					public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
-						long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
-						long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
-						return Long.compare(diff1, diff2);
-					}
-				}).getRight();
-
-				// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in "centicent"
-				double pricePrediction = pricePredictionInCentiCent / 10.0;
-				e.setWeight(pricePrediction);
-
+				double pricePredictionInEuro = 0;
 				// predict price
+				if (x > 0) {
+					// get predicted prices for gasStation
+					double pricePredictionInCentiCent = dbHandler
+							.getPricePredictionClosestToDate(successor.getValue().getId(), gasType, arrivalTime)
+							.getRight();
+
+					// Diesel : 1109 means 110.9 cent. Therefore 1109 is given
+					// in "centicent"
+					pricePredictionInEuro = pricePredictionInCentiCent / 1000.0;
+
+				}
+				e.setWeight(pricePredictionInEuro);
 
 				// cost so far for path start -> successor (depending on x)
 				double g_tentative = currentNode.getGCost() + e.getValue(x);
 
-				// if there is already a cheaper connection to this successor found
+				// if there is already a cheaper connection to this successor
+				// found
 				if (open.contains(successor) && g_tentative >= successor.getGCost()) {
 					continue;
 				}
@@ -292,17 +334,19 @@ public class PathFinder {
 
 		}
 
-		log.info("Needed " + closed.size() + " iterations.");
+		log.debug("Needed " + closed.size() + " iterations.");
 
 		// traverse the predecessor map from end node to start node
 		List<Vertex<GasStation>> path = new ArrayList<>();
 
-		// in case of start == end, pred is already null and path List stays empty
+		// in case of start == end, pred is already null and path List stays
+		// empty
 		if (currentNode == null) {
+			log.debug("currentNode is null");
 			return path;
 		}
 
-		// log.info("Getting path");
+		// log.debug("Getting path");
 		// add the end node to the path
 		path.add(currentNode);
 		Vertex<GasStation> pred = predecessorMap.get(currentNode);

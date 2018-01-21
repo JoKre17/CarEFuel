@@ -37,7 +37,7 @@
 
 		<!-- This enables debug log for carefuel packages, all other default to 
 			the Root logger level above -->
-		<logger name="carefuel" level="info" additivity="false">
+		<logger name="carefuel" level="debug" additivity="false">
 			<AppenderRef ref="ConsoleStdOut" />
 			<AppenderRef ref="ConsoleStdErr" />
 			<AppenderRef ref="RollingFile" />

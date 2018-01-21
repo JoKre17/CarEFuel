@@ -84,6 +84,11 @@ public class FixedPathAlgorithm {
 		// find breaking points according to algorithms
 		while (!slidingWindow.isEmpty()) {
 			if (!nodes.isEmpty()) {
+				if (distance(slidingWindow.getFirst(), nodes.getFirst()) > windowCapacity) {
+					log.info("Error distance: " + distance(slidingWindow.getFirst(), nodes.getFirst()));
+					log.info("$$$$$ Route impossible with the current tank-capacity $$$$$");
+					return null;
+				}
 				if (distance(slidingWindow.getFirst(), nodes.getFirst()) > windowCapacity - currentFill) {
 					first = slidingWindow.getFirst();
 					slidingWindow.remove(first);
@@ -150,7 +155,7 @@ public class FixedPathAlgorithm {
 		}
 
 		log.info("Distance between start and end: "
-				+ df.format(indirectDistance(gasStations.get(0), gasStations.get(gasStations.size() - 1))));
+				+ df.format(indirectDistance(gasStations.get(0), gasStations.get(gasStations.size() - 1))) + " Km");
 
 		printRoutePrice(gasStations);
 
@@ -201,10 +206,13 @@ public class FixedPathAlgorithm {
 	 * @return
 	 */
 	private double distance(Node n1, Node n2) {
-		return (6378.388 * Math.acos(Math.sin(n1.getGasStation().getLat() * Math.sin(n2.getGasStation().getLat())
-				+ Math.cos(n1.getGasStation().getLat() * Math.cos(n2.getGasStation().getLat()))
-						* Math.cos(n2.getGasStation().getLon() - n1.getGasStation().getLon()))))
-				/ 1000;
+		double lat_a = Math.toRadians(n1.getGasStation().getLat());
+		double lon_a = Math.toRadians(n1.getGasStation().getLon());
+		double lat_b = Math.toRadians(n2.getGasStation().getLat());
+		double lon_b = Math.toRadians(n2.getGasStation().getLon());
+
+		return 6378.388 * Math
+				.acos(Math.sin(lat_a) * Math.sin(lat_b) + Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a));
 	}
 
 	/**

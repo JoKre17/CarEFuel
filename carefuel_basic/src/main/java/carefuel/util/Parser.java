@@ -81,7 +81,7 @@ public class Parser {
 
 			reader.close();
 			log.info("************** Parser ends ***********************");
-			log.info("\n##### Predicted prices safed to out/pricePrediction/predictedPrices.txt #####");
+			log.info("\n##### route information safed to out/routes/" + file.getName() + " #####");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -91,7 +91,8 @@ public class Parser {
 	 * Parses the gasStations File with the gas stations to predict prices for.
 	 *
 	 * @param file
-	 *            File containing the gas stations, which priced shall be predicted
+	 *            File containing the gas stations, which priced shall be
+	 *            predicted
 	 */
 	public void parseGasStationsToPredict(File file) {
 		this.file = file;
@@ -116,7 +117,6 @@ public class Parser {
 				entry = line.split(splitBy);
 
 				int gasStationID = Integer.parseInt(entry[2]);
-				log.info("0: " + entry[0] + ", 1: " + entry[1] + ", id: " + gasStationID);
 				int predictedPrice = predictor.predictPrice(entry[0], entry[1], gasStationID);
 				gasStationTimePairs.add(new Pair<GasStation, String>(
 						new GasStation(entry[1], gasStationID, 0.0, 0.0, predictedPrice), entry[0]));
@@ -126,7 +126,7 @@ public class Parser {
 
 			reader.close();
 			savePredictedData(gasStationTimePairs);
-			log.info("\n##### Predicted prices safed to out/predictedPrices/" + file.getName() + ".txt #####");
+			log.info("\n##### Predicted prices safed to out/pricePrediction/" + file.getName() + ".txt #####");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -12,14 +12,20 @@
 
 # Download the newest database database dump into /tmp and extract
 cd /tmp
-curl https://creativecommons.tankerkoenig.de/history/history.dump.gz > history.dump.gz
+curl --proxy http://web-proxy.rrzn.uni-hannover.de:3128  https://creativecommons.tankerkoenig.de/history/history.dump.gz > history.dump.gz
 gunzip history.dump.gz
 
+# Build reduced Dump
+dateYesterday=$(date -d "yesterday" '+%Y-%m-%d')
+python /carefuel/scripts/diffDump.py $dateYesterday
+
+rm history.dump
+
 # Load newest data into database
-psql carefuel < history.dump
+psql carefuel < reduced_$dateYesterday.dump
 
 # Clean up
-rm history.dump
+rm reduced_$dateYesterday.dump
 
 # Notify the local webserver to update prices
 echo "update" | netcat 127.0.0.1
