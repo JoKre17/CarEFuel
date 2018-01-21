@@ -20,9 +20,9 @@ import carefuel.path.Vertex;
 
 /**
  * Class that computes the tanking strategy.
- * 
+ *
  * @author Jonas
- * 
+ *
  */
 public class TankStrategy {
 
@@ -45,10 +45,22 @@ public class TankStrategy {
 		this.dbHandler = dbHandler;
 	}
 
-	// Function that computes the tanking strategy for the given route. The
-	// algorithms is an implementation of the
-	// fixed-path gas station problem given in "to fill or not to fill" (accessible
-	// at https://dl.acm.org/citation.cfm?id=1978791)
+	/**
+	 * Function that computes the tanking strategy for the given route. The
+	 * algorithms is an implementation of the fixed-path gas station problem
+	 * given in "to fill or not to fill" (accessible at
+	 * https://dl.acm.org/citation.cfm?id=1978791)
+	 *
+	 * @param path
+	 * @param startTime
+	 * @param consumption
+	 * @param tankLevel
+	 * @param capacity
+	 * @param range
+	 * @param averageSpeed
+	 * @param gasType
+	 * @return
+	 */
 	public List<Node> computeTankStrategy(List<Vertex<GasStation>> path, Date startTime, double consumption,
 			int tankLevel, int capacity, double range, float averageSpeed, Fuel gasType) {
 
@@ -136,8 +148,8 @@ public class TankStrategy {
 	}
 
 	/**
-	 * Method that is called to examine the best tanking behavior between two break
-	 * points
+	 * Method that is called to examine the best tanking behavior between two
+	 * break points
 	 *
 	 * @param from
 	 * @param to
@@ -175,7 +187,7 @@ public class TankStrategy {
 
 	/**
 	 * Prepares all variables for the algorithm.
-	 * 
+	 *
 	 * @param startTime
 	 * @param consumption
 	 * @param tankLevel
@@ -246,7 +258,8 @@ public class TankStrategy {
 				}
 			}).getRight();
 
-			// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in "centicent"
+			// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in
+			// "centicent"
 			double pricePrediction = pricePredictionInCentiCent / 10.0;
 			n.setPredictedPrice(pricePrediction);
 		}
@@ -259,7 +272,8 @@ public class TankStrategy {
 	}
 
 	/**
-	 * Direct distance between two nodes in km computed by the great-circle distance
+	 * Direct distance between two nodes in km computed by the great-circle
+	 * distance
 	 *
 	 * @param n1
 	 * @param n2
@@ -276,8 +290,8 @@ public class TankStrategy {
 	}
 
 	/**
-	 * Computes the indirect distance between two not necessarily directly connected
-	 * gas stations.
+	 * Computes the indirect distance between two not necessarily directly
+	 * connected gas stations.
 	 *
 	 * @param n1
 	 * @param n2
