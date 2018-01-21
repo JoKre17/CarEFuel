@@ -10,6 +10,6 @@
 bin/
 dependency-reduced-pom.xml
 
-/target/
+/target/*
 
-!target/carefuel_basic.jar
+!/target/carefuel_basic.jar
