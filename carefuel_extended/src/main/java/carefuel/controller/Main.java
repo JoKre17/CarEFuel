@@ -3,23 +3,15 @@ package carefuel.controller;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.format.datetime.DateFormatter;
 
-import carefuel.model.GasStation;
 import carefuel.path.PathFinder;
-import carefuel.path.Vertex;
-import carefuel.tank.Node;
 import carefuel.tank.TankStrategy;
 
 /**
@@ -72,63 +64,11 @@ public class Main {
 		// }
 		// }.start();
 
-		// ### TEST JONAS ALGORITHMUS ###
-		// Route: Josef-Heimat nach Nürnberg
+		PredictionUpdater p = new PredictionUpdater(databaseHandler);
+		p.start();
 
-		// GasStation s1 = new GasStation();
-		// s1.setLatitude(52.706567);
-		// s1.setLongitude(7.284129);
-		// s1.setName("Meppen");
-		// GasStation s2 = new GasStation();
-		// s2.setLatitude(52.797222);
-		// s2.setLongitude(7.865279);
-		// s2.setName("Lastrup");
-		// GasStation s3 = new GasStation();
-		// s3.setLatitude(53.169574);
-		// s3.setLongitude(8.262815);
-		// s3.setName("Oldenburg");
-		// GasStation s4 = new GasStation();
-		// s4.setLatitude(53.595844);
-		// s4.setLongitude(8.567314);
-		// s4.setName("Bremerhaven");
-
-		Vertex<GasStation> g1 = new Vertex<>(databaseHandler.getGasStation("dadfc9a7-3715-453c-af05-d1dc6354843e"));
-		Vertex<GasStation> g2 = new Vertex<>(databaseHandler.getGasStation("308733a3-f3a6-4259-a10a-8a8e08efa94e"));
-		Vertex<GasStation> g3 = new Vertex<>(databaseHandler.getGasStation("2cb609f7-cfaa-4d5e-92ad-77b593091dab"));
-		Vertex<GasStation> g4 = new Vertex<>(databaseHandler.getGasStation("f8646cfb-fb24-479b-aa96-a5a29b76000b"));
-		List<Vertex<GasStation>> route = new ArrayList<>();
-
-		// Vertex<GasStation> g1 = new Vertex<>(s1);
-		// Vertex<GasStation> g2 = new Vertex<>(s2);
-		// Vertex<GasStation> g3 = new Vertex<>(s3);
-		// Vertex<GasStation> g4 = new Vertex<>(s4);
-		// List<Vertex<GasStation>> route = new ArrayList<>();
-
-		route.add(g1);
-		route.add(g2);
-		route.add(g3);
-		route.add(g4);
-
-		DateFormatter df = new DateFormatter("dd.MM.yyyy HH:mm");
-		Date startDate = null;
-		try {
-			startDate = df.parse("20.01.2018 19:01", Locale.GERMAN);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-
-		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startDate, 7.0, 5, 15, 214.8, 100,
-				Fuel.DIESEL);
-		for(Node n : nodeRoute) {
-			log.debug(n.getValue().getId() + "Tank: " + n.getGasInTank() + " Buy: " + n.getFuelToBuy());
-		}
-		// ### TEST ENDE ###
-
-		 PredictionUpdater p = new PredictionUpdater(databaseHandler);
-		 p.start();
-		
-		 pathFinder = new PathFinder(databaseHandler);
-		 pathFinder.setup();
+		pathFinder = new PathFinder(databaseHandler);
+		pathFinder.setup();
 	}
 
 	private static void configureOutput() {

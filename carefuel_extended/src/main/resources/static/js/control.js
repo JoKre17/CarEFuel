@@ -123,7 +123,9 @@ function submitButtonPressed() {
 			route = []
 			
 			fillAmounts = []
+			fillAmounts.push(0)
 			predictedPrices = []
+			predictedPrices.push(0)
 			
 			positions = []
 			start_pos = {
@@ -168,6 +170,7 @@ function submitButtonPressed() {
 		complete : function(xhr, textStatus) {
 //			console.log(xhr.status);
 			$("#loadingScreen").fadeOut("slow");
+			$("#controlContainer").fadeOut("slow");
 		}
 	});
 

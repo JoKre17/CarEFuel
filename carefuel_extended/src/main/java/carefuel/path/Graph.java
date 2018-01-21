@@ -81,6 +81,8 @@ public class Graph<E> {
 	 * 
 	 * @param node
 	 * @param maxRange
+	 * @param fuel
+	 *            used to weight the edge distance with default fuel price
 	 * @return
 	 */
 	public PriorityQueue<Edge<E>> getNeighbours(Vertex<E> node, float maxRange, Fuel fuel) {

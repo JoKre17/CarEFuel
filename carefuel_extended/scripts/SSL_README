@@ -1,0 +1,8 @@
+
+USE password: changeit
+openssl pkcs12 -export -inkey /etc/letsencrypt/live/carefuel.chi.uni-hannover.de/privkey.pem -in /etc/letsencrypt/live/carefuel.chi.uni-hannover.de/cert.pem -out /carefuel/carefuel.p12
+
+keytool -importkeystore -deststorepass changeit -destkeystore /carefuel/carefuel.keystore -srckeystore /carefuel/carefuel.p12 -srcstoretype PKCS12 -srcstorepass changeit -destalias carefuel_crt -alias 1
+
+For verification: (PW: changeit)
+keytool -keystore /carefuel/carefuel.keystore -list

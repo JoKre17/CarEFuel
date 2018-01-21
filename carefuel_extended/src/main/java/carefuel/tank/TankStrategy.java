@@ -225,6 +225,7 @@ public class TankStrategy {
 			} else {
 				Date currentTime = nodes.get(i - 1).getArrivalTime();
 				calendar.setTime(currentTime);
+				System.out.println(nodes.get(i - 1).getValue() + " " + n.getValue());
 				int timeInMins = (int) ((indirectDistance(nodes.get(i - 1), n) / averageSpeed) * 60.0);
 				calendar.add(Calendar.MINUTE, timeInMins);
 				Date arrivalTime = calendar.getTime();

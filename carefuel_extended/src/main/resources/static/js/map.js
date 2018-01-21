@@ -98,19 +98,25 @@ function displayMarkers(positions) {
  * @returns
  */
 function calculateAndDisplayRoute(routeList) {
-	
-	var positions = routeList[0]
-	var fillAmounts = routeList[1]
-	var predictedPrices = routeList[2]
-	console.log(predictedPrices);
 
+	var positions = routeList[0]
+	
 	var waypoints = [];
 
+	var fillAmounts = []
+	fillAmounts.push(0)
+	var predictedPrices = []
+	predictedPrices.push(0)
+
 	for (var i = 1; i < positions.length - 1; i++) {
-		waypoints.push({
-			location : positions[i],
-			stopover : true
-		})
+		if(routeList[1][i] != undefined && routeList[1][i] != 0) {
+			fillAmounts.push(routeList[1][i])
+			predictedPrices.push(routeList[2][i])
+			waypoints.push({
+				location : positions[i],
+				stopover : true
+			})
+		}
 	}
 
 	directionsService.route({
@@ -137,8 +143,8 @@ function calculateAndDisplayRoute(routeList) {
 				routeInformation += '<div class="route distance">' + route.legs[i].distance.text + '</div>';
 				routeInformation += '<div class="arrow"><image src="images/arrow_down_30_50.png"></div>';
 				var fillAmountString = ""
-				if(fillAmounts[i] != undefined) {
-					fillAmountString = parseFloat(Math.round(fillAmounts[i] * 100) / 100).toFixed(2) + "l" + "\nfor " + parseFloat(Math.round(predictedPrices[i]) / 100).toFixed(2) + "€/l";
+				if(fillAmounts[i] != undefined && fillAmounts[i] != 0) {
+					fillAmountString = parseFloat(Math.round(fillAmounts[i] * 100) / 100).toFixed(2).replace('.', ',') + "l" + "\nfür " + parseFloat(Math.round(predictedPrices[i]*10) / 1000).toFixed(3).replace('.', ',') + "€/l";
 				}
 				routeInformation += '<div class="tank">' + fillAmountString + '</div>';
 				routeInformation += '</div></div>';

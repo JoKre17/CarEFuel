@@ -59,8 +59,7 @@ public class PredictionUpdater extends Thread {
 				// Fetch all gas stations from the database and update one after another
 				List<UUID> gasStationUUIDs = dbHandler.getAllGasStationIDs().stream().collect(Collectors.toList());
 				log.info("Calculating import date of database with dump file");
-				dbHandler.updateMostRecentPriceDataDate();
-				Date mostRecentDate = dbHandler.getMostRecentPriceDataDate();
+				Date mostRecentDate = dbHandler.getPredictableTimeBound().getLeft();
 				log.info("Database seems to be imported on " + mostRecentDate);
 
 				// multi threading
@@ -114,6 +113,8 @@ public class PredictionUpdater extends Thread {
 				}
 				log.info("Prediction Progress: 100 %");
 				log.info("Predictions finished.");
+
+				dbHandler.updatePredictableTimeBound();
 
 				serviceSocket.close();
 				serverSocket.close();
@@ -212,11 +213,11 @@ class PredictionWorkerThread extends Thread {
 			int dayDiff = 30;
 			try {
 				// timeDiff in milliseconds
-				for(Fuel f : Fuel.values()) {
-					if(datePriceList.get(f).size() > 0) {
-						double timeDiffForFuelType = mostRecentDate.getTime() - datePriceList.get(f)
-								.get(datePriceList.get(f).size() - 1).getLeft().getTime();
-						if(timeDiffForFuelType < timeDiff) {
+				for (Fuel f : Fuel.values()) {
+					if (datePriceList.get(f).size() > 0) {
+						double timeDiffForFuelType = mostRecentDate.getTime()
+								- datePriceList.get(f).get(datePriceList.get(f).size() - 1).getLeft().getTime();
+						if (timeDiffForFuelType < timeDiff) {
 							timeDiff = timeDiffForFuelType;
 						}
 					}
@@ -231,7 +232,8 @@ class PredictionWorkerThread extends Thread {
 					continue;
 				} else {
 					if (dayDiff != 0) {
-//						log.debug(gasStation.getId() + ": Need to predict " + (dayDiff + 30) + " days into future.");
+						// log.debug(gasStation.getId() + ": Need to predict " + (dayDiff + 30) + " days
+						// into future.");
 					}
 				}
 				firstRunPredictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
@@ -251,7 +253,8 @@ class PredictionWorkerThread extends Thread {
 			if (dayDiff > 0) {
 				// add predicted prices to historical data until the date, where the db was
 				// updated
-//				log.debug(gasStation.getId() + ": T+30 days done. Predict next " + dayDiff + " days");
+				// log.debug(gasStation.getId() + ": T+30 days done. Predict next " + dayDiff +
+				// " days");
 				List<Pair<Date, Integer>> dieselData = datePriceList.get(Fuel.DIESEL);
 				List<Pair<Date, Integer>> e10Data = datePriceList.get(Fuel.E10);
 				List<Pair<Date, Integer>> e5Data = datePriceList.get(Fuel.E5);

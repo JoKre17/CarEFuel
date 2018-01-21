@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -40,8 +41,8 @@ public class DatabaseHandler {
 	private static final Logger log = LogManager.getLogger(DatabaseHandler.class);
 
 	protected SessionFactory sessionFactory;
-	
-	private Date mostRecentPriceDataDate = new Date();
+
+	private Pair<Date, Date> predictableTimeBound = Pair.of(new Date(), new Date());
 
 	public void exit() {
 		// code to close Hibernate Session factory
@@ -191,7 +192,7 @@ public class DatabaseHandler {
 		if (temp.size() == 0) {
 			return Pair.of(date, Fuel.getDefaultPrice(fuel));
 		}
-		
+
 		GasStationPricePrediction pred = temp.iterator().next();
 
 		switch (fuel) {
@@ -247,8 +248,8 @@ public class DatabaseHandler {
 		} finally {
 			this.sessionFactory.getCurrentSession().close();
 		}
-		
-		this.updateMostRecentPriceDataDate();
+
+		this.updatePredictableTimeBound();
 	}
 
 	/**
@@ -314,10 +315,10 @@ public class DatabaseHandler {
 		return result;
 	}
 
-	public Date getMostRecentPriceDataDate() {
-		return this.mostRecentPriceDataDate;
+	public Pair<Date, Date> getPredictableTimeBound() {
+		return this.predictableTimeBound;
 	}
-	
+
 	/**
 	 * Returns the most recent date of all historic price data. Means the import
 	 * date of the dump file.
@@ -327,7 +328,56 @@ public class DatabaseHandler {
 	 * 
 	 * @return
 	 */
-	public void updateMostRecentPriceDataDate() {
+	public void updatePredictableTimeBound() {
+		/*
+		 * SELECT date FROM gas_station_information_history ORDER BY date DESC LIMIT 1;
+		 */
+		Session session = this.sessionFactory.openSession();
+		// gets the date of the most recent entry of fuel price for all gas stations
+		Query query = session
+				.createQuery("FROM " + GasStationPricePrediction.class.getSimpleName() + " ORDER BY date ASC")
+				.setMaxResults(1);
+		Optional<GasStationPricePrediction> earliestPricePrediction = query.list().stream().findFirst();
+		query = session.createQuery("FROM " + GasStationPricePrediction.class.getSimpleName() + " ORDER BY date DESC")
+				.setMaxResults(1);
+		Optional<GasStationPricePrediction> latestPricePrediction = query.list().stream().findFirst();
+
+		session.close();
+
+		Date earliestPricePredictionDate = new Date();
+		Date latestPricePredictionDate = new Date();
+		if (earliestPricePrediction.isPresent()) {
+			earliestPricePredictionDate = earliestPricePrediction.get().getDate();
+		} else {
+			log.warn("Could not fetch earliest Prediction date. No predictions in Database!");
+		}
+		if (latestPricePrediction.isPresent()) {
+			latestPricePredictionDate = latestPricePrediction.get().getDate();
+		} else {
+			log.warn("Could not fetch latest Prediction date. No predictions in Database!");
+		}
+
+		// get day of the most recent entry
+		Calendar c = Calendar.getInstance();
+		c.setTime(earliestPricePredictionDate);
+		c.set(Calendar.HOUR_OF_DAY, 0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+		earliestPricePredictionDate = c.getTime();
+		c.setTime(latestPricePredictionDate);
+		c.set(Calendar.HOUR_OF_DAY, 0);
+		c.set(Calendar.MINUTE, 0);
+		c.set(Calendar.SECOND, 0);
+		latestPricePredictionDate = c.getTime();
+
+		this.predictableTimeBound = Pair.of(earliestPricePredictionDate, latestPricePredictionDate);
+	}
+
+	public void setPredictableTimeBound(Pair<Date, Date> predictableTimeBound) {
+		this.predictableTimeBound = predictableTimeBound;
+	}
+
+	public Date getMostRecentPriceDataDate() {
 		/*
 		 * SELECT date FROM gas_station_information_history ORDER BY date DESC LIMIT 1;
 		 */
@@ -335,20 +385,22 @@ public class DatabaseHandler {
 		// gets the date of the most recent entry of fuel price for all gas stations
 		Query query = session.createQuery("FROM " + GasStationPrice.class.getSimpleName() + " ORDER BY date DESC")
 				.setMaxResults(1);
-		GasStationPrice mostRecentPriceData = (GasStationPrice) query.list().stream().findFirst().get();
+		@SuppressWarnings("unchecked")
+		Optional<GasStationPrice> mostRecentPriceData = query.list().stream().findFirst();
 		session.close();
+
+		if (!mostRecentPriceData.isPresent()) {
+			return null;
+		}
 
 		// get day of the most recent entry
 		Calendar c = Calendar.getInstance();
-		c.setTime(mostRecentPriceData.getDate());
+		c.setTime(mostRecentPriceData.get().getDate());
 		c.set(Calendar.HOUR_OF_DAY, 0);
 		c.set(Calendar.MINUTE, 0);
 		c.set(Calendar.SECOND, 0);
 
-		this.mostRecentPriceDataDate = c.getTime();
+		return c.getTime();
 	}
-	
-	public void setMostRecentPriceDataDate(Date date) {
-		this.mostRecentPriceDataDate = date;
-	}
+
 }

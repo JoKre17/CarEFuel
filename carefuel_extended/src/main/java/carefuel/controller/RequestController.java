@@ -4,12 +4,12 @@ import java.io.File;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -122,23 +122,22 @@ public class RequestController {
 			e.printStackTrace();
 		}
 
-		Date importDate = Main.databaseHandler.getMostRecentPriceDataDate();
-		Calendar c = Calendar.getInstance();
-		c.setTime(importDate);
-		c.add(Calendar.DAY_OF_MONTH, 30);
-		Date maxPredDate = c.getTime();
-		
-		log.info(df.print(importDate, Locale.GERMAN));
-		log.info(df.print(startTimeDate, Locale.GERMAN));
-		log.info(df.print(maxPredDate, Locale.GERMAN));
+		Pair<Date, Date> predictableTimeBound = Main.databaseHandler.getPredictableTimeBound();
 
-		if (startTimeDate.before(importDate) || startTimeDate.after(maxPredDate)) {
-			String importDateString = df.print(importDate, Locale.GERMAN);
-			String maxPredDateString = df.print(maxPredDate, Locale.GERMAN);
-			log.error("Requested start time before today: " + importDateString + " or after " + maxPredDateString);
+		log.info(df.print(predictableTimeBound.getLeft(), Locale.GERMAN));
+		log.info(df.print(startTimeDate, Locale.GERMAN));
+		log.info(df.print(predictableTimeBound.getRight(), Locale.GERMAN));
+
+		if (startTimeDate.before(predictableTimeBound.getLeft())
+				|| startTimeDate.after(predictableTimeBound.getRight())) {
+			String importDateString = df.print(predictableTimeBound.getLeft(), Locale.GERMAN);
+			String maxPredDateString = df.print(predictableTimeBound.getRight(), Locale.GERMAN);
+			log.error("Requested start time before: " + importDateString + " or after " + maxPredDateString);
 			return errorResponse(9002,
-					"Requested start time out of predictable bounds.\nEither before import date of database: "
-							+ importDateString + "\nOr after maximal predict date: " + maxPredDateString).toString();
+					"Angefragte Startzeit fuer die Route ist ausserhalb der vorhersagbaren Zeiten.\n"
+							+ "Die Startzeit der Route muss nach: " + importDateString + "\n"
+							+ "Order vor dem maximal vorhersagbaren Datum: " + maxPredDateString).toString()
+					+ "\n" + "sein.";
 		}
 
 		// km/h
@@ -155,7 +154,10 @@ public class RequestController {
 					averageSpeed, metric);
 		} catch (Exception e) {
 			log.error("Error while calculating route", e);
-			return errorResponse(9001, "Unable to calculate route. Graph might not be loaded yet.").toString();
+			return errorResponse(9001,
+					"Das berechnen der Route war leider nicht moeglich." + "\n"
+							+ "Möglicherweise ist der Graph noch nicht komplett geladen." + "\n"
+							+ "Versuchen sie es in 1-2 Minuten erneut.").toString();
 		}
 		log.debug("Found path in " + ((System.currentTimeMillis() - time) / 1000.0) + " seconds");
 
