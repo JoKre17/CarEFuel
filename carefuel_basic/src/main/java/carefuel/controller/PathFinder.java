@@ -6,6 +6,7 @@ import java.util.List;
 
 import carefuel.model.GasStation;
 import carefuel.util.FixedPathAlgorithm;
+import carefuel.util.NaiveTankStrategy;
 import carefuel.util.Node;
 
 /**
@@ -49,6 +50,8 @@ public class PathFinder {
 	public void computeBestPath() {
 		FixedPathAlgorithm f = new FixedPathAlgorithm(gasStations, capacity, gasConsumption);
 		bestPath = f.run();
+		NaiveTankStrategy naiveStrat = new NaiveTankStrategy(gasStations, capacity, gasConsumption);
+		naiveStrat.run();
 		if (bestPath != null) {
 			savePath();
 		}

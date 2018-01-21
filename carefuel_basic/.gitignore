@@ -4,8 +4,8 @@
 /resource/solution.txt
 /out/routes/*
 !/out/routes/README.txt
-/out/precitedPrices/*
-!/out/precitedPrices/README.txt
+/out/pricePrediction/*
+!/out/pricePrediction/README.txt
 .settings
 .classpath
 bin/
