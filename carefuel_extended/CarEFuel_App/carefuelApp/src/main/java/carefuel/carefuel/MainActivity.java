@@ -23,8 +23,13 @@ public class MainActivity extends AppCompatActivity {
         WebSettings webSettings = this.webView.getSettings();
         webSettings.setJavaScriptEnabled(true);
         this.webView.loadUrl(this.url);
-        this.webView.setWebViewClient(new WebViewClient());
+        this.webView.setWebViewClient(new WebViewClient(){
 
+            @Override
+            public void onReceivedSslError (WebView view, SslErrorHandler handler, SslError error) {
+                handler.proceed();
+            }
+        });
     }
 
     @Override
