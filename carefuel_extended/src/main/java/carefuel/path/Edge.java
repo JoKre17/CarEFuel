@@ -2,7 +2,7 @@ package carefuel.path;
 
 /**
  * Generic Edge class defining the connection between two Vertices
- * 
+ *
  * @author josef
  *
  * @param <E>
@@ -49,10 +49,10 @@ public class Edge<E> implements Comparable<Edge<E>> {
 	}
 
 	/**
-	 * returns the cost of this edge depending on x x should be between 0 and 1, so
-	 * that in case of 0 the function returns only the distance and in case of 1 it
-	 * applies the full weight on the edge
-	 * 
+	 * returns the cost of this edge depending on x x should be between 0 and 1,
+	 * so that in case of 0 the function returns only the distance and in case
+	 * of 1 it applies the full weight on the edge
+	 *
 	 * @param x
 	 * @return
 	 */

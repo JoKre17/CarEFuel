@@ -56,7 +56,8 @@ public class PredictionUpdater extends Thread {
 				Socket serviceSocket = serverSocket.accept();
 				log.info("Starting to update price predictions");
 
-				// Fetch all gas stations from the database and update one after another
+				// Fetch all gas stations from the database and update one after
+				// another
 				List<UUID> gasStationUUIDs = dbHandler.getAllGasStationIDs().stream().collect(Collectors.toList());
 				log.info("Calculating import date of database with dump file");
 				Date mostRecentDate = dbHandler.getPredictableTimeBound().getLeft();
@@ -126,7 +127,7 @@ public class PredictionUpdater extends Thread {
 
 	/**
 	 * Returns true, if the PredictionUpdater is actual updating the Predictions
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isRunning() {
@@ -139,9 +140,9 @@ public class PredictionUpdater extends Thread {
 	}
 
 	/**
-	 * Returns 1 if the last update is finished and between 0 and 1, if there is an
-	 * Update in Progress
-	 * 
+	 * Returns 1 if the last update is finished and between 0 and 1, if there is
+	 * an Update in Progress
+	 *
 	 * @return
 	 */
 	public double getProgress() {
@@ -232,7 +233,8 @@ class PredictionWorkerThread extends Thread {
 					continue;
 				} else {
 					if (dayDiff != 0) {
-						// log.debug(gasStation.getId() + ": Need to predict " + (dayDiff + 30) + " days
+						// log.debug(gasStation.getId() + ": Need to predict " +
+						// (dayDiff + 30) + " days
 						// into future.");
 					}
 				}
@@ -251,9 +253,11 @@ class PredictionWorkerThread extends Thread {
 
 			// calculate until 30 days into future
 			if (dayDiff > 0) {
-				// add predicted prices to historical data until the date, where the db was
+				// add predicted prices to historical data until the date, where
+				// the db was
 				// updated
-				// log.debug(gasStation.getId() + ": T+30 days done. Predict next " + dayDiff +
+				// log.debug(gasStation.getId() + ": T+30 days done. Predict
+				// next " + dayDiff +
 				// " days");
 				List<Pair<Date, Integer>> dieselData = datePriceList.get(Fuel.DIESEL);
 				List<Pair<Date, Integer>> e10Data = datePriceList.get(Fuel.E10);
@@ -263,14 +267,16 @@ class PredictionWorkerThread extends Thread {
 				firstRunPredictions.stream().sorted((a, b) -> a.getDate().compareTo(b.getDate())).forEach(pred -> {
 
 					/*
-					 * if last date of historic price data was until e.g. 10 days before
-					 * mostRecentDate (last import date from dump file), then we also want to
-					 * predict until 30 days into future FROM mostRecentDate.
-					 * 
+					 * if last date of historic price data was until e.g. 10
+					 * days before mostRecentDate (last import date from dump
+					 * file), then we also want to predict until 30 days into
+					 * future FROM mostRecentDate.
+					 *
 					 * So (mostRecentDate + 30 days) is the aim.
-					 * 
-					 * Therefore we have to add the predicted data of the next 10 days to the
-					 * history data to predict the 30 days, after these 10 days.
+					 *
+					 * Therefore we have to add the predicted data of the next
+					 * 10 days to the history data to predict the 30 days, after
+					 * these 10 days.
 					 */
 					if (pred.getDate().getTime() < mostRecentDate.getTime()) {
 						dieselData.add(Pair.of(pred.getDate(), pred.getDiesel()));
@@ -285,7 +291,8 @@ class PredictionWorkerThread extends Thread {
 				} catch (Exception e) {
 					log.debug(e);
 
-					// Catches if there is none or too less data for the gasStation
+					// Catches if there is none or too less data for the
+					// gasStation
 					log.warn("Little or none historical price data for gas station with id "
 							+ gasStation.getId().toString());
 
@@ -303,9 +310,9 @@ class PredictionWorkerThread extends Thread {
 
 	/**
 	 * This function can be used to create a new price prediction of a given gas
-	 * station containing only constant prices. That may be necessary in case the
-	 * prediction process is erroneous.
-	 * 
+	 * station containing only constant prices. That may be necessary in case
+	 * the prediction process is erroneous.
+	 *
 	 * @param gasStation
 	 * @param startDate
 	 * @return

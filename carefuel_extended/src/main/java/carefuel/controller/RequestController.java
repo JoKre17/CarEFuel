@@ -203,13 +203,14 @@ public class RequestController {
 		}
 
 		/*
-		 * for (Vertex<GasStation> v : route) { GasStation station = v.getValue();
-		 * JSONObject stop = new JSONObject();
+		 * for (Vertex<GasStation> v : route) { GasStation station =
+		 * v.getValue(); JSONObject stop = new JSONObject();
 		 *
-		 * JSONObject loc = new JSONObject(); loc.put("lat", station.getLatitude());
-		 * loc.put("lng", station.getLongitude());
+		 * JSONObject loc = new JSONObject(); loc.put("lat",
+		 * station.getLatitude()); loc.put("lng", station.getLongitude());
 		 *
-		 * stop.put("id", station.getId().toString()); stop.put("location", loc);
+		 * stop.put("id", station.getId().toString()); stop.put("location",
+		 * loc);
 		 *
 		 * path.put(stop); }
 		 */

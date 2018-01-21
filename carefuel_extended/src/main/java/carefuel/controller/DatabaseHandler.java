@@ -68,7 +68,7 @@ public class DatabaseHandler {
 	/**
 	 * retrieves all IDs of gasStations. Used to avoid memory overflow while
 	 * iterating over all gasStations with lazy relation loading
-	 * 
+	 *
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
@@ -208,8 +208,8 @@ public class DatabaseHandler {
 	}
 
 	/**
-	 * truncates the whole prediction table and inserts all predictions of the set
-	 * of predictions
+	 * truncates the whole prediction table and inserts all predictions of the
+	 * set of predictions
 	 *
 	 * @param predictedPrices
 	 *            all predicted prices of all gas stations
@@ -268,9 +268,9 @@ public class DatabaseHandler {
 	}
 
 	/**
-	 * retrieves all historic prices for a given uuid of a gasStation in sorted oder
-	 * from oldest beginning to newest date
-	 * 
+	 * retrieves all historic prices for a given uuid of a gasStation in sorted
+	 * oder from oldest beginning to newest date
+	 *
 	 * @param uuid
 	 *            gasStation id
 	 * @return
@@ -322,18 +322,20 @@ public class DatabaseHandler {
 	/**
 	 * Returns the most recent date of all historic price data. Means the import
 	 * date of the dump file.
-	 * 
+	 *
 	 * TODO This function could be replaced later on by a properties file, which
 	 * gets updated, when the database is updated
-	 * 
+	 *
 	 * @return
 	 */
 	public void updatePredictableTimeBound() {
 		/*
-		 * SELECT date FROM gas_station_information_history ORDER BY date DESC LIMIT 1;
+		 * SELECT date FROM gas_station_information_history ORDER BY date DESC
+		 * LIMIT 1;
 		 */
 		Session session = this.sessionFactory.openSession();
-		// gets the date of the most recent entry of fuel price for all gas stations
+		// gets the date of the most recent entry of fuel price for all gas
+		// stations
 		Query query = session
 				.createQuery("FROM " + GasStationPricePrediction.class.getSimpleName() + " ORDER BY date ASC")
 				.setMaxResults(1);
@@ -379,10 +381,12 @@ public class DatabaseHandler {
 
 	public Date getMostRecentPriceDataDate() {
 		/*
-		 * SELECT date FROM gas_station_information_history ORDER BY date DESC LIMIT 1;
+		 * SELECT date FROM gas_station_information_history ORDER BY date DESC
+		 * LIMIT 1;
 		 */
 		Session session = this.sessionFactory.openSession();
-		// gets the date of the most recent entry of fuel price for all gas stations
+		// gets the date of the most recent entry of fuel price for all gas
+		// stations
 		Query query = session.createQuery("FROM " + GasStationPrice.class.getSimpleName() + " ORDER BY date DESC")
 				.setMaxResults(1);
 		@SuppressWarnings("unchecked")
