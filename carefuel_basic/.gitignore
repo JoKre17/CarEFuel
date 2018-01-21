@@ -13,3 +13,4 @@ dependency-reduced-pom.xml
 /target/*
 
 !/target/carefuel_basic.jar
+/target/

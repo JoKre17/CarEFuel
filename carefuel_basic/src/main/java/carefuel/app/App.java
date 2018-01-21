@@ -33,7 +33,8 @@ public class App {
 
 	/**
 	 *
-	 * Main-method, the programs entry point.
+	 * Main-method, the programs entry point. Allows specification of paths to
+	 * necessary files and directories. Chooses the operation to execute.
 	 *
 	 * @param args
 	 */
@@ -86,9 +87,9 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction and
-	 * returns the choosen route file or returns null if the user selected to
-	 * predict gasoline prices.
+	 * Function that allows the user to choose a file via console interaction
+	 * and returns the choosen route file or returns null if the user selected
+	 * to predict gasoline prices.
 	 *
 	 * @return file to parse
 	 */
@@ -137,8 +138,8 @@ public class App {
 	}
 
 	/**
-	 * Function that allows the user to choose a file via console interaction and
-	 * returns the choosen gasoline price file.
+	 * Function that allows the user to choose a file via console interaction
+	 * and returns the choosen gasoline price file.
 	 *
 	 * @return file to parse
 	 */
