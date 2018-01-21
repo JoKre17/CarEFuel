@@ -47,8 +47,8 @@ public class TankStrategy {
 
 	/**
 	 * Function that computes the tanking strategy for the given route. The
-	 * algorithms is an implementation of the fixed-path gas station problem
-	 * given in "to fill or not to fill" (accessible at
+	 * algorithms is an implementation of the fixed-path gas station problem given
+	 * in "to fill or not to fill" (accessible at
 	 * https://dl.acm.org/citation.cfm?id=1978791)
 	 *
 	 * @param path
@@ -148,8 +148,8 @@ public class TankStrategy {
 	}
 
 	/**
-	 * Method that is called to examine the best tanking behavior between two
-	 * break points
+	 * Method that is called to examine the best tanking behavior between two break
+	 * points
 	 *
 	 * @param from
 	 * @param to
@@ -237,7 +237,7 @@ public class TankStrategy {
 			} else {
 				Date currentTime = nodes.get(i - 1).getArrivalTime();
 				calendar.setTime(currentTime);
-				System.out.println(nodes.get(i - 1).getValue() + " " + n.getValue());
+
 				int timeInMins = (int) ((indirectDistance(nodes.get(i - 1), n) / averageSpeed) * 60.0);
 				calendar.add(Calendar.MINUTE, timeInMins);
 				Date arrivalTime = calendar.getTime();
@@ -273,8 +273,7 @@ public class TankStrategy {
 	}
 
 	/**
-	 * Direct distance between two nodes in km computed by the great-circle
-	 * distance
+	 * Direct distance between two nodes in km computed by the great-circle distance
 	 *
 	 * @param n1
 	 * @param n2
@@ -291,8 +290,8 @@ public class TankStrategy {
 	}
 
 	/**
-	 * Computes the indirect distance between two not necessarily directly
-	 * connected gas stations.
+	 * Computes the indirect distance between two not necessarily directly connected
+	 * gas stations.
 	 *
 	 * @param n1
 	 * @param n2
