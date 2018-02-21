@@ -3,6 +3,8 @@ package carefuel.path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -75,6 +77,16 @@ public class Graph<E> {
 	public float[][] getDistances() {
 		return distances;
 	}
+	
+	private <E> PriorityQueue<E> clone(PriorityQueue<E> priorityQueue) {
+		PriorityQueue<E> answer = new PriorityQueue<>();
+		
+		for(E e : priorityQueue) {
+			answer.add(e);
+		}
+		
+	    return answer;
+	}
 
 	/**
 	 * Returns the neighbours of a vertex depending on the range given by the
@@ -86,7 +98,7 @@ public class Graph<E> {
 	 *            used to weight the edge distance with default fuel price
 	 * @return
 	 */
-	public PriorityQueue<Edge<E>> getNeighbours(Vertex<E> node, float maxRange, Fuel fuel) {
+	synchronized public List<Edge<E>> getNeighbours(Vertex<E> node, float maxRange, Fuel fuel) {
 
 		PriorityQueue<Edge<E>> neighbours = node.getNeighbours();
 		// Try to use already computed neighbours
@@ -97,7 +109,7 @@ public class Graph<E> {
 			if (neighbours.stream().map(e -> e.getDistance()).max(Double::compareTo).get() > maxRange) {
 				PriorityQueue<Edge<E>> p = new PriorityQueue<>(new EdgeComparator<>());
 				p.addAll(neighbours.stream().filter(e -> e.getDistance() <= maxRange).collect(Collectors.toList()));
-				return p;
+				return p.stream().collect(Collectors.toList());
 			}
 		}
 
@@ -127,9 +139,11 @@ public class Graph<E> {
 			}
 		}
 
-		return neighbours;
+		return clone(neighbours).stream().collect(Collectors.toList());
 	}
 
+	private ReadWriteLock lock = new ReentrantReadWriteLock();
+	
 	/**
 	 * Creates a Vertex by value only if there is no vertex containing the same
 	 * value
@@ -138,10 +152,14 @@ public class Graph<E> {
 	 * @return
 	 */
 	public Vertex<E> getVertexByValue(E value) {
+		lock.readLock().lock();
 		Vertex<E> vertex = vertices.stream().filter(v -> v.getValue().equals(value)).findFirst().orElse(null);
+		lock.readLock().unlock();
 		if (vertex == null) {
 			vertex = new Vertex<E>(value);
+			lock.writeLock().lock();
 			this.vertices.add(vertex);
+			lock.writeLock().unlock();
 		}
 		return vertex;
 	}

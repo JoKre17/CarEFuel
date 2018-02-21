@@ -1,0 +1,2 @@
+-- deletes all gas stations which dont have predictions
+delete from gas_station where id in (select id from gas_station except select distinct stid as id from gas_station_information_prediction group by id);

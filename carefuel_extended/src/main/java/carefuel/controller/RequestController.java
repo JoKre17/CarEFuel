@@ -128,16 +128,20 @@ public class RequestController {
 		log.info(df.print(startTimeDate, Locale.GERMAN));
 		log.info(df.print(predictableTimeBound.getRight(), Locale.GERMAN));
 
-		if (startTimeDate.before(predictableTimeBound.getLeft())
-				|| startTimeDate.after(predictableTimeBound.getRight())) {
-			String importDateString = df.print(predictableTimeBound.getLeft(), Locale.GERMAN);
-			String maxPredDateString = df.print(predictableTimeBound.getRight(), Locale.GERMAN);
-			log.error("Requested start time before: " + importDateString + " or after " + maxPredDateString);
-			return errorResponse(9002,
-					"Angefragte Startzeit fuer die Route ist ausserhalb der vorhersagbaren Zeiten.\n"
-							+ "Die Startzeit der Route muss nach: " + importDateString + "\n"
-							+ "Order vor dem maximal vorhersagbaren Datum: " + maxPredDateString).toString()
-					+ "\n" + "sein.";
+		
+		if(metric > 0) {
+			// check if the predictions allow the requested start time
+			if (startTimeDate.before(predictableTimeBound.getLeft())
+					|| startTimeDate.after(predictableTimeBound.getRight())) {
+				String importDateString = df.print(predictableTimeBound.getLeft(), Locale.GERMAN);
+				String maxPredDateString = df.print(predictableTimeBound.getRight(), Locale.GERMAN);
+				log.error("Requested start time before: " + importDateString + " or after " + maxPredDateString);
+				return errorResponse(9002,
+						"Angefragte Startzeit fuer die Route ist ausserhalb der vorhersagbaren Zeiten.\n"
+								+ "Die Startzeit der Route muss nach: " + importDateString + "\n"
+								+ "Order vor dem maximal vorhersagbaren Datum: " + maxPredDateString).toString()
+						+ "\n" + "sein.";
+			}
 		}
 
 		// km/h

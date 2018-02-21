@@ -9,8 +9,15 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
@@ -33,10 +40,11 @@ public class PathFinder {
 	private static final Logger log = LogManager.getLogger(PathFinder.class);
 
 	private DatabaseHandler dbHandler;
-
 	private Graph<GasStation> graph;
 
 	private Function<Vertex<GasStation>, Number> heuristic;
+	private final int N_THREADS = Runtime.getRuntime().availableProcessors() * 4;
+	private ExecutorService es = Executors.newFixedThreadPool(N_THREADS);
 
 	public PathFinder(DatabaseHandler dbHandler) {
 
@@ -48,6 +56,8 @@ public class PathFinder {
 	 * Setup the PathFinder. Basically only loading the graph
 	 */
 	public void setup() {
+		log.info("Parallelization of A* Algorithm with " + N_THREADS);
+
 		// load the graph in background
 		double startTime = System.currentTimeMillis();
 		loadGraph();
@@ -60,13 +70,20 @@ public class PathFinder {
 	 * loads the graph necessary for the pathfinding algorithmus
 	 */
 	private void loadGraph() {
-		this.graph = loadGraphFromDatabase();
+		try {
+			this.graph = loadGraphFromDatabase();
+		} catch (InterruptedException | ExecutionException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
 	 * Loads the graph from database with fetching all GasStations
+	 * 
+	 * @throws ExecutionException
+	 * @throws InterruptedException
 	 */
-	private Graph<GasStation> loadGraphFromDatabase() {
+	private Graph<GasStation> loadGraphFromDatabase() throws InterruptedException, ExecutionException {
 		log.info("Loading Graph from Database");
 
 		log.info("Fetching all stations from database.");
@@ -86,44 +103,131 @@ public class PathFinder {
 
 		log.info("Building all vertices and edges for each station.");
 		double buildStartTime = System.currentTimeMillis();
+
+		final int AMOUNT_STATIONS = graphMap.length;
+
+		final int[] INDEX_SPLITTINGS = IntStream.rangeClosed(0, N_THREADS)
+				.mapToDouble(i -> (i / (double) N_THREADS) * AMOUNT_STATIONS).mapToInt(d -> (int) d).toArray();
+		CompletableFuture<?>[] completables = new CompletableFuture<?>[N_THREADS];
+		final List<Double> processes = new ArrayList<>();
+		IntStream.range(0, N_THREADS).forEach(i -> processes.add(0.0));
+
+		// calculate one directional distances (1/2 of the matrix)
+		for (int i = 0; i < (INDEX_SPLITTINGS.length - 1); i++) {
+			final int index = i;
+			log.debug(index + ": " + INDEX_SPLITTINGS[index] + " -> " + INDEX_SPLITTINGS[index + 1]);
+			completables[index] = CompletableFuture.runAsync(() -> {
+				IntStream.range(INDEX_SPLITTINGS[index], INDEX_SPLITTINGS[index + 1]).forEach(j -> {
+					double lat_a = graphMap[j][0];
+					double lon_a = graphMap[j][1];
+
+					// distances from vertex i to all other vertices
+					float[] neighbourDistances = distances[j];
+
+					// distance to itself is 0
+					neighbourDistances[j] = 0.0F;
+
+					// distances which are not yet calculated
+					for (int k = j; k < graphMap.length; k++) {
+
+						double lat_b = graphMap[k][0];
+						double lon_b = graphMap[k][1];
+
+						neighbourDistances[k] = (float) (GasStation.computeDistanceToGasStation(lat_a, lon_a, lat_b,
+								lon_b));
+
+					}
+
+					distances[j] = neighbourDistances;
+
+					// log.info("Thread " + index + ": " + ((j - INDEX_SPLITTINGS[index]) / (double)
+					// (INDEX_SPLITTINGS[index + 1] - INDEX_SPLITTINGS[index])));
+					processes.set(index, (j - INDEX_SPLITTINGS[index])
+							/ (double) (INDEX_SPLITTINGS[index + 1] - INDEX_SPLITTINGS[index]));
+				});
+
+			}, es);
+		}
+
+		// wait until all one directional distances are calculated and print process
+		// every 10%
 		int perc = 0;
-		// for each gasstation read lat lon
-		for (int i = 0; i < graphMap.length; i++) {
-
-			double lat_a = graphMap[i][0];
-			double lon_a = graphMap[i][1];
-
-			// distances from vertex i to all other vertices
-			float[] neighbourDistances = distances[i];
-
-			// copy symmetrical values
-			// needs more RAM but makes faster recalls of neighbours
-			for (int j = 0; j < i + 1; j++) {
-				neighbourDistances[j] = distances[j][i];
+		while (true) {
+			double overallProcess = 0;
+			for (double p : processes) {
+				overallProcess += (p / N_THREADS);
 			}
 
-			// distance to itself is 0
-			neighbourDistances[i] = 0.0F;
-
-			// distances which are not yet calculated
-			for (int j = i; j < graphMap.length; j++) {
-
-				double lat_b = graphMap[j][0];
-				double lon_b = graphMap[j][1];
-
-				neighbourDistances[j] = (float) (GasStation.computeDistanceToGasStation(lat_a, lon_a, lat_b, lon_b));
-
-			}
-
-			distances[i] = neighbourDistances;
-
-			// prints the actual progress every 10%
-			if (((int) ((double) (i) / amountStations * 100)) > perc) {
-				log.info("Vertices: " + perc + " %");
+			// log.info(overallProcess);
+			if ((overallProcess * 100) > perc) {
+				log.info("Distances calculated:  " + perc + " %");
 				perc += 10;
 			}
+
+			boolean allDone = true;
+			for (CompletableFuture<?> f : completables) {
+				if (!f.isDone()) {
+					allDone = false;
+					break;
+				}
+			}
+			if (allDone) {
+				break;
+			}
+
+			Thread.sleep(100);
 		}
-		log.info("Vertices: " + perc + " %");
+		log.info("Distances calculated: 100 %");
+
+		// Copy symmetrical values
+		for (int i = 0; i < (INDEX_SPLITTINGS.length - 1); i++) {
+			final int index = i;
+			// System.out.println(index + ": " + PERCENTAGE_MSG_STEP_INDICES_2[index] + " ->
+			// "
+			// + PERCENTAGE_MSG_STEP_INDICES_2[index + 1]);
+			completables[index] = CompletableFuture.runAsync(() -> {
+				IntStream.range(INDEX_SPLITTINGS[index], INDEX_SPLITTINGS[index + 1]).forEach(j -> {
+					// distances from vertex i to all other vertices
+					float[] neighbourDistances = distances[j];
+
+					// copy symmetrical distances
+					for (int k = 0; k < j + 1; k++) {
+						neighbourDistances[k] = distances[k][j];
+					}
+
+					distances[j] = neighbourDistances;
+				});
+
+			}, es);
+		}
+
+		// wait until all symmetrical distances are copied and print process every 10%
+		perc = 0;
+		while (true) {
+			double overallProcess = 0;
+			for (double p : processes) {
+				overallProcess += (p / N_THREADS);
+			}
+
+			if ((overallProcess * 100) > perc) {
+				log.info("Distances copied:  " + perc + " %");
+				perc += 10;
+			}
+
+			boolean allDone = true;
+			for (CompletableFuture<?> f : completables) {
+				if (!f.isDone()) {
+					allDone = false;
+					break;
+				}
+			}
+			if (allDone) {
+				break;
+			}
+
+			Thread.sleep(100);
+		}
+		log.info("Distances copied: 100 %");
 
 		// fetch new copy => maybe ram gets cleared ?
 		Graph<GasStation> graph = null;
@@ -144,16 +248,17 @@ public class PathFinder {
 	 * So far fix heuristic not depending on anything else. Could be overridden
 	 * later
 	 *
-	 * Contains default A* heuristic: Absolute cost to get to VERTEX + assumed
-	 * cost to get from VERTEX to GOAL
+	 * Contains default A* heuristic: Absolute cost to get to VERTEX + assumed cost
+	 * to get from VERTEX to GOAL
 	 *
 	 * @param heuristicMap
 	 * @return
 	 */
-	public <E> Function<Vertex<E>, Number> buildHeuristic(Map<Vertex<E>, Double> heuristicMap) {
+	public <E> Function<Vertex<E>, Number> buildHeuristic(Map<Vertex<E>, Double> heuristicMap,
+			Map<Vertex<E>, Double> gCosts) {
 
 		return (vertex) -> {
-			return vertex.getGCost() + heuristicMap.get(vertex);
+			return gCosts.get(vertex) + heuristicMap.get(vertex);
 		};
 	}
 
@@ -161,13 +266,13 @@ public class PathFinder {
 	 * Explorative A* Algorithm to solve the Gas Station Problem ("extended")
 	 *
 	 * The algorithmus is capable of using the predicted prices for the specific
-	 * arrival time at each gas station including the selection of one of the
-	 * three Fuel types (Diesel, E5, E10)
+	 * arrival time at each gas station including the selection of one of the three
+	 * Fuel types (Diesel, E5, E10)
 	 *
-	 * Calculates the best path from start GasStation to end GasStation
-	 * depending on maxRange (what GasStations are reachable from another
-	 * GasStation), how fast the average travel speed is and the value x,
-	 * specifying the bridge between the shortest and the cheapest path.
+	 * Calculates the best path from start GasStation to end GasStation depending on
+	 * maxRange (what GasStations are reachable from another GasStation), how fast
+	 * the average travel speed is and the value x, specifying the bridge between
+	 * the shortest and the cheapest path.
 	 *
 	 *
 	 * 0 => shortest path
@@ -187,66 +292,122 @@ public class PathFinder {
 	public List<Vertex<GasStation>> explorativeAStar(String startUUID, String endUUID, Date startTime, int tankLevel,
 			Fuel gasType, float maxRange, float averageSpeed, float x) throws Exception {
 
-		List<GasStation> allStations = graph.getValues();
-		GasStation start = allStations.stream().filter(s -> s.getId().toString().equals(startUUID)).findFirst().get();
-		GasStation end = allStations.stream().filter(s -> s.getId().toString().equals(endUUID)).findFirst().get();
-		// find start and end GasStations
-
-		// 0 < x < 1
-		x = (float) Math.max(0.0, Math.min(x, 1.0));
-
-		PriorityQueue<Vertex<GasStation>> open = new PriorityQueue<>(new VertexComparator<GasStation>());
-		List<Vertex<GasStation>> closed = new ArrayList<>();
+		// INITIATE ALGORITHM VARIABLES
 
 		// Build heuristic map without database
-		Map<Vertex<GasStation>, Double> heuristicMap = new HashMap<>();
-		Map<Vertex<GasStation>, Date> arriveTimes = new HashMap<>();
-		Map<Vertex<GasStation>, Vertex<GasStation>> predecessorMap = new HashMap<>();
+		// ConcurrentMap<Vertex<GasStation>, Double> heuristicMap = new
+		// ConcurrentHashMap<>();
+		ConcurrentMap<Vertex<GasStation>, Date> arriveTimes = new ConcurrentHashMap<>();
+		ConcurrentMap<Vertex<GasStation>, Vertex<GasStation>> predecessorMap = new ConcurrentHashMap<>();
+		ConcurrentMap<Vertex<GasStation>, Double> gCosts = new ConcurrentHashMap<>();
+		ConcurrentMap<Vertex<GasStation>, Double> hCosts = new ConcurrentHashMap<>();
+		Map<Vertex<GasStation>, List<Pair<Date, Integer>>> predictionPreservationMap = new HashMap<>();
 
-		// build heurstic, later fetch it from the database
+		List<GasStation> allStations = graph.getValues();
+
+		PriorityBlockingQueue<Vertex<GasStation>> open = new PriorityBlockingQueue<>((int) (allStations.size() / 2.0), new VertexComparator<GasStation>(hCosts));
+		List<Vertex<GasStation>> closed = new ArrayList<>();
+
+
+		// find start and end GasStations
+		GasStation start = allStations.stream().filter(s -> s.getId().toString().equals(startUUID)).findFirst().get();
+		GasStation end = allStations.stream().filter(s -> s.getId().toString().equals(endUUID)).findFirst().get();
+
+		// calculate the relevant dates (26 Hours from 2h before startTime until 24h
+		// into future. Noone needs >24 hours through Germany)
+		Calendar c = Calendar.getInstance();
+		c.setTime(startTime);
+		c.add(Calendar.HOUR_OF_DAY, -2);
+		Date earliestRelevantDate = c.getTime();
+		c.setTime(startTime);
+		c.add(Calendar.HOUR_OF_DAY, 24);
+		Date latestRelevantDate = c.getTime();
+
+		final double DISTANCE_TO_DRIVE = GasStation.computeDistanceBetweenGasStations(start, end);
+		final int MAX_ITERATIONS = (int) ((DISTANCE_TO_DRIVE / maxRange) * 4);
+		log.debug("Calculating maximal iterations: " + MAX_ITERATIONS);
+
+		// 0 < x < 1
+		final float bordered_x = (float) Math.max(0.0, Math.min(x, 1.0));
+
+		// define distance to end gasStation when the algorithm straight drives to goal
+		double MIN_RANGE_TO_END = 0.0;
+		if (x > 0) {
+			// 1% of distance between start and end, minimum is 3 and capped at maxRange
+			MIN_RANGE_TO_END = Math.min(maxRange, Math.max(3.0, 0.01 * DISTANCE_TO_DRIVE));
+			log.debug("Using advanced algorithm with x>0 until " + MIN_RANGE_TO_END + " km to destination");
+		}
+
 		float[][] distances = graph.getDistances();
-		List<GasStation> stations = graph.getValues();
 		// log.info("Build heuristic values");
 		double curTime = System.currentTimeMillis();
 
-		List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(end.getId(), gasType);
-		for (int i = 0; i < stations.size(); i++) {
-			// x > 0 means the fuel prices weight into the edges of the graph
-			// therefore it is necessary to give the heuristic also weighted
-			// values for each
-			// station
-			if (x > 0) {
-				long arrivalTimeLong = new Date(
-						(long) (startTime.getTime() + distances[i][stations.indexOf(end)] / averageSpeed)).getTime();
+		List<Pair<Date, Integer>> predictions = dbHandler.getPricePredictionBetweenDates(end.getId(), gasType,
+				earliestRelevantDate, latestRelevantDate);
 
-				// Diesel : 1109 means 1.109 euro. Therefore 1109 is given in
-				// "centicent"
-				int pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
-					@Override
-					public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
-						long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
-						long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
-						return Long.compare(diff1, diff2);
+		final int AMOUNT_STATIONS = allStations.size();
+
+		final int[] INDEX_SPLITTINGS = IntStream.rangeClosed(0, N_THREADS)
+				.mapToDouble(i -> (i / (double) N_THREADS) * AMOUNT_STATIONS).mapToInt(d -> (int) d).toArray();
+		CompletableFuture<?>[] completables = new CompletableFuture<?>[N_THREADS];
+
+		final boolean X_GREATER_ZERO = bordered_x > 0;
+
+		// parallel calculation of heuristical values from each station to endStation
+		for (int i = 0; i < (INDEX_SPLITTINGS.length - 1); i++) {
+			final int index = i;
+			log.debug(index + ": " + INDEX_SPLITTINGS[index] + " -> " + INDEX_SPLITTINGS[index + 1]);
+			completables[index] = CompletableFuture.runAsync(() -> {
+				IntStream.range(INDEX_SPLITTINGS[index], INDEX_SPLITTINGS[index + 1]).forEach(j -> {
+					// x > 0 means the fuel prices weight into the edges of the graph
+					// therefore it is necessary to give the heuristic also weighted
+					// values for each
+					// station
+					if (X_GREATER_ZERO) {
+						long arrivalTimeLong = new Date(
+								(long) (startTime.getTime() + distances[j][allStations.indexOf(end)] / averageSpeed))
+										.getTime();
+
+						// Diesel : 1109 means 1.109 euro. Therefore 1109 is given in
+						// "centicent"
+						int pricePredictionInCentiCent = Collections
+								.min(predictions, new Comparator<Pair<Date, Integer>>() {
+									@Override
+									public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
+										long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
+										long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
+										return Long.compare(diff1, diff2);
+									}
+								}).getRight();
+
+						double pricePredictionEuro = pricePredictionInCentiCent / 1000.0;
+
+						double hValue = distances[j][allStations.indexOf(end)]
+								* (1.0 + (pricePredictionEuro - 1.0) * bordered_x);
+						hCosts.put(graph.getVertexByValue(allStations.get(j)), hValue);
+					} else {
+						hCosts.put(graph.getVertexByValue(allStations.get(j)),
+								(double) distances[j][allStations.indexOf(end)]);
 					}
-				}).getRight();
+				});
 
-				double pricePredictionEuro = pricePredictionInCentiCent / 1000.0;
-
-				double hValue = distances[i][stations.indexOf(end)] * (1.0 + (pricePredictionEuro - 1.0) * x);
-				heuristicMap.put(graph.getVertexByValue(stations.get(i)), hValue);
-			} else {
-				heuristicMap.put(graph.getVertexByValue(stations.get(i)), (double) distances[i][stations.indexOf(end)]);
-			}
+			}, es);
 		}
+
+		for (CompletableFuture<?> f : completables) {
+			f.get();
+		}
+
 		log.info("Built heuristic in " + ((System.currentTimeMillis() - curTime) / 1000.0) + " s");
 
 		// use default heuristic
-		heuristic = buildHeuristic(heuristicMap);
+		heuristic = buildHeuristic(hCosts, gCosts);
 
 		// initiate the A Star algorithm
 		Vertex<GasStation> startNode = graph.getVertexByValue(start);
-		startNode.setGCost(0);
-		startNode.setHCost(heuristicMap.get(startNode));
+		Vertex<GasStation> endNode = graph.getVertexByValue(end);
+		gCosts.put(startNode, 0.0);
+		// hCosts.put(startNode, heuristicMap.get(startNode));
 		open.add(startNode);
 		arriveTimes.put(startNode, startTime);
 
@@ -256,9 +417,15 @@ public class PathFinder {
 
 		while (!open.isEmpty()) {
 			log.debug("Iteration " + closed.size());
-			// log.info(open.size() + " nodes left to discover.");
+//			 log.info(open.size() + " nodes left to discover.");
+
+			// break due to too many calculations and therefore fail the algorithm
+			if (closed.size() > MAX_ITERATIONS) {
+				break;
+			}
 
 			currentNode = open.poll();
+			final Vertex<GasStation> finalCurrentNode = currentNode;
 
 			double distanceToDest = GasStation.computeDistanceToGasStation(currentNode.getValue().getLatitude(),
 					currentNode.getValue().getLongitude(), end.getLatitude(), end.getLongitude());
@@ -270,32 +437,35 @@ public class PathFinder {
 			}
 
 			// For each neighbour of currentNode
+
 			// expand currentNode
-			PriorityQueue<Edge<GasStation>> neighbours = graph.getNeighbours(currentNode, maxRange, gasType);
-			// log.debug("Looking at " + neighbours.size() + " neighbours.");
-			for (Edge<GasStation> e : neighbours) {
+			List<Edge<GasStation>> neighbours = graph.getNeighbours(currentNode, maxRange, gasType);
+			 log.debug("Looking at " + neighbours.size() + " neighbours.");
 
-				Vertex<GasStation> successor = e.getTo();
-
-				// if already visited
-				if (closed.contains(successor)) {
-					continue;
+			// stop if close enough to prevent algorithm from too many calculations
+			if (distanceToDest < MIN_RANGE_TO_END) {
+				predecessorMap.put(graph.getVertexByValue(end), currentNode);
+				Edge<GasStation> edgeToEnd = null;
+				for (Edge<GasStation> e : neighbours) {
+					if (e.getTo().equals(endNode)) {
+						edgeToEnd = e;
+						break;
+					}
 				}
 
 				// calculate arrival time at successor
 				Date currentTime = arriveTimes.get(currentNode);
 				calendar.setTime(currentTime);
-				int timeInMins = (int) ((e.getDistance() / averageSpeed) * 60.0);
+				int timeInMins = (int) ((edgeToEnd.getDistance() / averageSpeed) * 60.0);
 				calendar.add(Calendar.MINUTE, timeInMins);
 				Date arrivalTime = calendar.getTime();
-				arriveTimes.put(successor, arrivalTime);
 
 				double pricePredictionInEuro = 0;
 				// predict price
-				if (x > 0) {
+				if (bordered_x > 0) {
 					// get predicted prices for gasStation
 					double pricePredictionInCentiCent = dbHandler
-							.getPricePredictionClosestToDate(successor.getValue().getId(), gasType, arrivalTime)
+							.getPricePredictionClosestToDate(edgeToEnd.getTo().getValue().getId(), gasType, arrivalTime)
 							.getRight();
 
 					// Diesel : 1109 means 110.9 cent. Therefore 1109 is given
@@ -303,31 +473,82 @@ public class PathFinder {
 					pricePredictionInEuro = pricePredictionInCentiCent / 1000.0;
 
 				}
-				e.setWeight(pricePredictionInEuro);
+				edgeToEnd.setWeight(pricePredictionInEuro);
+				double g_tentative = gCosts.get(finalCurrentNode) + edgeToEnd.getValue(bordered_x);
+				gCosts.put(edgeToEnd.getTo(), g_tentative);
+				currentNode = endNode;
+				break;
+			}
 
-				// cost so far for path start -> successor (depending on x)
-				double g_tentative = currentNode.getGCost() + e.getValue(x);
+			final int[] NEIGHBOUR_INDEX_SPLITTINGS = IntStream.rangeClosed(0, N_THREADS)
+					.mapToDouble(i -> (i / (double) N_THREADS) * neighbours.size()).mapToInt(d -> (int) d).toArray();
+			completables = new CompletableFuture<?>[N_THREADS];
 
-				// if there is already a cheaper connection to this successor
-				// found
-				if (open.contains(successor) && g_tentative >= successor.getGCost()) {
-					continue;
-				}
+			for (int i = 0; i < (NEIGHBOUR_INDEX_SPLITTINGS.length - 1); i++) {
+				final int index = i;
+				completables[index] = CompletableFuture.runAsync(() -> {
+					IntStream.range(NEIGHBOUR_INDEX_SPLITTINGS[index], NEIGHBOUR_INDEX_SPLITTINGS[index + 1])
+							.forEach(j -> {
+								Edge<GasStation> e = neighbours.get(j);
 
-				predecessorMap.put(successor, currentNode);
+								Vertex<GasStation> successor = e.getTo();
 
-				// set absolute cost for path start -> successor
-				successor.setGCost(g_tentative);
+								// if already visited
+								if (closed.contains(successor)) {
+									return;
+								}
 
-				double hCost = heuristic.apply(successor).doubleValue();
+								// calculate arrival time at successor
+								Date currentTime = arriveTimes.get(finalCurrentNode);
+								calendar.setTime(currentTime);
+								int timeInMins = (int) ((e.getDistance() / averageSpeed) * 60.0);
+								calendar.add(Calendar.MINUTE, timeInMins);
+								Date arrivalTime = calendar.getTime();
+								arriveTimes.put(successor, arrivalTime);
 
-				// heuristic cost used for priority queue
-				successor.setHCost(hCost);
+								double pricePredictionInEuro = 0;
+								// predict price
+								if (bordered_x > 0) {
+									// get predicted prices for gasStation
+									double pricePredictionInCentiCent = dbHandler.getPricePredictionClosestToDate(
+											successor.getValue().getId(), gasType, arrivalTime).getRight();
 
-				if (!open.contains(successor)) {
-					open.add(successor);
-				}
+									// Diesel : 1109 means 110.9 cent. Therefore 1109 is given
+									// in "centicent"
+									pricePredictionInEuro = pricePredictionInCentiCent / 1000.0;
 
+								}
+								e.setWeight(pricePredictionInEuro);
+
+								// cost so far for path start -> successor (depending on x)
+								double g_tentative = gCosts.get(finalCurrentNode) + e.getValue(bordered_x);
+
+								// if there is already a cheaper connection to this successor
+								// found
+								if (open.contains(successor) && g_tentative >= gCosts.get(successor)) {
+									return;
+								}
+
+								predecessorMap.put(successor, finalCurrentNode);
+
+								// set absolute cost for path start -> successor
+								gCosts.put(successor, g_tentative);
+
+								double hCost = heuristic.apply(successor).doubleValue();
+
+								// heuristic cost used for priority queue
+								hCosts.put(successor, hCost);
+
+								if (!open.contains(successor)) {
+									open.add(successor);
+								}
+							});
+
+				}, es);
+			}
+
+			for (CompletableFuture<?> f : completables) {
+				f.get();
 			}
 
 			closed.add(currentNode);
@@ -346,7 +567,7 @@ public class PathFinder {
 			return path;
 		}
 
-		// log.debug("Getting path");
+		log.debug("Getting path");
 		// add the end node to the path
 		path.add(currentNode);
 		Vertex<GasStation> pred = predecessorMap.get(currentNode);

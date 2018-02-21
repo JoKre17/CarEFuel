@@ -10,7 +10,7 @@ import java.util.PriorityQueue;
  *
  * @param <E>
  */
-public class Vertex<E> implements Comparable<Vertex<E>> {
+public class Vertex<E> {
 
 	// private static final Logger log = LogManager.getLogger(Vertex.class);
 
@@ -18,9 +18,9 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 
 	// these values need to be outsourced if multiple paths should be calculated
 	// cost from specific start vertex to this vertex
-	private Double gCost;
+//	private Double gCost;
 	// estimated cost from this vertex to end vertex
-	private Double hCost;
+//	private Double hCost;
 
 	private PriorityQueue<Edge<E>> neighbours;
 
@@ -55,34 +55,34 @@ public class Vertex<E> implements Comparable<Vertex<E>> {
 		return neighbours;
 	}
 
-	public void setHCost(double hCost) {
-		this.hCost = hCost;
-	}
+//	public void setHCost(double hCost) {
+//		this.hCost = hCost;
+//	}
+//
+//	public Double getHCost() {
+//		return this.hCost;
+//	}
+//
+//	public void setGCost(double gCost) {
+//		this.gCost = gCost;
+//	}
+//
+//	public Double getGCost() {
+//		return this.gCost;
+//	}
+//
+//	@Override
+//	public String toString() {
+//		return gCost.toString();
+//	}
 
-	public Double getHCost() {
-		return this.hCost;
-	}
-
-	public void setGCost(double gCost) {
-		this.gCost = gCost;
-	}
-
-	public Double getGCost() {
-		return this.gCost;
-	}
-
-	@Override
-	public String toString() {
-		return gCost.toString();
-	}
-
-	/**
-	 * Used by VertexComparator (PriorityQueue in PathFinder)
-	 */
-	@Override
-	public int compareTo(Vertex<E> other) {
-		return hCost.compareTo(other.getHCost());
-	}
+//	/**
+//	 * Used by VertexComparator (PriorityQueue in PathFinder)
+//	 */
+//	@Override
+//	public int compareTo(Vertex<E> other) {
+//		return hCost.compareTo(other.getHCost());
+//	}
 
 	/**
 	 * Used for HashMap to find equal elements

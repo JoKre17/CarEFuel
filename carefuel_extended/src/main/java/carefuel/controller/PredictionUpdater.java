@@ -1,6 +1,8 @@
 package carefuel.controller;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -13,6 +15,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -242,7 +245,9 @@ class PredictionWorkerThread extends Thread {
 
 				// Catch prediction errors that are caused by missing data
 			} catch (Exception e) {
-				log.debug(e);
+				OutputStream debugStream = new StandardOutputStream(Level.DEBUG);
+				PrintStream debugPS = new PrintStream(debugStream);
+				e.printStackTrace(debugPS);
 
 				// Catches if there is none or too less data for the gasStation
 				log.warn("Little or none historical price data for gas station with id "
@@ -289,7 +294,9 @@ class PredictionWorkerThread extends Thread {
 				try {
 					secondRunPredictions = pricePredictor.predictNextMonth(gasStation, datePriceList);
 				} catch (Exception e) {
-					log.debug(e);
+					OutputStream debugStream = new StandardOutputStream(Level.DEBUG);
+					PrintStream debugPS = new PrintStream(debugStream);
+					e.printStackTrace(debugPS);
 
 					// Catches if there is none or too less data for the
 					// gasStation

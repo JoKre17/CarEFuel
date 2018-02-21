@@ -170,7 +170,10 @@ function submitButtonPressed() {
 		complete : function(xhr, textStatus) {
 //			console.log(xhr.status);
 			$("#loadingScreen").fadeOut("slow");
-			$("#controlContainer").fadeOut("slow");
+			
+			if(window_width < 800) {
+				$("#controlContainer").fadeOut("slow");
+			}
 		}
 	});
 

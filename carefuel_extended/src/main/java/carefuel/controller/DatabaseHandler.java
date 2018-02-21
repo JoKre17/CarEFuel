@@ -165,6 +165,47 @@ public class DatabaseHandler {
 		return toReturn;
 	}
 
+	/**
+	 * returns a sorted list of pairs that map dates to prices of a specified
+	 * fueltype and between two dates
+	 *
+	 * @param id
+	 * @param fuel
+	 * @return
+	 */
+	public List<Pair<Date, Integer>> getPricePredictionBetweenDates(UUID uuid, Enum<Fuel> fuel, Date begin, Date end) {
+		Session session = this.sessionFactory.openSession();
+		session.beginTransaction();
+
+		Query query = session.createQuery("from " + GasStationPricePrediction.class.getSimpleName() + " where stid='"
+				+ uuid.toString() + "'" + " AND " + "date > '" + df1.print(begin, Locale.GERMAN) + "' AND date < '"
+				+ df1.print(end, Locale.GERMAN) + "'");
+
+		@SuppressWarnings("unchecked")
+		List<GasStationPricePrediction> temp = query.list();
+		session.getTransaction().commit();
+		session.close();
+
+		List<Pair<Date, Integer>> toReturn = new ArrayList<>();
+
+		if (fuel.equals(Fuel.DIESEL)) {
+			toReturn = temp.stream().map(x -> Pair.of(x.getDate(), x.getDiesel())).collect(Collectors.toList());
+		} else if (fuel.equals(Fuel.E5)) {
+			toReturn = temp.stream().map(x -> Pair.of(x.getDate(), x.getE5())).collect(Collectors.toList());
+		} else if (fuel.equals(Fuel.E10)) {
+			toReturn = temp.stream().map(x -> Pair.of(x.getDate(), x.getE10())).collect(Collectors.toList());
+		}
+
+		Collections.sort(toReturn, new Comparator<Pair<Date, Integer>>() {
+			@Override
+			public int compare(Pair<Date, Integer> o1, Pair<Date, Integer> o2) {
+				return o1.getLeft().compareTo(o2.getLeft());
+			}
+		});
+
+		return toReturn;
+	}
+
 	DateFormatter df1 = new DateFormatter("yyyy-MM-dd HH:mm:ssX");
 
 	/**
@@ -208,8 +249,8 @@ public class DatabaseHandler {
 	}
 
 	/**
-	 * truncates the whole prediction table and inserts all predictions of the
-	 * set of predictions
+	 * truncates the whole prediction table and inserts all predictions of the set
+	 * of predictions
 	 *
 	 * @param predictedPrices
 	 *            all predicted prices of all gas stations
@@ -268,8 +309,8 @@ public class DatabaseHandler {
 	}
 
 	/**
-	 * retrieves all historic prices for a given uuid of a gasStation in sorted
-	 * oder from oldest beginning to newest date
+	 * retrieves all historic prices for a given uuid of a gasStation in sorted oder
+	 * from oldest beginning to newest date
 	 *
 	 * @param uuid
 	 *            gasStation id
@@ -287,32 +328,34 @@ public class DatabaseHandler {
 		session.getTransaction().commit();
 		session.close();
 
-		ArrayList<Pair<Date, Integer>> historicE5 = new ArrayList<>();
-		ArrayList<Pair<Date, Integer>> historicE10 = new ArrayList<>();
-		ArrayList<Pair<Date, Integer>> historicDiesel = new ArrayList<>();
+		Map<Fuel, List<Pair<Date, Integer>>> historicFuelPrices = new HashMap<>();
+		for(Fuel f : Fuel.values()) {
+			historicFuelPrices.put(f, new ArrayList<>());
+		}
+		
 		for (GasStationPrice price : prices) {
 			if (price.getE5() > 0) {
-				historicE5.add(Pair.of(price.getDate(), price.getE5()));
+				historicFuelPrices.get(Fuel.E5).add(Pair.of(price.getDate(), price.getE5()));
 			}
 			if (price.getE10() > 0) {
-				historicE10.add(Pair.of(price.getDate(), price.getE10()));
+				historicFuelPrices.get(Fuel.E10).add(Pair.of(price.getDate(), price.getE10()));
 			}
 			if (price.getDiesel() > 0) {
-				historicDiesel.add(Pair.of(price.getDate(), price.getDiesel()));
+				historicFuelPrices.get(Fuel.DIESEL).add(Pair.of(price.getDate(), price.getDiesel()));
 			}
 		}
 
 		Comparator<Pair<Date, Integer>> comp = Comparator.comparing(Pair::getLeft);
-		historicE5.sort(comp);
-		historicE10.sort(comp);
-		historicDiesel.sort(comp);
+		
+		for(Fuel f : Fuel.values()) {
+			if(historicFuelPrices.get(f).size() <= 1) {
+				historicFuelPrices.get(f).clear();
+			} else {
+				historicFuelPrices.get(f).sort(comp);
+			}
+		}
 
-		Map<Fuel, List<Pair<Date, Integer>>> result = new HashMap<>();
-		result.put(Fuel.E5, historicE5);
-		result.put(Fuel.E10, historicE10);
-		result.put(Fuel.DIESEL, historicDiesel);
-
-		return result;
+		return historicFuelPrices;
 	}
 
 	public Pair<Date, Date> getPredictableTimeBound() {
@@ -330,8 +373,7 @@ public class DatabaseHandler {
 	 */
 	public void updatePredictableTimeBound() {
 		/*
-		 * SELECT date FROM gas_station_information_history ORDER BY date DESC
-		 * LIMIT 1;
+		 * SELECT date FROM gas_station_information_history ORDER BY date DESC LIMIT 1;
 		 */
 		Session session = this.sessionFactory.openSession();
 		// gets the date of the most recent entry of fuel price for all gas
@@ -381,8 +423,7 @@ public class DatabaseHandler {
 
 	public Date getMostRecentPriceDataDate() {
 		/*
-		 * SELECT date FROM gas_station_information_history ORDER BY date DESC
-		 * LIMIT 1;
+		 * SELECT date FROM gas_station_information_history ORDER BY date DESC LIMIT 1;
 		 */
 		Session session = this.sessionFactory.openSession();
 		// gets the date of the most recent entry of fuel price for all gas

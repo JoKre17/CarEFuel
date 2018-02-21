@@ -55,6 +55,7 @@ public class PricePredictor {
 	public PricePredictor() {
 		// Set file path
 		modelPath = System.getProperty("user.dir") + "/rnn_model/";
+		System.out.println("Load Model from " + modelPath);
 
 		// Initialize TensorFlow session with pretrained model for each fuel
 		// type

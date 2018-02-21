@@ -291,6 +291,16 @@ public class GasStation implements Serializable {
 		return 6378.388 * Math.acos(
 				(Math.sin(lat_a) * Math.sin(lat_b)) + (Math.cos(lat_a) * Math.cos(lat_b) * Math.cos(lon_b - lon_a)));
 	}
+	
+	public static double computeDistanceBetweenGasStations(GasStation a, GasStation b) {
+		double rad_lat_a = Math.toRadians(a.getLatitude());
+		double rad_lat_b = Math.toRadians(b.getLatitude());
+		double rad_lon_a = Math.toRadians(a.getLongitude());
+		double rad_lon_b = Math.toRadians(b.getLongitude());
+
+		return 6378.388 * Math.acos(
+				(Math.sin(rad_lat_a) * Math.sin(rad_lat_b)) + (Math.cos(rad_lat_a) * Math.cos(rad_lat_b) * Math.cos(rad_lon_b - rad_lon_a)));
+	}
 
 	/**
 	 * returns the gas station in json format

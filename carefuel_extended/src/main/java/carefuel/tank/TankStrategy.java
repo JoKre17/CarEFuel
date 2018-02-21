@@ -249,15 +249,19 @@ public class TankStrategy {
 		for (Node n : nodes) {
 			long arrivalTimeLong = n.getArrivalTime().getTime();
 			List<Pair<Date, Integer>> predictions = dbHandler.getPricePrediction(n.getValue().getId(), gasType);
+			log.debug("Fetched " + predictions.size() + " predicted prices for " + n.getValue().getId());
 
-			int pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
-				@Override
-				public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
-					long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
-					long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
-					return Long.compare(diff1, diff2);
-				}
-			}).getRight();
+			int pricePredictionInCentiCent = Fuel.getDefaultPrice(gasType);
+			if(predictions.size() > 0) {
+				pricePredictionInCentiCent = Collections.min(predictions, new Comparator<Pair<Date, Integer>>() {
+					@Override
+					public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
+						long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
+						long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
+						return Long.compare(diff1, diff2);
+					}
+				}).getRight();
+			}
 
 			// Diesel : 1109 means 110.9 cent. Therefore 1109 is given in
 			// "centicent"
