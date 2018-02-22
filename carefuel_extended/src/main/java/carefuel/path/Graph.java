@@ -2,10 +2,14 @@ package carefuel.path;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.PriorityQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +33,9 @@ public class Graph<E> {
 	private List<Vertex<E>> vertices;
 	private float[][] distances;
 	private int size;
+	
+	private ExecutorService es;
+	private int N_THREADS;
 
 	/**
 	 * Constructor takes a list of all values and a completed distance matrix
@@ -45,6 +52,11 @@ public class Graph<E> {
 		this.values = values;
 		this.vertices = new ArrayList<>();
 		this.setDistances(distances);
+	}
+	
+	public void setExecutorService(ExecutorService es) {
+		this.es = es;
+		N_THREADS = Runtime.getRuntime().availableProcessors() * 4;
 	}
 
 	/**
@@ -78,8 +90,8 @@ public class Graph<E> {
 		return distances;
 	}
 	
-	private <E> PriorityQueue<E> clone(PriorityQueue<E> priorityQueue) {
-		PriorityQueue<E> answer = new PriorityQueue<>();
+	private <E> PriorityBlockingQueue<E> clone(PriorityBlockingQueue<E> priorityQueue) {
+		PriorityBlockingQueue<E> answer = new PriorityBlockingQueue<>();
 		
 		for(E e : priorityQueue) {
 			answer.add(e);
@@ -100,45 +112,63 @@ public class Graph<E> {
 	 */
 	synchronized public List<Edge<E>> getNeighbours(Vertex<E> node, float maxRange, Fuel fuel) {
 
-		PriorityQueue<Edge<E>> neighbours = node.getNeighbours();
+		PriorityBlockingQueue<Edge<E>> neighbours = node.getNeighbours();
 		// Try to use already computed neighbours
 		if (!neighbours.isEmpty()) {
 			// if max distance of already calculated distances is bigger than
 			// maxRange, we
 			// can reuse it
-			if (neighbours.stream().map(e -> e.getDistance()).max(Double::compareTo).get() > maxRange) {
-				PriorityQueue<Edge<E>> p = new PriorityQueue<>(new EdgeComparator<>());
+			if (neighbours.stream().map(e -> e.getDistance()).max(Double::compareTo).get() >= maxRange) {
+				PriorityBlockingQueue<Edge<E>> p = new PriorityBlockingQueue<>(neighbours.size(), new EdgeComparator<>());
 				p.addAll(neighbours.stream().filter(e -> e.getDistance() <= maxRange).collect(Collectors.toList()));
 				return p.stream().collect(Collectors.toList());
 			}
 		}
-
+		
 		// distances to all neighbours
 		float[] neighbourDistances = distances[values.indexOf(node.getValue())];
 
 		// for all vertices...
-		for (int i = 0; i < neighbourDistances.length; i++) {
-			Float distance = neighbourDistances[i];
+		final int AMOUNT_DISTANCES = neighbourDistances.length;
 
-			// only get those in range and not itself
-			if (distance <= maxRange) {
-				Vertex<E> to = getVertexByValue(values.get(i));
-				if (node.equals(to)) {
-					continue;
-				}
-				Edge<E> edge = new Edge<E>(node, to);
-				edge.setDistance(distance);
-				edge.setWeight(Fuel.getDefaultPrice(fuel));
+		final int[] INDEX_SPLITTINGS = IntStream.rangeClosed(0, N_THREADS)
+				.mapToDouble(i -> (i / (double) N_THREADS) * AMOUNT_DISTANCES).mapToInt(d -> (int) d).toArray();
+		CompletableFuture<?>[] completables = new CompletableFuture<?>[N_THREADS];
+		
+		for(int i = 0; i < (INDEX_SPLITTINGS.length - 1); i++) {
+			final int index = i;
+			completables[index] = CompletableFuture.runAsync(() -> {
+				IntStream.range(INDEX_SPLITTINGS[index], INDEX_SPLITTINGS[index + 1]).forEach(j -> {
+					Float distance = neighbourDistances[j];
 
-				// neighbours was already computed but maxRange was smaller back
-				// then, so the
-				// edge is not in neighbours
-				if (!neighbours.contains(edge)) {
-					neighbours.add(edge);
-				}
+					// only get those in range and not itself
+					if (distance <= maxRange) {
+						Vertex<E> to = getVertexByValue(values.get(j));
+						if (node.equals(to)) {
+							return;
+						}
+						Edge<E> edge = new Edge<E>(node, to);
+						edge.setDistance(distance);
+
+						// neighbours was already computed but maxRange was smaller back
+						// then, so the
+						// edge is not in neighbours
+						if (!neighbours.contains(edge)) {
+							neighbours.add(edge);
+						}
+					}
+				});
+			}, es);
+		}
+		
+		for(CompletableFuture<?> f : completables) {
+			try {
+				f.get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
 			}
 		}
-
+		
 		return clone(neighbours).stream().collect(Collectors.toList());
 	}
 

@@ -186,6 +186,7 @@ public class RequestController {
 
 		JSONArray path = new JSONArray();
 
+		double costInEuro = 0;
 		for (Node n : nodeRoute) {
 			GasStation station = n.getValue();
 			JSONObject stop = new JSONObject();
@@ -200,11 +201,13 @@ public class RequestController {
 			stop.put("arrivalTime", n.getArrivalTime());
 			stop.put("predictedPrice", n.getPredictedPrice());
 			stop.put("fillAmount", n.getFuelToBuy());
+			costInEuro += (n.getPredictedPrice() / 100.0) * n.getFuelToBuy();
 
 			log.debug(station.getId() + " " + n.getFuelToBuy());
 
 			path.put(stop);
 		}
+		log.info("Path costs sum up to: " + costInEuro);
 
 		/*
 		 * for (Vertex<GasStation> v : route) { GasStation station =

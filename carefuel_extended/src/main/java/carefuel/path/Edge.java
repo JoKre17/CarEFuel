@@ -14,14 +14,10 @@ public class Edge<E> implements Comparable<Edge<E>> {
 
 	// distance is the real edge value
 	private Double distance;
-	// weight is the multiplier for the distance
-	private double weight;
 
 	public Edge(Vertex<E> from, Vertex<E> to) {
 		this.from = from;
 		this.to = to;
-
-		weight = 1;
 	}
 
 	public Vertex<E> getFrom() {
@@ -40,14 +36,6 @@ public class Edge<E> implements Comparable<Edge<E>> {
 		return this.distance;
 	}
 
-	public void setWeight(double weight) {
-		this.weight = weight;
-	}
-
-	public double getWeight() {
-		return this.weight;
-	}
-
 	/**
 	 * returns the cost of this edge depending on x x should be between 0 and 1,
 	 * so that in case of 0 the function returns only the distance and in case
@@ -56,8 +44,8 @@ public class Edge<E> implements Comparable<Edge<E>> {
 	 * @param x
 	 * @return
 	 */
-	public double getValue(double x) {
-		return this.distance * (1.0 + (this.weight - 1.0) * x);
+	public double getValue(double x, double weight) {
+		return this.distance * (1.0 + (weight - 1.0) * x);
 	}
 
 	@Override
@@ -70,11 +58,23 @@ public class Edge<E> implements Comparable<Edge<E>> {
 	 */
 	@Override
 	public int compareTo(Edge<E> other) {
-		double c = this.getValue(1) - other.getValue(1);
+		double c = distance - other.getDistance();
 		if (c < 0) {
 			return -1;
 		} else {
 			return 1;
+		}
+	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if(other instanceof Edge) {
+			@SuppressWarnings("rawtypes")
+			Edge o = (Edge) other;
+			
+			return from.equals(o.getFrom()) && to.equals(o.getTo());
+		} else {
+			return false;
 		}
 	}
 

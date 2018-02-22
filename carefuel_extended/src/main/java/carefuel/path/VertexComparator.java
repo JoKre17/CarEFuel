@@ -13,16 +13,34 @@ import java.util.Map;
  */
 public class VertexComparator<E> implements Comparator<Vertex<E>> {
 
+	Map<Vertex<E>, Double> gCosts;
 	Map<Vertex<E>, Double> hCosts;
 	
-	public VertexComparator(Map<Vertex<E>, Double> hCosts) {
+	public VertexComparator(Map<Vertex<E>, Double> gCosts, Map<Vertex<E>, Double> hCosts) {
+		assert gCosts != null;
 		assert hCosts != null;
+		
+		this.gCosts = gCosts;
 		this.hCosts = hCosts;
 	}
 	
 	@Override
-	public int compare(Vertex<E> o1, Vertex<E> o2) {
-		return hCosts.get(o1).compareTo(hCosts.get(o2));
+	public int compare(Vertex<E> a, Vertex<E> b) {
+		Double gA = gCosts.get(a);
+		Double hA = hCosts.get(a);
+		
+		Double gB = gCosts.get(b);
+		Double hB = hCosts.get(b);
+		
+		if(gA != null) {
+			hA += gA;
+		}
+		
+		if(gB != null) {
+			hB += gB;
+		}
+		
+		return hA.compareTo(hB);
 	}
 
 }

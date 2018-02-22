@@ -1,7 +1,7 @@
 package carefuel.path;
 
 import java.util.List;
-import java.util.PriorityQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * Generic Vertex class for the Graph class
@@ -22,7 +22,7 @@ public class Vertex<E> {
 	// estimated cost from this vertex to end vertex
 //	private Double hCost;
 
-	private PriorityQueue<Edge<E>> neighbours;
+	private PriorityBlockingQueue<Edge<E>> neighbours;
 
 	/**
 	 * Constructor also fetches neighbours depending on static range
@@ -32,7 +32,7 @@ public class Vertex<E> {
 	public Vertex(E value) {
 		this.value = value;
 
-		neighbours = new PriorityQueue<>(new EdgeComparator<E>());
+		neighbours = new PriorityBlockingQueue<>(500, new EdgeComparator<E>());
 	}
 
 	public E getValue() {
@@ -51,7 +51,7 @@ public class Vertex<E> {
 		this.neighbours.clear();
 	}
 
-	public PriorityQueue<Edge<E>> getNeighbours() {
+	public PriorityBlockingQueue<Edge<E>> getNeighbours() {
 		return neighbours;
 	}
 
