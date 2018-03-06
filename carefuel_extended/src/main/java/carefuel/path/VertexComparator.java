@@ -3,6 +3,9 @@ package carefuel.path;
 import java.util.Comparator;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Generic Vertex Comparator: uses the interface Comparable to compare two
  * Vertices
@@ -13,34 +16,24 @@ import java.util.Map;
  */
 public class VertexComparator<E> implements Comparator<Vertex<E>> {
 
-	Map<Vertex<E>, Double> gCosts;
-	Map<Vertex<E>, Double> hCosts;
+	private final Logger log = LogManager.getLogger(VertexComparator.class);
 	
-	public VertexComparator(Map<Vertex<E>, Double> gCosts, Map<Vertex<E>, Double> hCosts) {
-		assert gCosts != null;
-		assert hCosts != null;
+	Map<Vertex<E>, Double> cummulatedCosts;
+	
+	public VertexComparator(Map<Vertex<E>, Double> cummulatedCosts) {
+		assert cummulatedCosts != null;
 		
-		this.gCosts = gCosts;
-		this.hCosts = hCosts;
+		this.cummulatedCosts = cummulatedCosts;
 	}
 	
 	@Override
 	public int compare(Vertex<E> a, Vertex<E> b) {
-		Double gA = gCosts.get(a);
-		Double hA = hCosts.get(a);
+		Double costA = cummulatedCosts.get(a);
 		
-		Double gB = gCosts.get(b);
-		Double hB = hCosts.get(b);
+		Double costB = cummulatedCosts.get(b);
 		
-		if(gA != null) {
-			hA += gA;
-		}
 		
-		if(gB != null) {
-			hB += gB;
-		}
-		
-		return hA.compareTo(hB);
+		return costA.compareTo(costB);
 	}
 
 }

@@ -104,16 +104,16 @@ public class RequestController {
 
 		float range = (float) ((capacity / consumption) * 100.0);
 
-		log.debug("Path Request received");
-		log.debug("from: " + fromId);
-		log.debug("to: " + toId);
-		log.debug("startTime: " + startTime);
-		log.debug("tankLevel: " + tankLevel);
-		log.debug("capacity: " + capacity);
-		log.debug("consumption: " + consumption);
-		log.debug("Max Range: " + range);
-		log.debug("metric factor: " + metric);
-		log.debug("gasType: " + gasType.toString());
+		log.info("Path Request received");
+		log.info("from: " + fromId);
+		log.info("to: " + toId);
+		log.info("startTime: " + startTime);
+		log.info("tankLevel: " + tankLevel);
+		log.info("capacity: " + capacity);
+		log.info("consumption: " + consumption);
+		log.info("Max Range: " + range);
+		log.info("metric factor: " + metric);
+		log.info("gasType: " + gasType.toString());
 
 		Date startTimeDate = new Date();
 		try {
@@ -124,9 +124,9 @@ public class RequestController {
 
 		Pair<Date, Date> predictableTimeBound = Main.databaseHandler.getPredictableTimeBound();
 
-		log.info(df.print(predictableTimeBound.getLeft(), Locale.GERMAN));
-		log.info(df.print(startTimeDate, Locale.GERMAN));
-		log.info(df.print(predictableTimeBound.getRight(), Locale.GERMAN));
+		log.debug(df.print(predictableTimeBound.getLeft(), Locale.GERMAN));
+		log.debug(df.print(startTimeDate, Locale.GERMAN));
+		log.debug(df.print(predictableTimeBound.getRight(), Locale.GERMAN));
 
 		
 		if(metric > 0) {
@@ -163,7 +163,7 @@ public class RequestController {
 							+ "Möglicherweise ist der Graph noch nicht komplett geladen." + "\n"
 							+ "Versuchen sie es in 1-2 Minuten erneut.").toString();
 		}
-		log.debug("Found path in " + ((System.currentTimeMillis() - time) / 1000.0) + " seconds");
+		log.info("Found path in " + ((System.currentTimeMillis() - time) / 1000.0) + " seconds");
 
 		for (int i = 0; i < route.size(); i++) {
 			if (i == 0) {
@@ -184,6 +184,7 @@ public class RequestController {
 		List<Node> nodeRoute = Main.tankStrategy.computeTankStrategy(route, startTimeDate, consumption, tankLevel,
 				capacity, range, averageSpeed, gasType);
 
+		JSONObject response = new JSONObject();
 		JSONArray path = new JSONArray();
 
 		double costInEuro = 0;
@@ -208,21 +209,12 @@ public class RequestController {
 			path.put(stop);
 		}
 		log.info("Path costs sum up to: " + costInEuro);
-
-		/*
-		 * for (Vertex<GasStation> v : route) { GasStation station =
-		 * v.getValue(); JSONObject stop = new JSONObject();
-		 *
-		 * JSONObject loc = new JSONObject(); loc.put("lat",
-		 * station.getLatitude()); loc.put("lng", station.getLongitude());
-		 *
-		 * stop.put("id", station.getId().toString()); stop.put("location",
-		 * loc);
-		 *
-		 * path.put(stop); }
-		 */
-
-		return path.toString();
+		double roundedCostInEuro = ((int)(costInEuro * 100.0)) / 100.0;
+		response.put("totalCost", roundedCostInEuro);
+		response.put("path", path);
+		
+		log.info("Completed Path Request");
+		return response.toString();
 	}
 
 	@RequestMapping(value = "/download", method = RequestMethod.GET)

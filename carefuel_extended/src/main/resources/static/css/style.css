@@ -20,9 +20,9 @@ html, body {
 }
 
 .row:after {
-    content: "";
-    display: table;
-    clear: both;
+	content: "";
+	display: table;
+	clear: both;
 }
 
 .section {
@@ -125,19 +125,19 @@ input[type="radio"] {
 
 .hide-search-button {
 	display: none;
-    z-index: 31;
-    top: 5px;
-    left: 5px;
-    background: #fafafa;
-    cursor: pointer;
-    border-width: 4px;
-    font-size: 40px;
-    width: 65px;
-    text-align: center;
-    height: fit-content;
-    border-color: #6e6e6e;
-    border-style: solid;
-    border-radius: 10px;
+	z-index: 31;
+	top: 5px;
+	left: 5px;
+	background: #fafafa;
+	cursor: pointer;
+	border-width: 4px;
+	font-size: 40px;
+	width: 65px;
+	text-align: center;
+	height: fit-content;
+	border-color: #6e6e6e;
+	border-style: solid;
+	border-radius: 10px;
 }
 
 .hide-search-button:hover {
@@ -145,27 +145,27 @@ input[type="radio"] {
 }
 
 .bar1, .bar2, .bar3 {
-    width: 35px;
-    height: 5px;
-    background-color: #333;
-    margin: 6px 0;
+	width: 35px;
+	height: 5px;
+	background-color: #333;
+	margin: 6px 0;
 }
 
 .hide-route-button {
 	display: none;
-    border-radius: 10px;
-    z-index: 29;
-    top: 5px;
-    border-width: 4px;
-    font-size: 40px;
-    right: 5px;
-    border-color: #6e6e6e;
-    border-style: solid;
-    background: #fafafa;
-    cursor: pointer;
-    width: 65px;
-    text-align: center;
-    height: fit-content;
+	border-radius: 10px;
+	z-index: 29;
+	top: 5px;
+	border-width: 4px;
+	font-size: 40px;
+	right: 5px;
+	border-color: #6e6e6e;
+	border-style: solid;
+	background: #fafafa;
+	cursor: pointer;
+	width: 65px;
+	text-align: center;
+	height: fit-content;
 }
 
 .hide-route-button:hover {
@@ -173,18 +173,18 @@ input[type="radio"] {
 }
 
 .bar4, .bar5 {
-    width: 35px;
-    height: 5px;
-    background-color: #333;
-    margin: 6px 0;
+	width: 35px;
+	height: 5px;
+	background-color: #333;
+	margin: 6px 0;
 }
 
 .bar4 {
-	transform: rotate(-45deg) translate(-9px, 6px) ;
+	transform: rotate(-45deg) translate(-9px, 6px);
 }
 
 .bar5 {
-	transform: rotate(45deg) translate(-8px, -8px) ;
+	transform: rotate(45deg) translate(-8px, -8px);
 }
 
 /**********/
@@ -224,7 +224,6 @@ input[type="radio"] {
 	margin: 10px;
 	margin-right: 0px;
 	padding: 10px;
-
 	background: #eeeefe;
 }
 
@@ -238,8 +237,6 @@ input[type="radio"] {
 	display: flex;
 	height: auto;
 	padding: 10px;
-	
-	
 	/*color: green;*/
 	font-size: 18px;
 	font-weight: bold;
@@ -252,7 +249,6 @@ input[type="radio"] {
 	display: flex;
 	padding: 10px;
 	white-space: nowrap;
-	
 	font-size: 16px;
 	/*color: darkgreen;*/
 	background: #e2e2fa;
@@ -295,9 +291,22 @@ input[type="radio"] {
 
 #routeContainerHeader {
 	font-size: x-large;
-    display: block;
-    text-align: center;
-    overflow-y: auto;
+	display: block;
+	text-align: center;
+	overflow-y: auto;
+}
+
+#totalCostDiv {
+	height: 50px;
+	align-items: center;
+	background: #eeeefe;
+	font-weight: bold;
+	font-size: 18px;
+	display: flex;
+	border-radius: 10px;
+	justify-content: center;
+	border-color: darkgray;
+	border-style: double;
 }
 
 /***************/
@@ -331,36 +340,45 @@ input[type="radio"] {
 	cursor: pointer;
 }
 
-
 /***************/
 /*loading screen*/
 /***************/
-#loadingScreen{
+#loadingScreen {
 	display: none;
 	position: fixed;
 	background: rgba(180, 180, 180, 0.5);
-	width:100%;
-	height:100%;
-	z-index:60;
+	width: 100%;
+	height: 100%;
+	z-index: 60;
 }
 
 .loader {
-    border: 16px solid #f3f3f3; /* Light grey */
-    border-top: 16px solid #9fd0ff; /* Blue */
-    border-radius: 50%;
-    position: fixed;
-    width: 120px;
-    height: 120px;
-    top: calc(50% - 60px);
-    left: calc(50% - 60px);
-    animation: spin 2s linear infinite;
+	border: 16px solid #f3f3f3; /* Light grey */
+	border-top: 16px solid #9fd0ff; /* Blue */
+	border-radius: 50%;
+	position: fixed;
+	width: 120px;
+	height: 120px;
+	top: calc(50% - 60px);
+	left: calc(50% - 60px);
+	animation: spin 2s linear infinite;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@
+keyframes spin { 0% {
+	transform: rotate(0deg);
 }
 
+100%
+{
+transform
+:
+ 
+rotate
+(360deg);
+ 
+}
+}
 
 /***************/
 /* Mobile View */
@@ -373,22 +391,18 @@ input[type="radio"] {
 		width: 100%;
 		position: fixed;
 	}
-	
 	.hide-search-button {
 		display: block;
 		position: fixed;
 	}
-	
 	.hide-route-button {
 		display: block;
 		position: fixed;
 	}
-	
 	.route-container {
 		display: none;
 	}
-	
-	.form.submit-button{
+	.form.submit-button {
 		width: 100%;
 		margin-left: 0%;
 		margin-bottom: 6%;

@@ -118,6 +118,9 @@ function submitButtonPressed() {
 					return;
 				}
 			}
+			var pathData = data['path']
+			var totalCost = data['totalCost']
+			
 			
 			// now draw the route
 			route = []
@@ -140,18 +143,18 @@ function submitButtonPressed() {
 			
 			positions.push(start_pos)
 			
-			for(var i in data) {
-				console.log(data[i]);
+			for(var i in pathData) {
+				console.log(pathData[i]);
 				pos = {
-						lat: data[i]['location']['lat'],
-						lng: data[i]['location']['lng'] 
+						lat: pathData[i]['location']['lat'],
+						lng: pathData[i]['location']['lng'] 
 				}
 				positions.push(pos)
 				
-				fillAmount = data[i]['fillAmount']
+				fillAmount = pathData[i]['fillAmount']
 				fillAmounts.push(fillAmount)
 				
-				predictedPrice = data[i]['predictedPrice']
+				predictedPrice = pathData[i]['predictedPrice']
 				predictedPrices.push(predictedPrice)
 				
 				
@@ -162,6 +165,7 @@ function submitButtonPressed() {
 			route.push(positions)
 			route.push(fillAmounts)
 			route.push(predictedPrices)
+			route.push(totalCost)
 			
 			calculateAndDisplayRoute(route)
 			

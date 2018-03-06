@@ -28,22 +28,7 @@ function initMap() {
 	to_autocomplete = new google.maps.places.Autocomplete(to_input);
 	to_autocomplete.bindTo('bounds', map);
 
-	positions = [ {
-		lng : 9.5167,
-		lat : 52.5167
-	}, {
-		lng : 9.701,
-		lat : 52.326
-	}, {
-		lng : 9.791,
-		lat : 52.426
-	}, {
-		lng : 9.8367,
-		lat : 52.2167
-	} ]
-
 	centerToUserPosition();
-	calculateAndDisplayRoute(positions);
 }
 
 /**
@@ -100,6 +85,7 @@ function displayMarkers(positions) {
 function calculateAndDisplayRoute(routeList) {
 
 	var positions = routeList[0]
+	var totalCost = routeList[3]
 	
 	var waypoints = [];
 
@@ -161,6 +147,16 @@ function calculateAndDisplayRoute(routeList) {
 			}
 			
 			document.getElementById('routeContainerPanel').innerHTML = routeInformation;
+			
+			if(totalCost != undefined) {
+				var totalCostDiv = document.createElement('div')
+				var totalCostString = totalCost + ""
+				totalCostString.replace('.', ',')
+				totalCostDiv.innerHTML = "Gesamtkosten: " + totalCostString + " €"
+				totalCostDiv.id = "totalCostDiv"
+				document.getElementById('routeContainerPanel').appendChild(totalCostDiv)
+			}
 		}
 	});
+	
 }
