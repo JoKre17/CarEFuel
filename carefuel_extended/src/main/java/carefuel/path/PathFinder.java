@@ -324,20 +324,23 @@ public class PathFinder {
 		c.add(Calendar.HOUR_OF_DAY, 24);
 		final Date LATEST_RELEVANT_DATE = c.getTime();
 
-//		final double DISTANCE_TO_DRIVE = GasStation.computeDistanceBetweenGasStations(start, end);
-//		final int MAX_ITERATIONS = (int) ((DISTANCE_TO_DRIVE / maxRange) * 5);
-//		log.debug("Calculating maximal iterations: " + MAX_ITERATIONS);
+		// final double DISTANCE_TO_DRIVE =
+		// GasStation.computeDistanceBetweenGasStations(start, end);
+		// final int MAX_ITERATIONS = (int) ((DISTANCE_TO_DRIVE / maxRange) * 5);
+		// log.debug("Calculating maximal iterations: " + MAX_ITERATIONS);
 
 		// 0 < x < 1
 		final float bordered_x = (float) Math.max(0.0, Math.min(x, 1.0));
 
 		// define distance to end gasStation when the algorithm straight drives to goal
-//		double MIN_RANGE_TO_END = 0.0;
-//		if (x > 0) {
-//			// 1% of distance between start and end, minimum is 3 and capped at maxRange
-//			MIN_RANGE_TO_END = Math.min(maxRange, Math.max(3.0, 0.01 * DISTANCE_TO_DRIVE));
-//			log.debug("Using advanced algorithm with x>0 until " + MIN_RANGE_TO_END + " km to destination");
-//		}
+		// double MIN_RANGE_TO_END = 0.0;
+		// if (x > 0) {
+		// // 1% of distance between start and end, minimum is 3 and capped at maxRange
+		// MIN_RANGE_TO_END = Math.min(maxRange, Math.max(3.0, 0.01 *
+		// DISTANCE_TO_DRIVE));
+		// log.debug("Using advanced algorithm with x>0 until " + MIN_RANGE_TO_END + "
+		// km to destination");
+		// }
 
 		float[][] distances = graph.getDistances();
 
@@ -373,15 +376,18 @@ public class PathFinder {
 
 						// Diesel : 1109 means 1.109 euro. Therefore 1109 is given in
 						// "centicent"
-						int pricePredictionInCentiCent = Collections
-								.min(predictions, new Comparator<Pair<Date, Integer>>() {
-									@Override
-									public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
-										long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
-										long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
-										return Long.compare(diff1, diff2);
-									}
-								}).getRight();
+						int pricePredictionInCentiCent = Fuel.getDefaultPrice(gasType);
+						if (predictions.size() > 0) {
+							pricePredictionInCentiCent = Collections
+									.min(predictions, new Comparator<Pair<Date, Integer>>() {
+										@Override
+										public int compare(Pair<Date, Integer> d1, Pair<Date, Integer> d2) {
+											long diff1 = Math.abs(d1.getLeft().getTime() - arrivalTimeLong);
+											long diff2 = Math.abs(d2.getLeft().getTime() - arrivalTimeLong);
+											return Long.compare(diff1, diff2);
+										}
+									}).getRight();
+						}
 
 						double pricePredictionEuro = pricePredictionInCentiCent / 1000.0;
 
@@ -400,7 +406,7 @@ public class PathFinder {
 		for (CompletableFuture<?> f : completables) {
 			f.get();
 		}
-		
+
 		log.info("Built heuristic in " + ((System.currentTimeMillis() - curTime) / 1000.0) + " s");
 
 		// use default heuristic
@@ -447,42 +453,43 @@ public class PathFinder {
 			log.debug("Looking at " + neighbours.size() + " neighbours.");
 
 			// stop if close enough to prevent algorithm from too many calculations
-//			if (distanceToDest < MIN_RANGE_TO_END) {
-//				predecessorMap.put(graph.getVertexByValue(end), currentNode);
-//				Edge<GasStation> edgeToEnd = null;
-//				for (Edge<GasStation> e : neighbours) {
-//					if (e.getTo().equals(endNode)) {
-//						edgeToEnd = e;
-//						break;
-//					}
-//				}
-//
-//				// calculate arrival time at successor
-//				Date currentTime = arriveTimes.get(currentNode);
-//				calendar.setTime(currentTime);
-//				int timeInMins = (int) ((edgeToEnd.getDistance() / averageSpeed) * 60.0);
-//				calendar.add(Calendar.MINUTE, timeInMins);
-//				Date arrivalTime = calendar.getTime();
-//
-//				double pricePredictionInEuro = 0;
-//				// predict price
-//				if (bordered_x > 0) {
-//					// get predicted prices for gasStation
-//					double pricePredictionInCentiCent = dbHandler
-//							.getPricePredictionClosestToDate(edgeToEnd.getTo().getValue().getId(), gasType, arrivalTime)
-//							.getRight();
-//
-//					// Diesel : 1109 means 110.9 cent. Therefore 1109 is given
-//					// in "centicent"
-//					pricePredictionInEuro = pricePredictionInCentiCent / 1000.0;
-//
-//				}
-//				double g_tentative = gCosts.get(finalCurrentNode)
-//						+ edgeToEnd.getValue(bordered_x, pricePredictionInEuro);
-//				gCosts.put(edgeToEnd.getTo(), g_tentative);
-//				currentNode = endNode;
-//				break;
-//			}
+			// if (distanceToDest < MIN_RANGE_TO_END) {
+			// predecessorMap.put(graph.getVertexByValue(end), currentNode);
+			// Edge<GasStation> edgeToEnd = null;
+			// for (Edge<GasStation> e : neighbours) {
+			// if (e.getTo().equals(endNode)) {
+			// edgeToEnd = e;
+			// break;
+			// }
+			// }
+			//
+			// // calculate arrival time at successor
+			// Date currentTime = arriveTimes.get(currentNode);
+			// calendar.setTime(currentTime);
+			// int timeInMins = (int) ((edgeToEnd.getDistance() / averageSpeed) * 60.0);
+			// calendar.add(Calendar.MINUTE, timeInMins);
+			// Date arrivalTime = calendar.getTime();
+			//
+			// double pricePredictionInEuro = 0;
+			// // predict price
+			// if (bordered_x > 0) {
+			// // get predicted prices for gasStation
+			// double pricePredictionInCentiCent = dbHandler
+			// .getPricePredictionClosestToDate(edgeToEnd.getTo().getValue().getId(),
+			// gasType, arrivalTime)
+			// .getRight();
+			//
+			// // Diesel : 1109 means 110.9 cent. Therefore 1109 is given
+			// // in "centicent"
+			// pricePredictionInEuro = pricePredictionInCentiCent / 1000.0;
+			//
+			// }
+			// double g_tentative = gCosts.get(finalCurrentNode)
+			// + edgeToEnd.getValue(bordered_x, pricePredictionInEuro);
+			// gCosts.put(edgeToEnd.getTo(), g_tentative);
+			// currentNode = endNode;
+			// break;
+			// }
 
 			final int[] NEIGHBOUR_INDEX_SPLITTINGS = IntStream.rangeClosed(0, N_THREADS)
 					.mapToDouble(i -> (i / (double) N_THREADS) * neighbours.size()).mapToInt(d -> (int) d).toArray();
@@ -496,7 +503,7 @@ public class PathFinder {
 								Edge<GasStation> e = neighbours.get(j);
 
 								Vertex<GasStation> successor = e.getTo();
-//								Vertex<GasStation> predecessor = e.getFrom();
+								// Vertex<GasStation> predecessor = e.getFrom();
 
 								// if already visited
 								if (closed.contains(successor)) {
@@ -563,16 +570,14 @@ public class PathFinder {
 
 								predecessorMap.put(successor, finalCurrentNode);
 
-								
-								
 								// set absolute cost for path start -> successor
 								gCosts.put(successor, g_tentative);
 
 								double hCost = heuristic.apply(successor).doubleValue();
 								commulatedCosts.put(successor, hCost);
-								
+
 								// heuristic cost used for priority queue
-//								hCosts.put(successor, hCost);
+								// hCosts.put(successor, hCost);
 
 								if (!open.contains(successor)) {
 									open.add(successor);
